@@ -1,3 +1,9 @@
-# ignore all files but *.txt
+# ignore all files
 *
-!*.txt
+
+# do not ignore progamming files
+!*.c
+!*.h
+!*.cpp
+!*.hpp
+!*.sh
