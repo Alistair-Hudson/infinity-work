@@ -1,4 +1,5 @@
-#include<stdio.h>
+#include <stdio.h>
+#include <string.h>
 
 float exponCalc(int exponent)
 {
@@ -24,7 +25,7 @@ int revNum(int number)
 	
 	int output_num = 0;
 
-	while (number > 0)
+	while (number != 0)
 	{
 		int remain = number % 10;
 		output_num = output_num * 10 + remain;
@@ -34,13 +35,32 @@ int revNum(int number)
 	return(output_num);
 }
 
-void swap(int *array)
+void swap(int *x, int *y)
 {
 	
-	int z = array[0];
-	array[0] = array[1];
-	array[1] = z;
+	int z = *x;
+	*x = *y;
+	*y = z;
 
+}
+
+void txt2Hex(char *string)
+{
+	for (int i = 0; i < strlen(string); i++)
+	{
+		printf("%02x", string[i]);
+	}
+}
+
+void resultCompare (float result, float expected)
+{
+	if (result == expected)
+	{
+		printf("TRUE\n");
+	}else
+	{
+		printf("FALSE\n");
+	}
 }
 
 int main()
@@ -52,19 +72,53 @@ int main()
 	}
 	
 	printf("\n");
+	
+	printf("Hello World! in hex is:\n");
+	txt2Hex("Hello World!");
 
+	/*input and expected vaules for tests*/
+	int pos_exp = 3;
+	int neg_exp = -3;
+	int zero_exp = 0;
+	float expect_pos_exp_res = 1000;
+	float expect_neg_exp_res = 0.001;
+	float expect_zero_exp_res = 1;
 
-	float pos_exp = exponCalc(3);
-	float neg_exp = exponCalc(-3);
-	float zero_exp = exponCalc(0);
-	int check = revNum(12340);
-	printf("positive exponent 10^3 = %f \n", pos_exp);
-	printf("negative exponent 10^-3= %f \n", neg_exp);
-	printf("zero exponent 10^0 = %f \n", zero_exp);
-	printf("reverse of the number 12340 = %d \n", check);
+	int pos_rev_num = 12340;
+	int neg_rev_num = -12340;
+	int expected_pos_rev_num = 4321;
+	int expected_neg_rev_num = -4321;
 
-	int a[] = {5, 9};
-	swap(a);
-	printf("a = 5 and b = 9, swaped they are a = %d and b = %d \n", a[0], a[1]); 
+	int int_a = 5;
+	int int_b = 9;
+	int expect_a = int_b;
+	int expect_b = int_a;
+
+	printf("\n");
+	/*Tests*/
+	float test_pos_exp = exponCalc(pos_exp);
+	float test_neg_exp = exponCalc(neg_exp);
+	float test_zero_exp = exponCalc(zero_exp);
+	int test_pos_rev = revNum(pos_rev_num);
+	int test_neg_rev = revNum(neg_rev_num);
+	
+	/* comparisions to expected results*/
+	printf("Postive exponent test works:\n");
+	resultCompare(test_pos_exp, expect_pos_exp_res);
+	printf("Negative exponent test works:\n");
+	resultCompare(test_neg_exp, expect_neg_exp_res);
+	printf("Zero exponent test works:\n");
+	resultCompare(test_zero_exp, expect_zero_exp_res);
+
+	printf("Postive reverse test works:\n");
+	resultCompare(test_pos_rev, expected_pos_rev_num);
+	printf("Negative reverse test works:\n");
+	resultCompare(test_neg_rev, expected_neg_rev_num);
+
+	swap(&int_a, &int_b);
+	printf("The Swap function works with both a positive and negative int: \n");
+	resultCompare(int_a, expect_a); 
+	/* end of tests*/
+
 	return(0);
 }
