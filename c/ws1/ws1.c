@@ -52,6 +52,11 @@ void txt2Hex(char *string)
 	}
 }
 
+void hex2Text (char *array)
+{
+	printf("%s\n", array);
+}
+
 void resultCompare (float result, float expected)
 {
 	if (result == expected)
@@ -65,12 +70,10 @@ void resultCompare (float result, float expected)
 
 int main()
 {
-	int hex_letters[] = {0x22, 0x48, 0x65, 0x6c, 0x6c, 0x6f, 0x20, 0x57, 0x6f, 0x72, 0x6c, 0x64, 0x21, 0x22};
-	for (int i = 0; i < sizeof(hex_letters)/sizeof(int); i++)
-	{
-		printf("%c", hex_letters[i]);
-	}
-	
+	char hex_letters[] = {0x22, 0x48, 0x65, 0x6c, 0x6c, 0x6f, 0x20, 0x57, 0x6f, 0x72, 0x6c, 0x64, 0x21, 0x22};
+
+	hex2Text(hex_letters);
+
 	printf("\n");
 	
 	printf("Hello World! in hex is:\n");
@@ -99,8 +102,11 @@ int main()
 	float test_pos_exp = exponCalc(pos_exp);
 	float test_neg_exp = exponCalc(neg_exp);
 	float test_zero_exp = exponCalc(zero_exp);
+
 	int test_pos_rev = revNum(pos_rev_num);
 	int test_neg_rev = revNum(neg_rev_num);
+
+	swap(&int_a, &int_b);
 	
 	/* comparisions to expected results*/
 	printf("Postive exponent test works:\n");
@@ -115,7 +121,6 @@ int main()
 	printf("Negative reverse test works:\n");
 	resultCompare(test_neg_rev, expected_neg_rev_num);
 
-	swap(&int_a, &int_b);
 	printf("The Swap function works with both a positive and negative int: \n");
 	resultCompare(int_a, expect_a); 
 	/* end of tests*/
