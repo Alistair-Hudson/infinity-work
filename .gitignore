@@ -1,6 +1,9 @@
 # ignore all files
 *
 
+#not all directories
+!*/
+
 # do not ignore progamming files
 !*.c
 !*.h

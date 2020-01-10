@@ -98,11 +98,29 @@ char *Strdup(char *str)
 void Strcat(char *dest, char *src, int added)
 {
 	int length = Strlen(dest);
+	printf("%d\n", length);
 	for (int i = 0; i < added; ++i)
 	{
 		*(dest+length+i) = *(src+i);
 	}
 	printf("%s\n", dest);
+}
+
+char *Strstr(char *str1, char *str2)
+{
+	int length = Strlen(str1);
+	int i = 0;
+	int j = 0;
+	while (i <= length;)
+	{
+		if (*(str1+i) == *(str2+j))
+		{
+			++j;
+		}else
+		{
+ 			j = 0;
+		}
+	}
 }
 
 void main()
