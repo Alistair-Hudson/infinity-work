@@ -1,6 +1,8 @@
 # ignore all files
 *
 
+!.gitignore
+
 # do not ignore progamming files
 !*.c
 !*.h
@@ -8,3 +10,4 @@
 !*.hpp
 !*.sh
 !*.md
+!*/
