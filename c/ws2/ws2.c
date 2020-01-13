@@ -1,8 +1,9 @@
 #include <stdio.h>
 #include <string.h>
-#include <ws2.h>
+#include "ws2.h"
+#include <stdlib.h>
 
-int Strlen(char *string)
+size_t Strlen(const char *string)
 {
 	int length = 0;
 	while (*(string + length) != 0x0)
@@ -13,7 +14,7 @@ int Strlen(char *string)
 	return (length+1);
 }
 
-int Strcmp(char *str1, char *str2)
+int Strcmp(const char *str1, const char *str2)
 {
 	int len1 = Strlen(str1);
 	int len2 = Strlen(str2);
@@ -37,7 +38,7 @@ int Strcmp(char *str1, char *str2)
 		++i;
 		++j;
 	}
-	if (tot1 > tot2)
+	/*if (tot1 > tot2)
 	{
 		return 1;
 	}else if (tot1 < tot2)
@@ -46,10 +47,11 @@ int Strcmp(char *str1, char *str2)
 	}else if (tot1 == tot2)
 	{
 		return 0;
-	}
+	}*/
+	return (tot1 - tot2);
 }
 
-void *Strcpy(char *str2, char *str1)
+char *Strcpy(char *str2, const char *str1)
 {
 	int length = Strlen(str1);
 	for (int i = 0; i < length; ++i)
@@ -58,7 +60,7 @@ void *Strcpy(char *str2, char *str1)
 	}
 }
 
-void *Strncpy(char *str2, char *str1, int n)
+char *Strncpy(char *str2, const char *str1, size_t n)
 {
 
 	for (int i = 0; i < n; ++i)
@@ -67,8 +69,9 @@ void *Strncpy(char *str2, char *str1, int n)
 	}
 }
 
-void StrLowerConvert(char *str)
+char *StrLowerConvert(char *str)
 {
+	char *output;
 	int length = Strlen(str);
 	for (int i = 0; i <= length; ++i)
 	{
@@ -76,25 +79,25 @@ void StrLowerConvert(char *str)
 		{
 			*(str+i) = *(str+i)+0x20;
 		}
-	
 	}
+	
 }
 
 int Strcasecmp(char *str1, char *str2)
 {
-	StrLowerConvert(str1);
+	StrLowerConvert(str2);
 	StrLowerConvert(str2);
 	int result = Strcmp(str1, str2);
 
 	return result;	
 }
 
-char *Strchr(char *str, char *ch)
+char *Strchr(char *str, int ch)
 {
 	int length = Strlen(str);
 	for (int i = 0; i <= length; ++i)
 	{
-		if (*(str+i) == *ch)
+		if (*(str+i) == ch)
 		{
 			return (str+i);
 			break;
@@ -104,11 +107,12 @@ char *Strchr(char *str, char *ch)
 
 char *Strdup(char *str)
 {
-	char *output = str;
+	char *output;
+	output = str;
 	return output;
 }
 
-void Strcat(char *dest, char *src)
+char Strcat(char *dest, const char *src)
 {
 	int length = Strlen(dest) -1;
 	int added = Strlen(src);
@@ -118,7 +122,7 @@ void Strcat(char *dest, char *src)
 	}
 }
 
-void Strncat(char *dest, char *src, int n)
+char Strncat(char *dest, const char *src, size_t n)
 {
 	int length = Strlen(dest) -1;
 	char output[length+n];
@@ -151,7 +155,7 @@ char *Strstr(char *hay, char *needle)
 }
 
 
-int Strspn(char *initial, char *span)
+size_t Strspn(const char *initial, const char *span)
 {
 	int length_init = Strlen(initial)-1;
 	int length_span = Strlen(span);
@@ -176,24 +180,38 @@ int Strspn(char *initial, char *span)
 	}
 }
 
-char *Strtok(char *str, char *delin)
+char *Strtok(char *str, const char *delin)
 {
-	char *output;
-	if(*str != 0x0)
+	static char *buffer;
+	static int previous = 0;
+	static int length = 0;
+	static int end = 0;
+	if(str != NULL)
 	{
-		static char previous = 0;
-		static length = Strlen(str);
+		previous = 0;
+		length = Strlen(str);
+		buffer = str;
 	}
+	char *output = (char *)malloc(length);
 	for(int i = previous; i <= length; ++i)
-	{
-		if(*(str+i) == *delin)
+	{	
+		if(end == 1)
 		{
-			output = (str+i);
+			return 0x0;
+			break;
+		}else if(*(buffer+i) == *delin)
+		{
+			previous = ++i;
+			return output;
+			break;
+		}else if(*(buffer+i) == 0x0)
+		{
+			end = 1;
 			return output;
 			break;
 		}
+		*(output+i-previous) = *(buffer+i);
 	}
-	
 }
 
 int IsPalindrome (char *str)
@@ -243,36 +261,46 @@ void Boom7(int from, int to)
 	}
 }
 
-void Swap(int *num1, int *num2)
+void Swap(int **num1, int **num2)
 {
-	int temp = *num1;
+	int *temp = *num1;
 	*num1 = *num2;
 	*num2 = temp;
 }
 
-/*void RmSpaces(char *str)
+void RmSpaces(char *str)
 {
 	int length = Strlen(str);
+	char *buffer = (char *) malloc(length);
+	int j = 0;
 	for (int i = 0; i <= length; ++i)
 	{
-		if ((i == 0) && (*(str+i) == " "))
+		*(buffer+j) = *(str+i);
+		if ((i == 0) && (*(str+i) == 32))
 		{
-			
-		}else if ((i == (length-1)) && (*(str+i) == " "))
+			--j;
+		}else if ((i == (length-1)) && (*(str+i) == 32))
 		{
-
-		}else if ((*(str+i) == " ") && (*(str+i-1) == " "))
+			--j;
+		}else if ((*(str+i) == 32) && (*(str+i-1) == 32))
 		{
-
+			--j;
 		}
+		++j;
 	}
-}*/
+	for(j; j <= length; ++j)
+	{
+		*(buffer+j) = 0x0;
+	}
+	Strcpy(str, buffer);
+}
 
-int StringSum(char *num1, char *num2, char *output)
+char *StringSum(char *num1, char *num2)
 {
 	int len1 = Strlen(num1);
 	int len2 = Strlen(num2);
 	int out_pos = (len1 > len2) ? (len1+1):(len2+1);
+	char *output = (char *) malloc(out_pos);
 	int buffer = 0;
 	int carry = 0;
 	while(out_pos >= 0)
@@ -284,10 +312,10 @@ int StringSum(char *num1, char *num2, char *output)
 		else if((len1 < 0) && (len2 < 0))
 		{
 			buffer = 48 + carry;
-		}else if((len1 > 0) && (len2 < 0))
+		}else if((len1 >= 0) && (len2 < 0))
 		{
 			buffer = *(num1+len1) + carry;
-		}else if((len1 < 0) && (len2 > 0))
+		}else if((len1 < 0) && (len2 >= 0))
 		{
 			buffer = *(num2+len2) + carry;
 		}else
@@ -303,29 +331,10 @@ int StringSum(char *num1, char *num2, char *output)
 		{
 			carry = 0;
 		}
-		printf("%c + %C = %c\n", *(num1+len1), *(num2+len2), buffer);
 		*(output+out_pos) = buffer;
 		--out_pos;
 		--len1;
 		--len2;
 	}
-}
-
-void main()
-{
-	int num1 = 650;
-	int num2 = 850;
-	char string1[] = {"124"};
-	char string2[] = {"1956"};
-	char string3[10];
-	//char *ret;
-	//int len = IsPalindrome(string1);
-	//ret = Strstr(string1, string2);
-	//printf("%s %s\n", string1, string2);
-	//printf("%d\n", len);
-	//Boom7(&num1, &num2);
-	//printf("%d %d\n", num1, num2);
-	StringSum(string1, string2, string3);
-	printf("%s\n", string3);
-
+	return output;
 }
