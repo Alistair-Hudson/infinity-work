@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+#include <ws2.h>
 
 int Strlen(char *string)
 {
@@ -175,9 +176,24 @@ int Strspn(char *initial, char *span)
 	}
 }
 
-void Strtok()
+char *Strtok(char *str, char *delin)
 {
-
+	char *output;
+	if(*str != 0x0)
+	{
+		static char previous = 0;
+		static length = Strlen(str);
+	}
+	for(int i = previous; i <= length; ++i)
+	{
+		if(*(str+i) == *delin)
+		{
+			output = (str+i);
+			return output;
+			break;
+		}
+	}
+	
 }
 
 int IsPalindrome (char *str)
@@ -201,12 +217,12 @@ int IsPalindrome (char *str)
 	}
 }
 
-void Boom7(int *num1, int *num2)
+void Boom7(int from, int to)
 {
-	for(num1; *num1 <= *num2; *(num1)+=1)
+	for(from; from <= to; ++from)
 	{
 		int hit = 0;
-		for(int i = *num1; i > 0; i /= 10)
+		for(int i = from; i > 0; i /= 10)
 		{
 			if((i % 10) == 7)
 			{
@@ -214,7 +230,7 @@ void Boom7(int *num1, int *num2)
 				break;
 			}
 		}
-		if ((*num1 % 7) == 0)
+		if ((from % 7) == 0)
 		{
 			printf("BOOM\n");
 		}else if(hit == 1) 
@@ -222,7 +238,7 @@ void Boom7(int *num1, int *num2)
 			printf("BOOM\n");
 		}else
 		{
-			printf("%d\n", *num1);
+			printf("%d\n", from);
 		}
 	}
 }

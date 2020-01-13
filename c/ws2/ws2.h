@@ -17,7 +17,7 @@ char *Strstr(char *hay, char *needle);	/*Find the forst instence of a string wit
 					/*and create a pointer to it				*/
 int Strspn(char *initial, char *span);	/*Find the length of the first instence of a continuos	*/
 					/*set of characters and return its length		*/
-void Strtok();
+char *Strtok(char *str, char *delin);
 int IsPalindrome (char *str);		/*Check if a string is a Palindrome, return 1 for yes	*/
 					/* 0 for no						*/
 void Boom7(int *num1, int *num2);	/*Play a game of Boom 7					*/void Swap(int *num1, int *num2);	/*Swap the address of two intergers			*/
