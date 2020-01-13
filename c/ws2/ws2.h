@@ -22,7 +22,7 @@ char *Strdup(char *str);
 char Strcat(char *dest, const char *src);
 /*Append a string onto the destination string up to n chatacers			*/	
 char Strncat(char *dest, const char *src, size_t n);
-/*Find the forst instence of a string within a string and create a pointer to it*/
+/*Find the first instence of a string within a string and create a pointer to it*/
 char *Strstr(char *hay, char *needle);	
 /*Find the length of the first instence of a continuos set of characters and 	*/
 /*return its length								*/		
