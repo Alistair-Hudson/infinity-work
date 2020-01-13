@@ -1,7 +1,12 @@
 # ignore all files
 *
 
+<<<<<<< HEAD
 !.gitignore
+=======
+#not all directories
+!*/
+>>>>>>> 47bb25f0d83036e9c377fb24434bffeed32ecf9c
 
 # do not ignore progamming files
 !*.c
