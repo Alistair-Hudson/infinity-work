@@ -47,8 +47,7 @@ int Strcmp(const char *str1, const char *str2)
 
 char *Strcpy(char *str2, const char *str1)
 {
-	int length = Strlen(str1);
-	for (int i = 0; i <= length; ++i)
+	while(*str1 != '\0')
 	{
 		*str2 = *str1;
 		++str1;
@@ -71,12 +70,11 @@ char *Strncpy(char *str2, const char *str1, size_t n)
 
 char *StrLowerConvert(char *str)
 {
-	int length = Strlen(str);
-	for (int i = 0; i <= length; ++i)
+	while(*str != '\0')
 	{
-		if ((*str > 0x40) && (*str < 0x5b))
+		if ((*str > 'A') && (*str < 'Z'))
 		{
-			*str = *str+0x20;
+			*str = *str + ('a'-'A');
 		}
 		++str;
 	}
@@ -94,8 +92,7 @@ int Strcasecmp(char *str1, char *str2)
 
 char *Strchr(char *str, int ch)
 {
-	int length = Strlen(str);
-	for (int i = 0; i <= length; ++i)
+	while(*str != '\0')
 	{
 		if (*str == ch)
 		{
@@ -142,19 +139,15 @@ char Strncat(char *dest, const char *src, size_t n)
 }
 
 char *Strstr(char *hay, char *needle)
-{
-	//char *output;
-	int length = Strlen(hay);	
+{	
 	int j = 0;
-	for(int i = 0; i <= length; ++i)
+	while(*hay != '\0')
 	{
 		if(*hay == *(needle+j))
 		{
-			//++needle;
 			++j;
-		}else if (*(needle+j) == 0x0)
+		}else if (*(needle+j) == '\0')
 		{	
-			//output = hay - j;
 			hay-=j;
 			return hay;
 			break;
@@ -170,10 +163,9 @@ char *Strstr(char *hay, char *needle)
 
 size_t Strspn(const char *initial, const char *span)
 {
-	int length_init = Strlen(initial)-1;
 	int length_span = Strlen(span);
 	int char_count = 0;
-	for(int i = 0; i <= length_init; ++i)
+	while(*initial != '\0')
 	{
 		for(int j = 0; j <= length_span; ++j)
 		{
@@ -181,7 +173,7 @@ size_t Strspn(const char *initial, const char *span)
 			{
 				++char_count;
 				break;
-			}else if((*span == 0x0) && (char_count != 0))
+			}else if((*span == '\0') && (char_count != 0))
 			{
 				return char_count;
 			}
@@ -199,37 +191,36 @@ size_t Strspn(const char *initial, const char *span)
 char *Strtok(char *str, const char *delin)
 {
 	static char *buffer;
-	static int previous = 0;
-	static int length = 0;
-	static int end = 0;
+	char *start = buffer;
 	if(str != NULL)
 	{
-		previous = 0;
-		length = Strlen(str);
 		buffer = str;
 	}
-	char *output = (char *)malloc(length);
-	for(int i = previous; i <= length; ++i)
-	{	
-		if(end == 1)
+	int iter = 0;
+	start = buffer;
+	if(*buffer == '\0'){ return 0;}
+	while(*buffer != '\0')
+	{
+		while(*delin != '\0')
 		{
-			return 0x0;
-			break;
-		}else if(*buffer == *delin)
-		{
-			previous = ++i;
-			return output;
-			break;
-		}else if(*buffer == 0x0)
-		{
-			end = 1;
-			return output;
-			break;
+			if(*buffer == *delin)
+			{
+				*buffer = '\0';
+				++buffer;
+				return start;
+			}
+			++delin;
+			++iter;
 		}
-		*(output-previous) = *buffer;
+		delin -= iter;
+		iter = 0;
 		++buffer;
-		++output;
+		if(*buffer == '\0')
+		{
+			return start;
+		}
 	}
+	
 	return 0;
 }
 
@@ -290,29 +281,31 @@ void Swap(int **num1, int **num2)
 
 void RmSpaces(char *str)
 {
-	int length = Strlen(str);
-	char *buffer = (char *) malloc(length);
+	char *buffer = str;
+	char *start = buffer;
 	int j = 0;
-	for (int i = 0; i <= length; ++i)
+	while(*str != '\0')
 	{
-		*(buffer+j) = *(str+i);
-		if ((i == 0) && (*(str+i) == 32))
+		*buffer = *str;
+		if ((j == 0) && (*str == ' '))
 		{
-			--j;
-		}else if ((i == (length-1)) && (*(str+i) == 32))
+			++str;
+			++j;
+		}else if ((*(str+1) == '\0') && (*str == ' '))
 		{
-			--j;
-		}else if ((*(str+i) == 32) && (*(str+i-1) == 32))
+			++str;
+		}else if ((*str == ' ') && (*(str+1) == ' '))
 		{
-			--j;
+			++str;
+		}else
+		{
+			++str;
+			++buffer;
+			
 		}
-		++j;
 	}
-	for( ; j <= length; ++j)
-	{
-		*(buffer+j) = 0x0;
-	}
-	Strcpy(str, buffer);
+	*buffer = '\0';
+	Strcpy(str, start);
 }
 
 char *StringSum(char *num1, char *num2)

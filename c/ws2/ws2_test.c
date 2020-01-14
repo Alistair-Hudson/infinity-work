@@ -107,33 +107,37 @@ void DupTest(char *test_str)
 }
 
 
-void CatTest(char *test_base, char *exp_base, char *append)
+void CatTest(char *base, char *append)
 {
-	Strcat(test_base, append);
-	strcat(exp_base, append);
-	if(strcmp(test_base, exp_base) == 0)
+	char *test = strdup(base);
+	char *exp = strdup(base);
+	Strcat(test, append);
+	strcat(exp, append);
+	if(strcmp(test, exp) == 0)
 	{
 		printf("Cat test passed\n");
-		printf("test = %s, exp = %s\n", test_base, exp_base);
+		printf("test = %s, exp = %s\n", test, exp);
 	}else
 	{
 		printf("Cat test failed\n");
-		printf("test = %s, exp = %s\n", test_base, exp_base);
+		printf("test = %s, exp = %s\n", test, exp);
 	}
 }
 
-void CatnTest(char *test_base, char *exp_base, char *append, int n)
+void CatnTest(char *base, char *append, int n)
 {
-	Strncat(test_base, append, n);
-	strncat(exp_base, append, n);
-	if(strcmp(test_base, exp_base) == 0)
+	char *test = strdup(base);
+	char *exp = strdup(base);
+	Strncat(test, append, n);
+	strncat(exp, append, n);
+	if(strcmp(test, exp) == 0)
 	{
 		printf("Cat n test passed\n");
-		printf("test = %s, exp = %s\n", test_base, exp_base);
+		printf("test = %s, exp = %s\n", test, exp);
 	}else
 	{
 		printf("Cat n test failed\n");
-		printf("test = %s, exp = %s\n", test_base, exp_base);
+		printf("test = %s, exp = %s\n", test, exp);
 	}
 }
 
@@ -169,22 +173,33 @@ void SpnTest(char *test_str, char *test_span)
 
 void TokTest(char *test_str, char *delin)
 {
+	char *test = strdup(test_str);
+	char *exp = strdup(test_str);
 	int round = 0;
-	char *test_ret = Strtok(test_str, delin);
-	char *exp_ret = strtok(test_str, delin);
+	int res = 0;
+	char *test_ret = Strtok(test, delin);
+	char *exp_ret = strtok(exp, delin);
 	while((test_ret != NULL) && (exp_ret != NULL))
 	{
+		res = strcmp(test_ret, exp_ret);
+		if(res != 0)
+		{
+			printf("Tok test failed\n");
+			printf("test = %s, exp = %s, round = %d\n", test_ret, exp_ret, round);
+		}
 		++round;
 		test_ret = Strtok(NULL, delin);
 		exp_ret = strtok(NULL, delin);
+		
 	}
-	if(test_ret == exp_ret)
-	{
-		printf("Tok test passed\n");
-	}else
+	if(res == 0)
+		{
+			printf("Tok test passed\n");
+		}
+	else
 	{
 		printf("Tok test failed\n");
-		printf("test = %s, exp = %s\n, round = %d", test_ret, exp_ret, round);
+		printf("test = %s, exp = %s, round = %d\n", test_ret, exp_ret, round);
 	}
 }
 
@@ -208,7 +223,9 @@ void PalindromeTest()
 
 void Boom7Test()
 {
-	
+	printf("\n Boom & test begins\n");
+	Boom7(62,85);
+	printf("\n Boom 7 test ends\n");
 }
 
 void SwapTest()
@@ -228,13 +245,18 @@ void SwapTest()
 	}
 }
 
-void SumTest()
+void RMSpacesTest(char *test_str, char *exp_str)
 {
-	int total_pass = 0;
-	char *res;
-	res = StringSum("1234", "851");
-	//if(res == "2085"){++total_pass;}
-	printf("Sum test passed %d times", total_pass);
+	RmSpaces(test_str);
+	int res = strcmp(test_str, exp_str);
+	if(res == 0)
+	{
+		printf("RmSpaces test passed\n");	
+	}else
+	{
+		printf("RmSpaces test failed\n");
+		printf("test = %s, exp = %s\n", test_str, exp_str);
+	}
 }
 
 int main()
@@ -267,8 +289,11 @@ int main()
 	char needle[] = " wor";
 	char span[] = "Hell";
 	/*Tok test*/
-	char source[] = "Hello-Shalom-Ki ora";
-	char delin[] = "-";
+	char test_src[] = "Hello-Shalom-Kia ora";
+	char delin[] = "- ";
+	/*RMSpaces test*/
+	char test_rm[50] = " Hello  world ";
+	char exp_rm[] = "Hello world";
 
 	/*Function test order*/
 	/*Length Test*/
@@ -287,17 +312,21 @@ int main()
 	/*Chr test*/
 	ChrTest(test, ch);
 	/*Cat and Cat n tets*/
-	CatTest(base, base, append);
-	CatnTest(base, base, append, n);
+	CatTest(base, append);
+	CatnTest(base,append, n);
 	/*Str and Spn tests*/
 	StrTest(hay, needle);
 	SpnTest(hay, span);
 	/*Tok test*/
-	TokTest(source, delin);
+	TokTest(test_src, delin);
 	/*Palindrome tests*/
 	PalindromeTest();
 	/*Swap test*/
 	SwapTest();
+	/*RMSpaces test*/
+	RMSpacesTest(test_rm, exp_rm);
+	/*Boom 7 tet*/
+	Boom7Test();
 
 	return 0;
 }
