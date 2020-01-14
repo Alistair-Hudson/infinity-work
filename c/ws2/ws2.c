@@ -6,58 +6,55 @@
 size_t Strlen(const char *string)
 {
 	int length = 0;
-	while (*(string + length) != 0x0)
+	while (*string != 0x0)
 	{
+		++string;
 		++length;
 	}
 
-	return (length+1);
+	return length;
 }
 
 int Strcmp(const char *str1, const char *str2)
 {
 	int len1 = Strlen(str1);
 	int len2 = Strlen(str2);
-	int tot1 = 0;
-	int tot2 = 0;
+	int compare = 0;
 	int i = 0;
 	int j = 0;
 	while((i <= len1) || (j <= len2))
 	{
 		if ((i >= len1) && (j <= len2))
 		{
-			tot2 += *(str2+j);
+			compare -= *(str2+j);
 		}else if ((i <= len1) && (j >= len2))
 		{
-			tot1 += *(str1+i);
-		}else
+			compare += *(str1+i);
+		}else 
 		{
-			tot1 += *(str1+i);
-			tot2 += *(str2+j);
+			compare = *(str1+i) - *(str2+j);
+		}
+		if (compare != 0)
+		{
+			return compare;
+			break;
 		}
 		++i;
 		++j;
 	}
-	/*if (tot1 > tot2)
-	{
-		return 1;
-	}else if (tot1 < tot2)
-	{
-		return -1;
-	}else if (tot1 == tot2)
-	{
-		return 0;
-	}*/
-	return (tot1 - tot2);
+	return 0;
 }
 
 char *Strcpy(char *str2, const char *str1)
 {
 	int length = Strlen(str1);
-	for (int i = 0; i < length; ++i)
+	for (int i = 0; i <= length; ++i)
 	{
-		*(str2+i) = *(str1+i);
+		*str2 = *str1;
+		++str1;
+		++str2;
 	}
+	return 0;
 }
 
 char *Strncpy(char *str2, const char *str1, size_t n)
@@ -65,27 +62,30 @@ char *Strncpy(char *str2, const char *str1, size_t n)
 
 	for (int i = 0; i < n; ++i)
 	{
-		*(str2+i) = *(str1+i);
+		*str2 = *str1;
+		++str1;
+		++str2;
 	}
+	return 0;
 }
 
 char *StrLowerConvert(char *str)
 {
-	char *output;
 	int length = Strlen(str);
 	for (int i = 0; i <= length; ++i)
 	{
-		if ((*(str+i) > 0x40) && (*(str+i) < 0x5b))
+		if ((*str > 0x40) && (*str < 0x5b))
 		{
-			*(str+i) = *(str+i)+0x20;
+			*str = *str+0x20;
 		}
+		++str;
 	}
-	
+	return 0;
 }
 
 int Strcasecmp(char *str1, char *str2)
 {
-	StrLowerConvert(str2);
+	StrLowerConvert(str1);
 	StrLowerConvert(str2);
 	int result = Strcmp(str1, str2);
 
@@ -97,12 +97,14 @@ char *Strchr(char *str, int ch)
 	int length = Strlen(str);
 	for (int i = 0; i <= length; ++i)
 	{
-		if (*(str+i) == ch)
+		if (*str == ch)
 		{
-			return (str+i);
+			return str;
 			break;
 		}
+		++str;
 	}
+	return 0;
 }
 
 char *Strdup(char *str)
@@ -114,44 +116,55 @@ char *Strdup(char *str)
 
 char Strcat(char *dest, const char *src)
 {
-	int length = Strlen(dest) -1;
+	int length = Strlen(dest);
 	int added = Strlen(src);
+	dest += length;
 	for (int i = 0; i < added; ++i)
 	{
-		*(dest+i+length) = *(src+i);	
+		*dest = *src;
+		++dest;
+		++src;	
 	}
+	return 0;
 }
 
 char Strncat(char *dest, const char *src, size_t n)
 {
-	int length = Strlen(dest) -1;
-	char output[length+n];
+	int length = Strlen(dest);
+	dest += length;
 	for (int i = 0; i < n; ++i)
 	{
-		*(dest+i+length) = *(src+i);	
+		*dest = *src;
+		++dest;
+		++src;	
 	}
+	return 0;
 }
 
 char *Strstr(char *hay, char *needle)
 {
-	int length = Strlen(hay);
-	char *output;	
+	//char *output;
+	int length = Strlen(hay);	
 	int j = 0;
 	for(int i = 0; i <= length; ++i)
 	{
-		if(*(hay+i) == *(needle+j))
+		if(*hay == *(needle+j))
 		{
+			//++needle;
 			++j;
 		}else if (*(needle+j) == 0x0)
 		{	
-			output = (hay+i-j);
-			return output;
+			//output = hay - j;
+			hay-=j;
+			return hay;
 			break;
 		}else
 		{
 			j = 0;
 		}
+		++hay;
 	}
+	return 0;
 }
 
 
@@ -160,24 +173,27 @@ size_t Strspn(const char *initial, const char *span)
 	int length_init = Strlen(initial)-1;
 	int length_span = Strlen(span);
 	int char_count = 0;
-	for(int i = 0; i < length_init; ++i)
+	for(int i = 0; i <= length_init; ++i)
 	{
-		for(int j = 0; j < length_span; ++j)
+		for(int j = 0; j <= length_span; ++j)
 		{
-			if(*(initial+i) == *(span+j))
+			if(*initial == *span)
 			{
 				++char_count;
 				break;
-			}else if((*(span+j) == 0x0) && (char_count != 0))
+			}else if((*span == 0x0) && (char_count != 0))
 			{
 				return char_count;
 			}
+			++span;
 		}
+		++initial;
 	}
 	if (char_count == 0)
 	{
 		return char_count;
 	}
+	return 0;
 }
 
 char *Strtok(char *str, const char *delin)
@@ -199,25 +215,28 @@ char *Strtok(char *str, const char *delin)
 		{
 			return 0x0;
 			break;
-		}else if(*(buffer+i) == *delin)
+		}else if(*buffer == *delin)
 		{
 			previous = ++i;
 			return output;
 			break;
-		}else if(*(buffer+i) == 0x0)
+		}else if(*buffer == 0x0)
 		{
 			end = 1;
 			return output;
 			break;
 		}
-		*(output+i-previous) = *(buffer+i);
+		*(output-previous) = *buffer;
+		++buffer;
+		++output;
 	}
+	return 0;
 }
 
 int IsPalindrome (char *str)
 {
 	int l = 0;
-	int r = Strlen(str) -2;
+	int r = Strlen(str) -1;
 	StrLowerConvert(str);
 	while (l <= r)
 	{
@@ -233,11 +252,12 @@ int IsPalindrome (char *str)
 	{
 		return 1;
 	}
+	return 0;
 }
 
 void Boom7(int from, int to)
 {
-	for(from; from <= to; ++from)
+	for( ; from <= to; ++from)
 	{
 		int hit = 0;
 		for(int i = from; i > 0; i /= 10)
@@ -288,7 +308,7 @@ void RmSpaces(char *str)
 		}
 		++j;
 	}
-	for(j; j <= length; ++j)
+	for( ; j <= length; ++j)
 	{
 		*(buffer+j) = 0x0;
 	}
