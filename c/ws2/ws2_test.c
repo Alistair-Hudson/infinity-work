@@ -105,6 +105,8 @@ void DupTest(char *test_str)
 		printf("Dup test failed\n");
 		printf("test = %s, exp = %s\n", test_ret, exp_ret);
 	}
+	free(test_ret);
+	free(exp_ret);
 }
 
 
@@ -123,6 +125,8 @@ void CatTest(char *base, char *append)
 		printf("Cat test failed\n");
 		printf("test = %s, exp = %s\n", test, exp);
 	}
+	free(test);
+	free(exp);
 }
 
 void CatnTest(char *base, char *append, int n)
@@ -140,6 +144,8 @@ void CatnTest(char *base, char *append, int n)
 		printf("Cat n test failed\n");
 		printf("test = %s, exp = %s\n", test, exp);
 	}
+	free(test);
+	free(exp);
 }
 
 void StrTest(char *test_hay, char *test_needle)
@@ -172,14 +178,12 @@ void SpnTest(char *test_str, char *test_span)
 	}
 }
 
-void TokTest(char *test_str, char *delin)
+void TokTest(char *test_str, char *exp_str, char *delin)
 {
-	char *test = strdup(test_str);
-	char *exp = strdup(test_str);
 	int round = 0;
 	int res = 0;
-	char *test_ret = Strtok(test, delin);
-	char *exp_ret = strtok(exp, delin);
+	char *test_ret = Strtok(test_str, delin);
+	char *exp_ret = strtok(exp_str, delin);
 	while((test_ret != NULL) && (exp_ret != NULL))
 	{
 		res = strcmp(test_ret, exp_ret);
@@ -323,6 +327,7 @@ int main()
 	/*Tok test*/
 	char test_src[] = "Hello-Shalom-Kia ora";
 	char delin[] = "- ";
+	char *exp_src;
 	/*RMSpaces test*/
 	char test_rm[50] = " Hello  world ";
 	char exp_rm[] = "Hello world";
@@ -350,7 +355,9 @@ int main()
 	StrTest(hay, needle);
 	SpnTest(hay, span);
 	/*Tok test*/
-	TokTest(test_src, delin);
+	exp_src = strdup(test_src);
+	TokTest(test_src, exp_src, delin);
+	free(exp_src);
 	/*Palindrome tests*/
 	PalindromeTest();
 	/*Swap test*/
