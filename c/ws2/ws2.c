@@ -48,6 +48,8 @@ char *Strcpy(char *str2, const char *str1)
 		++str1;
 		++str2;
 	}
+	++str2;
+	*str2 = '\0';
 	return 0;
 }
 
@@ -60,6 +62,8 @@ char *Strncpy(char *str2, const char *str1, size_t n)
 		++str1;
 		++str2;
 	}
+	++str2;
+	*str2 = '\0';
 	return 0;
 }
 
@@ -117,7 +121,7 @@ char *Strchr(const char *str, int ch)
 
 char *Strdup(const char *str)
 {
-	char *output = (char *) malloc(Strlen(str));
+	char *output = (char *) malloc(Strlen(str)+1);
 	Strcpy(output, str);
 	return output;
 }

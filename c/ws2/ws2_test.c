@@ -95,16 +95,15 @@ void ChrTest(char *test_str, int ch)
 void DupTest(char *test_str)
 {
 	char *test_ret = Strdup(test_str);
-	char *exp_ret = strdup(test_str);
+	char *exp_ret = strdup(test_str);	
 	if(strcmp(test_ret, exp_ret) == 0)
 	{
 		printf("Dup test passed\n");
-		printf("test = %s, exp = %s\n", test_ret, exp_ret);
 	}else
 	{
 		printf("Dup test failed\n");
-		printf("test = %s, exp = %s\n", test_ret, exp_ret);
 	}
+	printf("test = %s, exp = %s\n", test_ret, exp_ret);
 	free(test_ret);
 	free(exp_ret);
 }
@@ -308,7 +307,7 @@ int main()
 	char exp_cmp_lng[] = "Hello+";
 	/*Copy, copy n, and Dup tests*/
 	char cpy[] = "this is the copy";
-	char test[] = "this is the test";
+	char test[] = "this is the  test";
 	char exp[] = "this is the expected";
 	char n_test[] = "12345";
 	char n_exp[] = "12345";
