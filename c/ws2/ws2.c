@@ -17,30 +17,25 @@ size_t Strlen(const char *string)
 
 int Strcmp(const char *str1, const char *str2)
 {
-	int len1 = Strlen(str1);
-	int len2 = Strlen(str2);
 	int compare = 0;
-	int i = 0;
-	int j = 0;
-	while((i <= len1) || (j <= len2))
+	while(*str1 != '\0' || *str2 != '\0')
 	{
-		if ((i >= len1) && (j <= len2))
+		if (*str1 == '\0' && *str2 != '\0')
 		{
-			compare -= *(str2+j);
-		}else if ((i <= len1) && (j >= len2))
+			compare -= *str2;
+		}else if (*str1 != '\0' && *str2 == '\0')
 		{
-			compare += *(str1+i);
+			compare += *str1;
 		}else 
 		{
-			compare = *(str1+i) - *(str2+j);
+			compare = *str1 - *str2;
 		}
 		if (compare != 0)
 		{
 			return compare;
-			break;
 		}
-		++i;
-		++j;
+		++str1;
+		++str2;
 	}
 	return 0;
 }
@@ -58,8 +53,8 @@ char *Strcpy(char *str2, const char *str1)
 
 char *Strncpy(char *str2, const char *str1, size_t n)
 {
-
-	for (int i = 0; i < n; ++i)
+	unsigned int i = 0;
+	for (; i < n; ++i)
 	{
 		*str2 = *str1;
 		++str1;
@@ -68,46 +63,62 @@ char *Strncpy(char *str2, const char *str1, size_t n)
 	return 0;
 }
 
-char *StrLowerConvert(char *str)
+char StrLowerConvert(char ch)
 {
-	while(*str != '\0')
+	if ((ch > 'A') && (ch < 'Z'))
 	{
-		if ((*str > 'A') && (*str < 'Z'))
-		{
-			*str = *str + ('a'-'A');
-		}
-		++str;
+		ch = ch + ('a'-'A');
+		return ch;
 	}
 	return 0;
 }
 
-int Strcasecmp(char *str1, char *str2)
+int Strcasecmp(const char *str1, const char *str2)
 {
-	StrLowerConvert(str1);
-	StrLowerConvert(str2);
-	int result = Strcmp(str1, str2);
-
-	return result;	
+	int compare = 0;
+	char char1;
+	char char2;
+	while(*str1 != '\0' || *str2 != '\0')
+	{
+		char1 = tolower(*str1);
+		char2 = tolower(*str2);
+		if (*str1 == '\0' && *str2 != '\0')
+		{
+			compare -= char2;
+		}else if (*str1 != '\0' && *str2 == '\0')
+		{
+			compare += char1;
+		}else 
+		{
+			compare = char1 - char2;
+		}
+		if (compare != 0)
+		{
+			return compare;
+		}
+		++str1;
+		++str2;
+	}
+	return 0;
 }
 
-char *Strchr(char *str, int ch)
+char *Strchr(const char *str, int ch)
 {
 	while(*str != '\0')
 	{
 		if (*str == ch)
-		{
-			return str;
-			break;
+		{	
+			return (char *)str;
 		}
 		++str;
 	}
 	return 0;
 }
 
-char *Strdup(char *str)
+char *Strdup(const char *str)
 {
-	char *output;
-	output = str;
+	char *output = (char *) malloc(Strlen(str));
+	Strcpy(output, str);
 	return output;
 }
 
@@ -115,8 +126,9 @@ char Strcat(char *dest, const char *src)
 {
 	int length = Strlen(dest);
 	int added = Strlen(src);
+	int i = 0;
 	dest += length;
-	for (int i = 0; i < added; ++i)
+	for (; i < added; ++i)
 	{
 		*dest = *src;
 		++dest;
@@ -128,8 +140,9 @@ char Strcat(char *dest, const char *src)
 char Strncat(char *dest, const char *src, size_t n)
 {
 	int length = Strlen(dest);
+	unsigned int i = 0;
 	dest += length;
-	for (int i = 0; i < n; ++i)
+	for (; i < n; ++i)
 	{
 		*dest = *src;
 		++dest;
@@ -138,7 +151,7 @@ char Strncat(char *dest, const char *src, size_t n)
 	return 0;
 }
 
-char *Strstr(char *hay, char *needle)
+char *Strstr(const char *hay, const char *needle)
 {	
 	int j = 0;
 	while(*hay != '\0')
@@ -148,9 +161,8 @@ char *Strstr(char *hay, char *needle)
 			++j;
 		}else if (*(needle+j) == '\0')
 		{	
-			hay-=j;
-			return hay;
-			break;
+			hay -= j; 
+			return (char *)hay;
 		}else
 		{
 			j = 0;
@@ -167,7 +179,8 @@ size_t Strspn(const char *initial, const char *span)
 	int char_count = 0;
 	while(*initial != '\0')
 	{
-		for(int j = 0; j <= length_span; ++j)
+		int j = 0;
+		for(; j <= length_span; ++j)
 		{
 			if(*initial == *span)
 			{
@@ -192,11 +205,11 @@ char *Strtok(char *str, const char *delin)
 {
 	static char *buffer;
 	char *start = buffer;
+	int iter = 0;
 	if(str != NULL)
 	{
 		buffer = str;
 	}
-	int iter = 0;
 	start = buffer;
 	if(*buffer == '\0'){ return 0;}
 	while(*buffer != '\0')
@@ -224,22 +237,21 @@ char *Strtok(char *str, const char *delin)
 	return 0;
 }
 
-int IsPalindrome (char *str)
+int IsPalindrome (const char *str)
 {
-	int l = 0;
-	int r = Strlen(str) -1;
-	StrLowerConvert(str);
-	while (l <= r)
+	int r = Strlen(str)-1;
+	char *char1 = (char *)str;
+	char *char2 = (char *)(str+r);
+	while (char1 <= char2)
 	{
-		if(*(str+l) != *(str+r))
+		if(tolower(*char1) != tolower(*char2))
 		{
 			return 0;
-			break;
 		}
-		++l;
-		--r;
+		++char1;
+		--char2;
 	}
-	if (l > r)
+	if (char1 > char2)
 	{
 		return 1;
 	}
@@ -251,7 +263,8 @@ void Boom7(int from, int to)
 	for( ; from <= to; ++from)
 	{
 		int hit = 0;
-		for(int i = from; i > 0; i /= 10)
+		int i = from;
+		for(; i > 0; i /= 10)
 		{
 			if((i % 10) == 7)
 			{
@@ -308,7 +321,7 @@ void RmSpaces(char *str)
 	Strcpy(str, start);
 }
 
-char *StringSum(char *num1, char *num2)
+char *StringSum(const char *num1, const char *num2)
 {
 	int len1 = Strlen(num1);
 	int len2 = Strlen(num2);

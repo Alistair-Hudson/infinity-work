@@ -1,13 +1,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <strings.h>
 #include "ws2.c"
 
 void LenTest(char *test_str)
 {
-	printf("%s\n", test_str);
 	int test_len = Strlen(test_str);
 	int exp_len = strlen(test_str);
+	printf("%s\n", test_str);
 	if(test_len == exp_len)
 	{
 		printf("Length test passed\n");
@@ -20,9 +21,9 @@ void LenTest(char *test_str)
 
 void CmpTest(char *test_str1, char *test_str2)
 {
-	printf("Test = %s, Exp = %s\n", test_str1, test_str2);
 	int test_res = Strcmp(test_str1, test_str2);
 	int exp_res = strcmp(test_str1, test_str2);
+	printf("Test = %s, Exp = %s\n", test_str1, test_str2);
 	if(test_res == exp_res)
 	{
 		printf("Compare test passed\n");
@@ -158,9 +159,9 @@ void StrTest(char *test_hay, char *test_needle)
 
 void SpnTest(char *test_str, char *test_span)
 {
-	printf("Span = %s\n", test_span);
 	int test_len = Strspn(test_str, test_span);
 	int exp_len = strspn(test_str, test_span);
+	printf("Span = %s\n", test_span);
 	if(test_len == exp_len)
 	{
 		printf("Spn test passed\n");
@@ -205,18 +206,48 @@ void TokTest(char *test_str, char *delin)
 
 void PalindromeTest()
 {	
-	printf("Palindrome Test:\n");
 	int total_pass = 0;
 	char test1[] ="HANNAH";
 	char test2[] ="Hannah";
 	char test3[] ="ABCdef123";
 	char test4[] ="12321";
 	char test5[] ="!@# #@!";
-	if(IsPalindrome(test1) == 1){++total_pass;}
-	if(IsPalindrome(test2) == 1){++total_pass;}
-	if(IsPalindrome(test3) == 0){++total_pass;}
-	if(IsPalindrome(test4) == 1){++total_pass;}
-	if(IsPalindrome(test5) == 1){++total_pass;}
+	printf("Palindrome Test:\n");
+	if(IsPalindrome(test1) == 1)
+	{
+		++total_pass;
+	}else
+	{
+		printf("Test 1 failed\n");
+	}
+	if(IsPalindrome(test2) == 1)
+	{
+		++total_pass;
+	}else
+	{
+		printf("Test 2 failed\n");
+	}
+	if(IsPalindrome(test3) == 0)
+	{
+		++total_pass;
+	}else
+	{
+		printf("Test 3 failed\n");
+	}
+	if(IsPalindrome(test4) == 1)
+	{
+		++total_pass;
+	}else
+	{
+		printf("Test 4 failed\n");
+	}
+	if(IsPalindrome(test5) == 1)
+	{
+		++total_pass;
+	}else
+	{
+		printf("Test 5 failed\n");
+	}
 	printf(" passed %d times\n", total_pass);
 	if(total_pass == 5){printf("Complete pass\n");}
 }
@@ -247,8 +278,9 @@ void SwapTest()
 
 void RMSpacesTest(char *test_str, char *exp_str)
 {
+	int res;
 	RmSpaces(test_str);
-	int res = strcmp(test_str, exp_str);
+	res = strcmp(test_str, exp_str);
 	if(res == 0)
 	{
 		printf("RmSpaces test passed\n");	

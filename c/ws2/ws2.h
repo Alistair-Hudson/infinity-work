@@ -11,26 +11,28 @@ char *Strcpy(char *str2, const char *str1);
 /*Copy st1 to str2, up to n charcters						*/	
 char *Strncpy(char *str2, const char *str1, size_t  n);
 /*Convert all characters in a string to lower case				*/
-char *StrLowerConvert(char *str);
+char StrLowerConvert(char ch);
 /*Converts all strings to lower case and then performs a Strcmp			*/	
-int Strcasecmp(char *str1, char *str2);
+int Strcasecmp(const char *str1, const char *str2);
+int tolower(int argument);
 /*Create a pointer to the first instance of a character	in the string 		*/
-char *Strchr(char *str, int ch);
+char *Strchr(const char *str, int ch);
 /*Duplicate the pointer of the a string						*/	
-char *Strdup(char *str);		
+char *Strdup(const char *str);
+char *strdup(const char *s);		
 /*Append a string onto the destination string					*/
 char Strcat(char *dest, const char *src);
 /*Append a string onto the destination string up to n chatacers			*/	
 char Strncat(char *dest, const char *src, size_t n);
 /*Find the first instence of a string within a string and create a pointer to it*/
-char *Strstr(char *hay, char *needle);	
+char *Strstr(const char *hay, const char *needle);	
 /*Find the length of the first instence of a continuos set of characters and 	*/
 /*return its length								*/		
 size_t Strspn(const char *initial, const char *span);	
 /*Separate a string by a deliniator and return the string upto the diliniator	*/
 char *Strtok(char *str, const char *delin);
 /*Check if a string is a Palindrome, return 1 for yes 0 for no			*/
-int IsPalindrome (char *str);		
+int IsPalindrome (const char *str);		
 /*Play a game of Boom 7								*/
 void Boom7(int from, int to);	
 /*Swap the address of two intergers						*/
@@ -38,5 +40,5 @@ void Swap(int **num1, int **num2);
 /*Remove extra white space from a string					*/
 void RmSpaces(char *str);		
 /*Sum two numbers written as strings						*/
-char *StringSum(char *num1, char *num2);	
+char *StringSum(const char *num1, const char *num2);	
 #endif
