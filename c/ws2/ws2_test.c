@@ -105,7 +105,9 @@ void DupTest(char *test_str)
 	}
 	printf("test = %s, exp = %s\n", test_ret, exp_ret);
 	free(test_ret);
+	test_ret = NULL;
 	free(exp_ret);
+	exp_ret = NULL;
 }
 
 
@@ -125,7 +127,9 @@ void CatTest(char *base, char *append)
 		printf("test = %s, exp = %s\n", test, exp);
 	}
 	free(test);
+	test = NULL;
 	free(exp);
+	exp = NULL;
 }
 
 void CatnTest(char *base, char *append, int n)
@@ -144,7 +148,9 @@ void CatnTest(char *base, char *append, int n)
 		printf("test = %s, exp = %s\n", test, exp);
 	}
 	free(test);
+	test = NULL;
 	free(exp);
+	exp = NULL;
 }
 
 void StrTest(char *test_hay, char *test_needle)
@@ -357,6 +363,7 @@ int main()
 	exp_src = strdup(test_src);
 	TokTest(test_src, exp_src, delin);
 	free(exp_src);
+	exp_src = NULL;
 	/*Palindrome tests*/
 	PalindromeTest();
 	/*Swap test*/

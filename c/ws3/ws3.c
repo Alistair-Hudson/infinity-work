@@ -73,17 +73,12 @@ void Datatypes()
 
 char *Copy(char *dest, const char *src)
 {
-	/*char *copy = (char *)malloc(strlen(src)+1);
-	strcpy(dest, src);*/
-	dest = strdup(src);
+	strcpy(dest, src);
 	while(*dest)
 	{	
 		*dest = (char)tolower(*dest);
-		/*++copy;*/
 		++dest;
 	}
-	/*free(copy);
-	copy = NULL;*/
 	return 0;
 }
 
@@ -96,16 +91,20 @@ void EnvExercise(const char **evp)
 {
 	char **env = (char **)evp;
 	char *buffer;
+	int i = 0;
 	while(*env)
-	{
+	{	
+		if(i != 1)
+		{
 		buffer = (char *)malloc(strlen(*env)+1);
 		Copy(buffer, *env);		
 		Print(buffer);		
-		++env;
 		free(buffer);
 		buffer = NULL;
-	}
-			
+		}
+		++env;
+		++i;
+	}			
 }
 
 
@@ -115,17 +114,17 @@ int main (int argc, char **argv, char **envp)
 	/*int result;
 	double time_taken;
 	clock_t t; 
-    t = clock(); 
+	t = clock(); 
  	result =  Josephus(15);
-    t = clock() - t; 
+	t = clock() - t; 
   	time_taken = ((double)t)/CLOCKS_PER_SEC;
-    printf("Josephus took %f seconds to execute \n", time_taken); 
+	printf("Josephus took %f seconds to execute \n", time_taken); 
 
 	t = clock(); 
  	result =  AliJosephus(15);
-    t = clock() - t; 
+	t = clock() - t; 
   	time_taken = ((double)t)/CLOCKS_PER_SEC;
-    printf("AliJosephus took %f seconds to execute \n", time_taken);*/
+	printf("AliJosephus took %f seconds to execute \n", time_taken);*/
 	Datatypes();
 	printf("Josephus for 100 = %d \n", Josephus(100));
 	EnvExercise((const char **)envp);
