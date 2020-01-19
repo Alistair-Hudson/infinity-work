@@ -2,10 +2,12 @@
 #include <string.h>
 #include "ws2.h"
 #include <stdlib.h>
+#include <assert.h>
 
 size_t Strlen(const char *string)
 {
 	int length = 0;
+	assert (string != NULL);
 	while (*string != 0x0)
 	{
 		++string;
@@ -18,6 +20,8 @@ size_t Strlen(const char *string)
 int Strcmp(const char *str1, const char *str2)
 {
 	int compare = 0;
+	assert (str1 != NULL);
+	assert (str2 != NULL);
 	while(*str1 != '\0' || *str2 != '\0')
 	{
 		if (*str1 == '\0' && *str2 != '\0')
@@ -42,13 +46,14 @@ int Strcmp(const char *str1, const char *str2)
 
 char *Strcpy(char *str2, const char *str1)
 {
+	assert (str1 != NULL);
+	assert (str2 != NULL);
 	while(*str1 != '\0')
 	{
 		*str2 = *str1;
 		++str1;
 		++str2;
 	}
-	++str2;
 	*str2 = '\0';
 	return 0;
 }
@@ -56,6 +61,8 @@ char *Strcpy(char *str2, const char *str1)
 char *Strncpy(char *str2, const char *str1, size_t n)
 {
 	unsigned int i = 0;
+	assert (str1 != NULL);
+	assert (str2 != NULL);
 	for (; i < n; ++i)
 	{
 		*str2 = *str1;
@@ -69,6 +76,7 @@ char *Strncpy(char *str2, const char *str1, size_t n)
 
 char StrLowerConvert(char ch)
 {
+	assert (ch != NULL);
 	if ((ch > 'A') && (ch < 'Z'))
 	{
 		ch = ch + ('a'-'A');
@@ -82,6 +90,8 @@ int Strcasecmp(const char *str1, const char *str2)
 	int compare = 0;
 	char char1;
 	char char2;
+	assert (str1 != NULL);
+	assert (str2 != NULL);
 	while(*str1 != '\0' || *str2 != '\0')
 	{
 		char1 = tolower(*str1);
@@ -108,6 +118,8 @@ int Strcasecmp(const char *str1, const char *str2)
 
 char *Strchr(const char *str, int ch)
 {
+	assert (str != NULL);
+	assert (ch != NULL);
 	while(*str != '\0')
 	{
 		if (*str == ch)
@@ -122,6 +134,7 @@ char *Strchr(const char *str, int ch)
 char *Strdup(const char *str)
 {
 	char *output = (char *) malloc(Strlen(str)+1);
+	assert (output);
 	Strcpy(output, str);
 	return output;
 }
@@ -131,6 +144,8 @@ char Strcat(char *dest, const char *src)
 	int length = Strlen(dest);
 	int added = Strlen(src);
 	int i = 0;
+	assert (dest != NULL);
+	assert (src != NULL);
 	dest += length;
 	for (; i < added; ++i)
 	{
@@ -138,6 +153,7 @@ char Strcat(char *dest, const char *src)
 		++dest;
 		++src;	
 	}
+	*dest = '\0';
 	return 0;
 }
 
@@ -145,6 +161,8 @@ char Strncat(char *dest, const char *src, size_t n)
 {
 	int length = Strlen(dest);
 	unsigned int i = 0;
+	assert (dest != NULL);
+	assert (src != NULL);
 	dest += length;
 	for (; i < n; ++i)
 	{
@@ -158,6 +176,8 @@ char Strncat(char *dest, const char *src, size_t n)
 char *Strstr(const char *hay, const char *needle)
 {	
 	int j = 0;
+	assert (hay != NULL);
+	assert (needle != NULL);
 	while(*hay != '\0')
 	{
 		if(*hay == *(needle+j))
@@ -179,29 +199,28 @@ char *Strstr(const char *hay, const char *needle)
 
 size_t Strspn(const char *initial, const char *span)
 {
-	int length_span = Strlen(span);
+	const char *span_end = span;
 	int char_count = 0;
+	assert (initial != NULL);
+	assert (span != NULL);
 	while(*initial != '\0')
 	{
-		int j = 0;
-		for(; j <= length_span; ++j)
+		while(*span != '\0')
 		{
 			if(*initial == *span)
 			{
 				++char_count;
 				break;
-			}else if((*span == '\0') && (char_count != 0))
+			}
+			++span;
+			if(*span == '\0')
 			{
 				return char_count;
 			}
-			++span;
 		}
+		span = span_end;
 		++initial;
-	}
-	if (char_count == 0)
-	{
-		return char_count;
-	}
+	} 
 	return 0;
 }
 
@@ -209,7 +228,9 @@ char *Strtok(char *str, const char *delin)
 {
 	static char *buffer;
 	char *start = buffer;
-	int iter = 0;
+	const char *del_start = delin;
+	assert (str != NULL);
+	assert (delin != NULL);
 	if(str != NULL)
 	{
 		buffer = str;
@@ -222,15 +243,20 @@ char *Strtok(char *str, const char *delin)
 		{
 			if(*buffer == *delin)
 			{
-				*buffer = '\0';
-				++buffer;
-				return start;
+				if(buffer != start)
+				{
+					*buffer = '\0';
+					++buffer;
+					return start;
+				}else
+				{
+					++buffer;
+					++start;
+				}
 			}
 			++delin;
-			++iter;
 		}
-		delin -= iter;
-		iter = 0;
+		delin = del_start;
 		++buffer;
 		if(*buffer == '\0')
 		{
@@ -246,6 +272,8 @@ int IsPalindrome (const char *str)
 	int r = Strlen(str)-1;
 	char *char1 = (char *)str;
 	char *char2 = (char *)(str+r);
+	assert (str != NULL);
+
 	while (char1 <= char2)
 	{
 		if(tolower(*char1) != tolower(*char2))
@@ -264,6 +292,8 @@ int IsPalindrome (const char *str)
 
 void Boom7(int from, int to)
 {
+	assert (from != NULL);
+	assert (to != NULL);
 	for( ; from <= to; ++from)
 	{
 		int hit = 0;
@@ -292,6 +322,8 @@ void Boom7(int from, int to)
 void Swap(int **num1, int **num2)
 {
 	int *temp = *num1;
+	assert (num1 != NULL);
+	assert (num2 != NULL);
 	*num1 = *num2;
 	*num2 = temp;
 }
@@ -300,28 +332,30 @@ void RmSpaces(char *str)
 {
 	char *buffer = str;
 	char *start = buffer;
+	char *str_start = str;
 	int j = 0;
+	assert (str != NULL);
 	while(*str != '\0')
 	{
 		*buffer = *str;
-		if ((j == 0) && (*str == ' '))
+		if (((*str == ' ') || (*str == '\t')) && ((*(str+1) == ' ') || (*(str+1) == '\t')))
+		{
+			++str;
+		}else if ((j == 0) && ((*str == ' ') || (*str == '\t')))
 		{
 			++str;
 			++j;
-		}else if ((*(str+1) == '\0') && (*str == ' '))
-		{
-			++str;
-		}else if ((*str == ' ') && (*(str+1) == ' '))
+		}else if ((*(str+1) == '\0') && ((*str == ' ') || (*str == '\t')))
 		{
 			++str;
 		}else
 		{
 			++str;
 			++buffer;
-			
 		}
 	}
 	*buffer = '\0';
+	str = str_start;
 	Strcpy(str, start);
 }
 

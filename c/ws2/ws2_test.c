@@ -111,10 +111,8 @@ void DupTest(char *test_str)
 }
 
 
-void CatTest(char *base, char *append)
+void CatTest(char *test, char *exp, char *append)
 {
-	char *test = strdup(base);
-	char *exp = strdup(base);
 	Strcat(test, append);
 	strcat(exp, append);
 	if(strcmp(test, exp) == 0)
@@ -126,16 +124,10 @@ void CatTest(char *base, char *append)
 		printf("Cat test failed\n");
 		printf("test = %s, exp = %s\n", test, exp);
 	}
-	free(test);
-	test = NULL;
-	free(exp);
-	exp = NULL;
 }
 
-void CatnTest(char *base, char *append, int n)
+void CatnTest(char *test, char *exp, char *append, int n)
 {
-	char *test = strdup(base);
-	char *exp = strdup(base);
 	Strncat(test, append, n);
 	strncat(exp, append, n);
 	if(strcmp(test, exp) == 0)
@@ -147,10 +139,6 @@ void CatnTest(char *base, char *append, int n)
 		printf("Cat n test failed\n");
 		printf("test = %s, exp = %s\n", test, exp);
 	}
-	free(test);
-	test = NULL;
-	free(exp);
-	exp = NULL;
 }
 
 void StrTest(char *test_hay, char *test_needle)
@@ -323,18 +311,21 @@ int main()
 	/*Chr test*/
 	int ch = ' ';
 	/*Cat and Cat n tests*/
-	char base[15] = "hello";
+	char cat_test[15] = "hello";
+	char cat_exp[15] = "hello";
+	char catn_test[15] = "hello";
+	char catn_exp[15] = "hello";
 	char append[] = " world";
 	/*Str and Spn tests*/
 	char hay[] = "Hello world!";
 	char needle[] = " wor";
 	char span[] = "Hell";
 	/*Tok test*/
-	char test_src[] = "Hello-Shalom-Kia ora";
+	char test_src[] = "Hello-Shalom--Kia ora";
 	char delin[] = "- ";
 	char *exp_src;
 	/*RMSpaces test*/
-	char test_rm[50] = " Hello  world ";
+	char test_rm[50] = " \tHello \t world\t ";
 	char exp_rm[] = "Hello world";
 
 	/*Function test order*/
@@ -354,11 +345,13 @@ int main()
 	/*Chr test*/
 	ChrTest(test, ch);
 	/*Cat and Cat n tets*/
-	CatTest(base, append);
-	CatnTest(base,append, n);
+	CatTest(cat_test, cat_exp, append);
+	CatnTest(catn_test, catn_exp, append, n);
 	/*Str and Spn tests*/
 	StrTest(hay, needle);
 	SpnTest(hay, span);
+	SpnTest(hay, "abc");
+	SpnTest(hay, "eloHl");
 	/*Tok test*/
 	exp_src = strdup(test_src);
 	TokTest(test_src, exp_src, delin);
