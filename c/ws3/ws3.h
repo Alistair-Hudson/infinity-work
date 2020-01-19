@@ -5,7 +5,7 @@
 unsigned int Josephus(unsigned int number_of_soldiers);
 unsigned int AliJosephus(unsigned int number_of_soldiers);
 /*Data types and their sizes*/
-void Datatypes();
+void PrintDataTypeSizes();
 /*Enviroment varibles call*/
 void EnvExercise(const char **envp);
 /*Copy to lower case*/
