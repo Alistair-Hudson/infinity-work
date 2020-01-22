@@ -14,7 +14,7 @@ typedef struct _str_hand
 }STR;
 struct _str_hand str_handler[5];
 
-enum errors{EXIT, SUCCESS, OPEN, NO_STRING, NO_INPUT, NO_RENAME, NO_REMOVE};
+enum statuses{EXIT, SUCCESS, OPEN, NO_STRING, NO_INPUT, NO_RENAME, NO_REMOVE};
 
 int Compare (char *cmp_str)
 {
@@ -147,7 +147,7 @@ int AppendToStart(char *filename)
 int EditFile(char *filename)
 {
 	int call;
-	int error = 1;
+	int status = 1;
 	char input[50];
 	int i = 0;
 /*Permenant string values*/
@@ -166,7 +166,7 @@ int EditFile(char *filename)
 	str_handler[3].action = CountLines;
 	str_handler[4].action = Exit;
 
-	while(error)
+	while(status)
 	{
 		fgets(input, 50, stdin);
 		if(NULL == input)
@@ -175,7 +175,7 @@ int EditFile(char *filename)
 			return NO_INPUT;
 		}
 		call = Compare(input);
-		error = str_handler[call].action(filename);
+		status = str_handler[call].action(filename);
 
 	}
 	return 0;
