@@ -1,8 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-int Bursa(int *stock_price, size_t array_size)
+int *Bursa(int *stock_price, size_t array_size)
 {
+	int result[3];
+	int *resptr = result;
 	unsigned int buy = 0;
 	unsigned int sell = 1;
 	int min_price = stock_price[buy];
@@ -36,8 +38,10 @@ int Bursa(int *stock_price, size_t array_size)
 			index_to_sell = sell_at_buf;
 		}
 	}
-	printf("buy @ %d, sell @ %d\n", index_to_buy, index_to_sell);
-	return profit;
+	result[0] = profit;
+	result[1] = index_to_buy;
+	result[2] = index_to_sell;
+	return resptr;
 }
 
 
@@ -45,8 +49,8 @@ int main ()
 {	
 	int stock[] = {6,12,3,5,1,4,9,2};
 	size_t size = sizeof(stock)/sizeof(int);
-	int profit = Bursa(stock, size);
-	printf("profit is %d", profit);
+	int *profit = Bursa(stock, size);
+	printf("profit is %d, buy @ %d, sell @ %d\n", *profit, profit[1], profit[2]);
  	return 0;
 }
 	
