@@ -14,7 +14,7 @@ typedef struct _str_hand
 }STR;
 struct _str_hand str_handler[5];
 
-enum errors{ext, success, open, no_string, no_input, no_rename, no_remove};
+enum errors{EXIT, SUCCESS, OPEN, NO_STRING, NO_INPUT, NO_RENAME, NO_REMOVE};
 
 int Compare (char *cmp_str)
 {
@@ -22,7 +22,7 @@ int Compare (char *cmp_str)
 	if(NULL == cmp_str)
 	{
 		perror("Error: ");
-		return no_string;
+		return NO_STRING;
 	}
 	while(i > 1)
 	{
@@ -32,7 +32,7 @@ int Compare (char *cmp_str)
 		}
 		--i;
 	}
-	if(*cmp_str == '<')
+	if('<' == *cmp_str)
 	{
 		strcpy(str_handler[1].string, cmp_str+1);
 		return 1;
@@ -43,8 +43,8 @@ int Compare (char *cmp_str)
 
 int Exit(char *filename)
 {
-	printf("Exiting program %s, Have a nice day", filename);
-	return ext;
+	printf("Exiting program %s, Have a nice day\n", filename);
+	return EXIT;
 }
 
 int Append(char *filename)
@@ -53,17 +53,16 @@ int Append(char *filename)
 	if(NULL == file)
 	{
 		perror("Error: ");
-		return open;
+		return OPEN;
 	}
 	if(NULL == str_handler[0].string)
 	{
 		perror("Error: ");
-		return no_string;
+		return NO_STRING;
 	}
 	fputs(str_handler[0].string, file);
-	fputc('\n', file);
 	fclose(file);
-	return success;
+	return SUCCESS;
 }
 
 int Remove(char *filename)
@@ -72,9 +71,9 @@ int Remove(char *filename)
 	if(0 != file)
 	{
 		perror("Error: ");
-		return no_remove;
+		return NO_REMOVE;
 	}
-	return success;
+	return SUCCESS;
 }
 
 int CountLines(char *filename)
@@ -84,7 +83,7 @@ int CountLines(char *filename)
 	if(NULL == file)
 	{
 		perror("Error: ");
-		return open;
+		return OPEN;
 	}
 	while (1)
 	{
@@ -98,7 +97,7 @@ int CountLines(char *filename)
 			break;
 		}
 	}
-	return success;
+	return SUCCESS;
 }
 
 int AppendToStart(char *filename)
@@ -112,20 +111,19 @@ int AppendToStart(char *filename)
 	if(NULL == dest_file)
 	{
 		perror("Error: ");
-		return open;
+		return OPEN;
 	}
 	if(NULL == src_file)
 	{
 		perror("Error: ");
-		return open;
+		return OPEN;
 	}
 	if(NULL == str_handler[1].string)
 	{
 		perror("Error: ");
-		return no_string;
+		return NO_STRING;
 	}
 	fputs(str_handler[1].string, dest_file);
-	fputc('\n', dest_file);
 	while(1)
 	{
 		chr = fgetc(src_file);
@@ -141,9 +139,9 @@ int AppendToStart(char *filename)
 	if(0 != ret)
 	{
 		perror("Error:");
-		return no_rename;
+		return NO_RENAME;
 	}
-	return success;
+	return SUCCESS;
 }
 
 int EditFile(char *filename)
@@ -153,9 +151,9 @@ int EditFile(char *filename)
 	char input[50];
 	int i = 0;
 /*Permenant string values*/
-	strcpy(str_handler[2].string, "-remove");
-	strcpy(str_handler[3].string,"-count");
-	strcpy(str_handler[4].string, "-exit");
+	strcpy(str_handler[2].string, "-remove\n");
+	strcpy(str_handler[3].string, "-count\n");
+	strcpy(str_handler[4].string, "-exit\n");
 /*Assign strcmp to all structures*/
 	for(; 4 >= i; ++i)
 	{
@@ -170,11 +168,11 @@ int EditFile(char *filename)
 
 	while(error)
 	{
-		gets(input);
+		fgets(input, 50, stdin);
 		if(NULL == input)
 		{
 			perror("Error: ");
-			return no_input;
+			return NO_INPUT;
 		}
 		call = Compare(input);
 		error = str_handler[call].action(filename);
