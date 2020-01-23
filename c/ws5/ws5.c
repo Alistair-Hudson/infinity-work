@@ -107,7 +107,7 @@ int AppendToStart(char *filename)
 	int ret;
 	int chr;
 	dest_file = fopen("temp.txt", "a+");
-	src_file = fopen(filename, "r");
+	src_file = fopen(filename, "a+");
 	if(NULL == dest_file)
 	{
 		perror("Error: ");
