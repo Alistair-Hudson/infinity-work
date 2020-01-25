@@ -162,16 +162,46 @@ unsigned char byte_mirror(unsigned char x)
 
 void PrintBitsOfFloat(float x)
 {
-	
+	int size = sizeof(float) * 8;
+	int i = 1;
+	unsigned int *bit_cast = &x;
+	for(; size >= 0; --size)
+	{
+		if(*bit_cast & i)
+		{
+			printf("%d", 1);
+		}
+		else
+		{
+			printf("%d", 0);
+		}
+		i <<= 1;
+	}
+	printf("\n");
 }
+
 size_t BitCount(int x)
 {
-	
-	 return 0;
+	x = x - ((x >> 1) & 0x55);
+	x = (x & 0x33) + ((x >> 2) & 0x33);
+	x = (x + (x >> 4)) & 0x0F;
+	x = x + (x >> 8);
+	x = x + (x >> 16);
+	return x & 0x3F;
+}
+
+int IsPow2(unsigned int n)
+{
+	if(1 == BitCount(n))
+	{
+		return 1;
+	}
+	return 0;
 }
 
 int main()
 {
-	printf("%d\n", byte_mirror(0xA0));
+	PrintBitsOfFloat(0.15625);
+/*	printf("%d\n", BitCount(0xA0));*/
 	return 0;
 }
