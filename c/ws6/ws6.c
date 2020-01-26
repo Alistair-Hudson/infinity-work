@@ -1,5 +1,6 @@
 #include <stdlib.h> /*Standard Library for operational functions*/
 #include <stdio.h> /* standard IOs for program interaction*/
+#include "ws6.h"
 
 long Power2(unsigned int x, unsigned int y)
 {
@@ -10,13 +11,11 @@ long Power2(unsigned int x, unsigned int y)
 
 size_t BitCountLoop(unsigned int x)
 {
-	int i = 1;
 	int count = 0;
-	while (8 >= i)
+	while (0 != x)
 	{
 		count += x & 1;
 		x >>= 1;
-		++i;
 	}
 	return count;
 }
@@ -32,7 +31,7 @@ int IsPow2Loop(unsigned int n)
 
 int Is2and6(unsigned char x)
 {
-	int result = x ^ 255;
+	int result = x ^ 0xFFFFFFFF;
 	result &= 34; 
 	return result;
 }
@@ -45,7 +44,7 @@ int Is2or6(unsigned char x)
 
 unsigned int IsDivisable16(unsigned int x)
 {
-	int result = 0xF0 & x;
+	int result = 0xFFFFFFF0 & x;
 	return result;
 }
 
@@ -54,7 +53,7 @@ void Print3Bits(unsigned int *array, size_t size)
 	unsigned int index = 0;
 	for(; index <= size; ++index)
 	{
-		if(3 == BitCountLoop(array[index]))
+		if(3 == BitCount(array[index]))
 		{
 			printf("%d\n", array[index]);
 		}
@@ -162,10 +161,9 @@ unsigned char byte_mirror(unsigned char x)
 
 void PrintBitsOfFloat(float x)
 {
-	int size = sizeof(float) * 8;
 	int i = 1;
-	unsigned int *bit_cast = &x;
-	for(; size >= 0; --size)
+	unsigned int *bit_cast = (unsigned int *)&x;
+	while(i)
 	{
 		if(*bit_cast & i)
 		{
@@ -180,11 +178,11 @@ void PrintBitsOfFloat(float x)
 	printf("\n");
 }
 
-size_t BitCount(int x)
+size_t BitCount(unsigned int x)
 {
-	x = x - ((x >> 1) & 0x55);
-	x = (x & 0x33) + ((x >> 2) & 0x33);
-	x = (x + (x >> 4)) & 0x0F;
+	x = x - ((x >> 1) & 0x55555555);
+	x = (x & 0x33333333) + ((x >> 2) & 0x33333333);
+	x = (x + (x >> 4)) & 0x0F0F0F0F;
 	x = x + (x >> 8);
 	x = x + (x >> 16);
 	return x & 0x3F;
@@ -199,9 +197,3 @@ int IsPow2(unsigned int n)
 	return 0;
 }
 
-int main()
-{
-	PrintBitsOfFloat(0.15625);
-/*	printf("%d\n", BitCount(0xA0));*/
-	return 0;
-}
