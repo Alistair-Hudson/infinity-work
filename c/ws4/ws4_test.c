@@ -7,9 +7,9 @@
 int main ()
 {
 	system("stty -icanon -echo");
-	LUTButton();
 	IfElseButton();
 	SwitchButton();
+	LUTButton();
 	system("stty icanon echo");
 	return 0;
 }

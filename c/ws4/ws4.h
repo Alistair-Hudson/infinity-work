@@ -1,5 +1,5 @@
-#ifndef FUNCTIONS_H_INCLUDED
-#define FUNCTIONS_H_INCLUDED
+#ifndef __WS_4__
+#define __WS_4__
 
 /*If/Else function*/
 void IfElseButton();
@@ -7,4 +7,4 @@ void IfElseButton();
 void SwitchButton();
 /*LUT function*/
 void LUTButton();
-#endif
+#endif	/*__WS_4__*/
