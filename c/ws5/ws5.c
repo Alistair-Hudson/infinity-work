@@ -3,22 +3,27 @@
 #include <string.h>	/*Handling strings*/
 #include "ws5.h"
 
+#define STRING_LIMIT (100)
+#define NUM_FUNCS (5)
+
 typedef int (*cmp_t)(const char*, const char*);
 typedef int (*act_t)(char*);
 
 typedef struct _str_hand
 {
-	char string[50];
+	char string[STRING_LIMIT];
 	cmp_t compare;
 	act_t action;
-}STR;
-struct _str_hand str_handler[5];
+}str_handler_t;
+struct str_handler_t str_handler[NUM_FUNCS];
 
 enum statuses{EXIT, SUCCESS, OPEN, NO_STRING, NO_INPUT, NO_RENAME, NO_REMOVE};
 
-int Compare (char *cmp_str)
+static const int max_iterations = NUM_FUNCS -1;
+
+static int Compare (char *cmp_str)
 {
-	int i = 4;
+	int i = max_iterations;
 	if(NULL == cmp_str)
 	{
 		perror("Error: ");
@@ -41,13 +46,13 @@ int Compare (char *cmp_str)
 	return 0;
 }
 
-int Exit(char *filename)
+static int Exit(char *filename)
 {
 	printf("Exiting program %s, Have a nice day\n", filename);
 	return EXIT;
 }
 
-int Append(char *filename)
+static int Append(char *filename)
 {
 	FILE *file = fopen(filename, "a+");
 	if(NULL == file)
@@ -65,7 +70,7 @@ int Append(char *filename)
 	return SUCCESS;
 }
 
-int Remove(char *filename)
+static int Remove(char *filename)
 {
 	int file = remove(filename);
 	if(0 != file)
@@ -76,7 +81,7 @@ int Remove(char *filename)
 	return SUCCESS;
 }
 
-int CountLines(char *filename)
+static int CountLines(char *filename)
 {
 	FILE *file = fopen(filename, "r");
 	int line_count = 0;
@@ -100,7 +105,7 @@ int CountLines(char *filename)
 	return SUCCESS;
 }
 
-int AppendToStart(char *filename)
+static int AppendToStart(char *filename)
 {
 	FILE *dest_file;
 	FILE *src_file;
@@ -144,31 +149,23 @@ int AppendToStart(char *filename)
 	return SUCCESS;
 }
 
+str_handler[NUM_FUNCS] = {
+						{NULL, NULL, Append}, /*default*/
+						{NULL, NULL, AppendToStart},
+						{"-remove\n", strcmp, Remove},
+						{"-count\n", strcmp, CountLines},
+						{"-exit\n", strcmp, Exit}
+						};
+
 int EditFile(char *filename)
 {
 	int call;
-	int status = 1;
-	char input[50];
-	int i = 0;
-/*Permenant string values*/
-	strcpy(str_handler[2].string, "-remove\n");
-	strcpy(str_handler[3].string, "-count\n");
-	strcpy(str_handler[4].string, "-exit\n");
-/*Assign strcmp to all structures*/
-	for(; 4 >= i; ++i)
-	{
-		str_handler[i].compare = strcmp;
-	}
-/*Assign actions to structures*/
-	str_handler[0].action = Append;
-	str_handler[1].action = AppendToStart;
-	str_handler[2].action = Remove;
-	str_handler[3].action = CountLines;
-	str_handler[4].action = Exit;
+	int status = SUCCESS;
+	char input[STRING_LIMIT];
 
 	while(status)
 	{
-		fgets(input, 50, stdin);
+		fgets(input, STRING_LIMIT, stdin);
 		if(NULL == input)
 		{
 			perror("Error: ");

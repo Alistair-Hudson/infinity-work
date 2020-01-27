@@ -25,11 +25,22 @@ static int OtherPressed(char key)
 	return key;
 }
 
-static void *CreateASCIILookup()
+static void CreateASCIILookup(int (*lookup_array[])(char), size_t size_of_lut)
 {
-	
+	unsigned int lut_index = 0;
+	while(lut_index <= size_of_lut) 
+	{
+		lookup_array[lut_index] = OtherPressed;
+		++lut_index;
+	}
+	lookup_array['a'] = PrintKeyPressed;
+	lookup_array['A'] = PrintKeyPressed;
+	lookup_array['t'] = PrintKeyPressed;
+	lookup_array['T'] = PrintKeyPressed;
+	lookup_array[ESC_key] = EscPressed;
 	
 }
+
 void IfElseButton()
 {
 	char key_pressed;
@@ -91,18 +102,8 @@ void LUTButton()
 	char key_pressed;
 	unsigned int pass;
 	int is_active = 1;
-	int i = 0;
 	int (*KeyLookup[ASCII_range])(char key);
-	while(i <= ASCII_range) 
-	{
-		KeyLookup[i] = OtherPressed;
-		++i;
-	}
-	KeyLookup['a'] = PrintKeyPressed;
-	KeyLookup['A'] = PrintKeyPressed;
-	KeyLookup['t'] = PrintKeyPressed;
-	KeyLookup['T'] = PrintKeyPressed;
-	KeyLookup[ESC_key] = EscPressed;
+	CreateASCIILookup(KeyLookup, ASCII_range);
 	printf("LUT begins\n\n");
 	while(is_active)
 	{	
