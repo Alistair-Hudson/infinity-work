@@ -1,11 +1,17 @@
-#include <stdio.h>
+#include <stdio.h>/*for printf and sprintf*/
 #include <stdlib.h>
-#include <string.h>
+#include <string.h>/*for strcpy and strcat*/
 
 #define ARRAY_SIZE (7)
-#define MAX_STR_LEN (50)
+#define MAX_STR_LEN (100)
+#define ADD_VAL (10)
+/*MACROS*/
+#define MAX2(a, b) ((a > b) ? a : b)
+#define MAX3(a, b, c) ((a > b) ? MAX2(a,c) : MAX2(b, c))
+#define SIZEOF_VAR(var) ((char *)(&var+1)-(char*)(&var))
+#define SIZEOF_TYPE(type) ((size_t)(1 + ((type*)0)))
 
-typedef int (*add_t)(void*, const int);
+typedef int (*add_t)(void**, const int);
 typedef int (*free_t)(void*);
 typedef int (*print_t)(void*);
 
@@ -16,23 +22,34 @@ typedef struct action_t
 	print_t print;
 }action_struct;
 
-static int AddToInt(void *add_to, const int added)
+typedef struct element_t
 {
-	*(int*)&add_to += added;
-printf("%d\n", *(int*)&add_to);
-	return 0;
-	
+	void* data;
+	struct action_t *action;
+}element_struct;
+
+static int AddToInt(void **add_to, const int added)
+{
+	*(int*)add_to += added;
+	return 0;	
 }
 
-static int AddToString(void *add_to, const int added)
+static int AddToString(void **add_to, const int added)
 {
-/*	*add_to += added;*/
+	char int_string[MAX_STR_LEN];
+	char *buffer = (char *)malloc(MAX_STR_LEN);
+	sprintf(int_string, "%d", added);
+	strcpy(buffer, *add_to);
+	strcat(buffer, int_string);
+	*add_to = buffer;
+	free(buffer);
+	buffer = NULL;
 	return 0;
 }
 
-static int AddToFloat(void *add_to, const int added)
+static int AddToFloat(void **add_to, int added)
 {
-/*	*add_to += added;*/
+	*(float*)add_to += added;
 	return 0;
 }
 
@@ -66,19 +83,12 @@ static int FreeFloat(void *to_free)
 
 static int FreeString(void *to_free)
 {
-	free(to_free);
 	return 0;
 }
 
 static struct action_t int_actions = {AddToInt, FreeInt, PrintInt};
 static struct action_t float_actions = {AddToFloat, FreeFloat, PrintFloat};
 static struct action_t string_actions = {AddToString, FreeString, PrintString};
-
-typedef struct element_t
-{
-	void* data;
-	struct action_t *action;
-}element_struct;
 
 static struct element_t array_of_types[ARRAY_SIZE];
 
@@ -98,7 +108,6 @@ static int FloatInitializer(int element, float value)
 
 static int StringInitializer(int element, char *value)
 {
-	array_of_types[element].data = malloc(MAX_STR_LEN);
 	array_of_types[element].data = value;
 	array_of_types[element].action = &string_actions;
 	return 0;
@@ -124,12 +133,33 @@ static int PrintArray()
 	}
 	return 0;
 }
+
+static int AddToArray()
+{
+	int index;
+	for(index = 0; index < ARRAY_SIZE; ++index)
+	{
+		array_of_types[index].action->add(&array_of_types[index].data, ADD_VAL);
+	}
+	return 0; 
+}
+
+static int FreeArray()
+{
+	int index;
+	for(index = 0; index < ARRAY_SIZE; ++index)
+	{
+		array_of_types[index].action->free(array_of_types[index].data);
+	}
+	return 0; 
+}
+
 int main()
 {
-	int x;
 	ArrayInitializer();
 	PrintArray();
-	/*array_of_types[0].data = */array_of_types[0].action->add(array_of_types[0].data, 10);
+	AddToArray();
 	PrintArray();
+	FreeArray();
 	return 0;
 }
