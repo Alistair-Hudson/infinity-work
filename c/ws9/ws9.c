@@ -7,7 +7,7 @@
 /******************MACROS***********************/
 #define WORD_SIZE 			(sizeof(size_t))
 #define NO_LETTERS			26
-#define IS_LITTLE_ENDIAN() 	(1 == *(char*)&(sizeof(char)))? 1 : 0
+#define IS_LITTLE_ENDIAN() 	(1 == *(int*)"1\0\0")? 1 : 0
 
 /******************FUNCTIONS***********************/
 static char *ReverseStr(char *str)
