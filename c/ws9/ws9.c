@@ -203,7 +203,7 @@ void PrintLettersofArrays(	const char *arr1, size_t size1,
 
 		if('a' <= tolower(*arr1) && 'z' >= tolower(*arr1))
 		{
-			*(buffer+tolower(*arr1)-'a') += 1;
+			*(buffer+tolower(*arr1)-'a') = 1;
 			++arr1;
 			--size1;
 		}
@@ -217,7 +217,7 @@ void PrintLettersofArrays(	const char *arr1, size_t size1,
 	{
 		if('a' <= tolower(*arr2) && 'z' >= tolower(*arr2))
 		{
-			*(buffer+tolower(*arr2)-'a') += 1;
+			*(buffer+tolower(*arr2)-'a') *= 2;
 			++arr2;
 			--size2;
 		}
