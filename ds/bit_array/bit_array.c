@@ -131,7 +131,7 @@ bitsarr_t BitArrSetBit(bitsarr_t bit_arr, size_t pos, int set_to)
 	
 }
 
-bitsarr_t BitArrFlipAllBits(bitsarr_t bit_arr)
+bitsarr_t BitArrFlipArrayBits(bitsarr_t bit_arr)
 {
 	return ~bit_arr;
 }

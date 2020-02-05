@@ -1,3 +1,6 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include "bit_array.c"
 
 void SetAllTest()
@@ -117,7 +120,7 @@ void FlipTest()
 {
 	bitsarr_t test_arr = 0xFEDCBA9876543210;
 	size_t expected = 0x123456789ABCDEF;
-	if (expected == BitArrFlipAllBits(test_arr))
+	if (expected == BitArrFlipArrayBits(test_arr))
 	{
 		printf("Flip passed\n");
 	}
@@ -158,9 +161,9 @@ void GetValTest()
 
 void RotRTest()
 {
-	bitsarr_t test_arr = 0xFEDCBA9876543210;
-	size_t expected = 0x6543210FEDCBA987;
-	if (expected == BitArrRotR(test_arr, 28))
+	bitsarr_t test_arr = 0x0000000000000FF;
+	size_t expected = 0xFF00000000000000;
+	if (expected == BitArrRotR(test_arr, 8))
 	{
 		printf("RotR passed\n");
 	}
@@ -172,9 +175,9 @@ void RotRTest()
 
 void RotLTest()
 {
-	bitsarr_t test_arr = 0xFEDCBA9876543210;
-	size_t expected = 0x876543210FEDCBA9;
-	if (expected == BitArrRotL(test_arr, 28))
+	bitsarr_t test_arr = 0xFF00000000000000;
+	size_t expected = 0x00000000000000FF;
+	if (expected == BitArrRotL(test_arr, 8))
 	{
 		printf("RotL passed\n");
 	}
