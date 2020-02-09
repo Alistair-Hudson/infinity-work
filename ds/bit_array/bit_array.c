@@ -21,8 +21,11 @@
 #define _MASKR					(0xff)
 #define _MASKL					(0xFF00000000000000)
 #define _MASKMSB				(0x8000000000000000)
+#define CHAR_BITS				(8)
 
 /*******TYPEDEFS AND STATIC FUNCTIONS*********/
+/*The following functions uses the Hamming Weight method to calculate how 	*/
+/*many bits on set on in a byte, and returns the value						*/
 static int BytesOnCreator(unsigned int byte_value)
 {
 	byte_value = byte_value - ((byte_value >> 1) & _0101MASK);
@@ -33,6 +36,8 @@ static int BytesOnCreator(unsigned int byte_value)
 	return (byte_value & _BYTEMASK);
 }
 
+/*the following function receives a byte and mirrors its bits				*/
+/*ie a byte CA would become 53												*/
 static int BytesMirrorCreator(unsigned int byte_value)
 {
 	unsigned char output = 0;
@@ -61,6 +66,9 @@ static int BytesMirrorCreator(unsigned int byte_value)
 	output = swapr | swapl;
 	return output;
 } 
+
+/*The following function creates a LUT for all possible combinations of 	*/
+/*set bits and how many bits would be on in that combination				*/
 static void CreateBytesOnLookup(int *lookup_array, size_t size_of_lut)
 {
 	unsigned int lut_index = 0;
@@ -71,6 +79,8 @@ static void CreateBytesOnLookup(int *lookup_array, size_t size_of_lut)
 	}
 }
 
+/*The following function creates a LUT for all possible combinations of 	*/
+/*set bits and how the bits would be rearrange in that combination			*/
 static void CreateBytesMirrorLookup(int *lookup_array, size_t size_of_lut)
 {
 	unsigned int lut_index = 0;
@@ -84,12 +94,12 @@ static void CreateBytesMirrorLookup(int *lookup_array, size_t size_of_lut)
 /*******USER FUNCTIONS******/
 bitsarr_t BitArrSetAll(bitsarr_t bit_arr)
 {
-	return ~0x0;
+	return ~(bit_arr & 0x0);
 }
 
 bitsarr_t BitArrResetAll(bitsarr_t bit_arr)
 {
-	return 0x0;
+	return bit_arr & 0x0;
 }
 
 bitsarr_t BitArrSetOn(bitsarr_t bit_arr, size_t pos)
@@ -174,7 +184,7 @@ bitsarr_t BitArrCountBitsOn(bitsarr_t bit_arr)
 	{
 		byte = bit_arr & 0xFF;
 		count += ByteLookup[byte];
-		bit_arr >>= 8;
+		bit_arr >>= CHAR_BITS;
 		--bytes_remain;
 	}
 	return count;
@@ -197,15 +207,15 @@ bitsarr_t BitArrMirror(bitsarr_t bit_arr)
 	CreateBytesMirrorLookup(ByteLookup, MAX_POSS_COMBINATIONS);
 	while(right_byte < left_byte)
 	{
-		byter = (bit_arr >> (right_byte*8));
-		bytel = (bit_arr << (right_byte*8));
+		byter = (bit_arr >> (right_byte*CHAR_BITS));
+		bytel = (bit_arr << (right_byte*CHAR_BITS));
 		byter &= _MASKR;
 		bytel &= _MASKL;
-		bytel >>= 56;
+		bytel >>= 7*CHAR_BITS;
 		byter = ByteLookup[(int)byter];
 		bytel = ByteLookup[(int)bytel];
-		bytel <<= (right_byte*8);
-		byter <<= (left_byte*8);
+		bytel <<= (right_byte*CHAR_BITS);
+		byter <<= (left_byte*CHAR_BITS);
 		output |= (bytel | byter);
 		++right_byte;
 		--left_byte;
