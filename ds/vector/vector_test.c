@@ -38,13 +38,13 @@ int main()
 		++pass;
 		printf("Pop\n");
 	}
-	if(666 == *(size_t*)VectorGetValue(ptr, 1))
+	if(666 == *(int*)VectorGetElement(ptr, 1))
 	{
 		++pass;
 		printf("Get\n");
 	}
 	VectorSetElement(ptr, 1, (void*)101);
-	if(101 == *(size_t*)VectorGetValue(ptr, 1))
+	if((void*)101 == VectorGetElement(ptr, 1))
 	{
 		++pass;
 		printf("Set\n");
@@ -55,7 +55,7 @@ int main()
 		++pass;
 		printf("Shrink\n");
 	}
-	if(101 == *(size_t*)VectorGetValue(ptr, 1))
+	if((void*)101 == VectorGetElement(ptr, 1))
 	{
 		++pass;
 	}

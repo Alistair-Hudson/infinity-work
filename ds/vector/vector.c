@@ -17,14 +17,16 @@ struct vector
 vector_t *VectorCreate(size_t capacity)
 {
 	vector_t *_vector = malloc(sizeof(struct vector) * ELEMENT_SIZE);
-	if(0 == _vector)
+	if(NULL == _vector)
 	{
-		return 0;
+		return NULL;
 	}
 	_vector->base = malloc(capacity * ELEMENT_SIZE);
-	if(0 == _vector->base)
+	if(NULL == _vector->base)
 	{
-		return 0;
+		free(_vector);
+		_vector = NULL;
+		return NULL;
 	}
 	_vector->max = (size_t *)_vector->base + capacity;
 	_vector->top = _vector->base;
@@ -61,7 +63,7 @@ int VectorPushBack(vector_t *vector, void *data)
 	size_t next_top_loc = (size_t)vector->top + ELEMENT_SIZE;
 
 	assert(NULL != vector);
-	if ((size_t)vector->max <= next_top_loc)
+	if ((size_t)vector->max < next_top_loc)
 	{
 		reserve_check = VectorReserve(vector, PUSH_ADJST);
 		if(reserve_check)
@@ -78,7 +80,7 @@ void *VectorGetElement(vector_t *vector, size_t pos)
 {
 	assert(NULL != vector);
 
-	return (size_t*)((size_t)(vector->base)+(pos * ELEMENT_SIZE));
+	return (void*)((size_t)(vector->base)+(pos * ELEMENT_SIZE));
 }
 
 size_t VectorSize(const vector_t *vector)
