@@ -90,13 +90,13 @@ size_t SListCount(const list_t *list)
 	return count-1;
 }
 
-iter_t SListInsertBefore(iter_t iterator , void *data)
+iter_t SListInsertBefore(list_t *list, iter_t iterator , void *data)
 {
 	node_t *old_node = 0;
 	node_t *new_node = malloc(NODE_SIZE);
 	if(NULL == new_node)
 	{
-		return 0;
+		return list->tail;
 	}
 	old_node = iterator;
 
@@ -108,8 +108,9 @@ iter_t SListInsertBefore(iter_t iterator , void *data)
 	
 	if(NULL == new_node->next_node)
 	{
-		UpdateTail(new_node->data, new_node);
+		UpdateTail(list, new_node);
 	}
+	return old_node->next_node;
 }
 
 iter_t SListBegin(const list_t *list)
@@ -129,4 +130,101 @@ static void UpdateTail(list_t *list, node_t *node)
 	assert(NULL != node);
 
 	list->tail = node;
+}
+
+iter_t SListRemove(iter_t iterator)
+{
+	node_t *held_node = 0;
+	node_t *remove_node = 0;
+
+	assert(NULL != iterator);
+	
+	held_node = iterator;
+	remove_node = held_node->next_node;
+	
+	held_node->data = remove_node->data;
+	held_node->next_node = remove_node->next_node;
+
+	free(remove_node);
+	remove_node = NULL;
+	
+	return held_node->next_node;
+
+}
+
+void *SListGetData(iter_t iterator)
+{
+	node_t *node = 0;
+	assert(NULL != iterator);
+	node = iterator;
+	return node->data;
+}
+
+void SListSetData(iter_t iterator, void *data)
+{
+	node_t *node = 0;
+	assert(NULL != iterator);
+	node = iterator;
+	node->data = data;
+}
+
+int SListIsEqual(iter_t iterator1, iter_t iterator2)
+{
+	assert(NULL != iterator1);
+	assert(NULL != iterator2);
+	return(iterator1 == iterator2);
+}
+
+iter_t SListNext(iter_t iterator)
+{
+	node_t *node = 0;
+	assert(NULL != iterator);
+	node = iterator;
+	return node->next_node;
+	
+}
+
+iter_t SListFind(iter_t from, iter_t to, compare_t compare , void* data)
+{
+	node_t *check_node = 0;
+	assert(NULL != from);
+	assert(NULL != to);
+	assert(NULL != compare);
+
+	check_node = from;
+	
+	do
+	{
+		if(!(*compare)(data, check_node->data))
+		{
+			return check_node;
+		}
+		check_node = check_node->next_node;
+	}while(!SListIsEqual(check_node, to));
+	
+	return to;
+}
+
+int SListForEach(iter_t from, iter_t to, action_t action, void *param)
+{
+	node_t *node_from = 0;
+	node_t *node_to = 0;
+	
+	assert(NULL != from);
+	assert(NULL != to);
+	assert(NULL != action);
+
+	node_from = from;
+	node_to = to;
+	
+	do
+	{
+		if((*action)(node_from->data, param))
+		{
+			return 1;
+		}
+		node_from = node_from->next_node;
+	}while(!SListIsEqual(node_from, node_to));
+
+	return 0;
 }
