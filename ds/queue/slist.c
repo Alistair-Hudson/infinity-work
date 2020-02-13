@@ -231,14 +231,14 @@ int SListForEach(iter_t from, iter_t to, action_t action, void *param)
 
 list_t *SListAppend(list_t *dest, list_t *src)
 {
-	node_t dest_tail = 0;
-	node_t src_head = 0;
+	node_t *dest_tail = 0;
+	node_t *src_head = 0;
 
 	assert(NULL != dest);
 	assert(NULL != src);
 
 	dest_tail = SListEnd(dest);
-	src_head = SlistBegin(src);
+	src_head = SListBegin(src);
 
 	dest_tail->data = src_head->data;
 	dest_tail->next_node = SListRemove(src_head);
