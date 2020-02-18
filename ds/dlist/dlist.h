@@ -1,15 +1,17 @@
+
 #ifndef __DLIST_H__
 #define __DLIST_H__
 
 /*******************************************************************************
                                  *  OL85 API
-                                 * version 1.0
+                                 * version 1.2
  ******************************************************************************/
 
 #include<stddef.h> /* size_t */
 
 typedef struct dlist dlist_t;
 typedef void * iter_t;
+
 /*
 *Compare function
 *Input : two void pointers:
@@ -17,6 +19,7 @@ typedef void * iter_t;
  Return :"0" - if successful , difference if not equal.
 */
 typedef int (* compare_t)(void* data, void *key);
+
 /*
 *Action function
 *Input : two void pointers:
@@ -30,27 +33,27 @@ typedef int (* action_t)(void *data, void *param);
 * Process: allocate memory for empty list
 * Return: pointer to dlist_t if successful, NULL if failed
 */
-dlist_t*  SListCreate(void);
+dlist_t*  DListCreate(void);
 
 /*
 * Input:  pointer to dlist_t
 * Process: destroy the whole dlist (free memory)
 * Return: none
 */
-void DListDestroy(dlist_t *list);
+void DListDestroy(dlist_t *dlist);
 
 /*
  * The function checks the given list and returns ‘1’ if list is empty
  * or ‘0’ if not
  */
-int DListIsEmpty(const dlist_t *list);
+int DListIsEmpty(const dlist_t *dlist);
 
 /*
  * Input: pointer to the dlist
  * Process: The function counts the number of elements in the given list
  * Return: number of elements
  */
-size_t DListSize(const dlist_t *list);
+size_t DListSize(const dlist_t *dlist);
 
 /*
  * Input: Iterator
@@ -85,13 +88,13 @@ iter_t DListPushBack (dlist_t *dlist, void *data);
 *Input:  pointer to dlist ;
 *Process: Pop node at the begin;
 */
-void * DListPopFront(dlist_t *dlist);
+void DListPopFront(dlist_t *dlist);
 
 /*
 *Input:  pointer to dlist;
 *Process: Pop node before the end;
 */
-void * DListPopBack(dlist_t *dlist);
+void DListPopBack(dlist_t *dlist);
 
 /*
 *Input:  iterator ;
@@ -123,25 +126,27 @@ int DListForEach(iter_t from, iter_t to, action_t action, void *param);
 
 /*
 Input:  pointer to DList struct
-Return: iterator that points to the first node in Linked List;
+Return: iterator that points to the first node in DLinked List;
 */
 iter_t DListBegin(const dlist_t *dlist);
 
 /*
 Input: pointer to DList struct
-Return: iterator that points to the end in Linked List;
+Return: iterator that points to the tail in DLinked List;
 */
 iter_t DListEnd(const dlist_t *dlist);
 
 /*
 Input: iterator to the node, from which user want to receive the next node
-Return: iterator that points to the next in LinkedList or undefined behavior if it points to the end;
+Return: iterator that points to the next in LinkedList or undefined behavior 
+if it points to the end;
  */
 iter_t DListNext(iter_t iter);
 
 /*
 Input: iterator to the node, from which user want to receive the next node
-Return: iterator that points to the previous in LinkedList or undefined behavior if it points to the begin;
+Return: iterator that points to the previous in LinkedList or undefined behavior 
+if it points to the begin;
  */
 iter_t DListPrev(iter_t iter);
 /*
@@ -155,7 +160,8 @@ iter_t DListPrev(iter_t iter);
 int DListIsSame(iter_t iter1, iter_t iter2);
 
 /*
- * Input: iterator on node, from user wants to splice, iterator on node, to which user wants to splice and iterator on node, after which user wants to put splced nodes;
+ * Input: iterator on node, from user wants to splice, iterator on node, to which user 
+wants to splice and iterator on node, after which user wants to put splced nodes;
  * Process: copying nodes to another place;
  * Return: iterator that points the last spliced node;
 */
@@ -169,7 +175,8 @@ iter_t DListSplice(iter_t from, iter_t to, iter_t where);
   key from void pointer using compare function
 * Return: pointer to the destination dlist if successful, iterator to if failed
 */
-dlist_t DListMultifind(iter_t from, iter_t to, compare_t compare, void *key, dlist_t dest);
+dlist_t *DListMultifind(iter_t from, iter_t to, compare_t compare, void *key, dlist_t *dest);
 
 #endif /* __DLIST_H__ */
+
 

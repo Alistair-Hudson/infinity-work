@@ -1,4 +1,3 @@
-#include <stdio.h>
 #include <stdlib.h> 	/*malloc*/
 #include <assert.h>		/*assert*/
 #include "dlist.h"
@@ -76,8 +75,8 @@ dlist_t *DListCreate()
 
 void DListDestroy(dlist_t *list)
 {
-	node_t *free_node = 0;
-	node_t *next_2_free = 0;
+	node_t *free_node = NULL;
+	node_t *next_2_free = NULL;
 	
 	ASSERT_NOT_NULL(list);
 
@@ -110,24 +109,24 @@ int DListIsEmpty(const dlist_t *list)
 
 size_t DListSize(const dlist_t *list)
 {
-	size_t count = 0;
-	node_t *node_next = 0;
+	size_t count = NULL;
+	node_t *node_next = NULL;
 
 	ASSERT_NOT_NULL(list);
 
-	node_next = list->head;
+	node_next = DListBegin(list);
 	do
 	{
 		node_next = node_next->next_node;
 		++count;
 	}while(node_next);
 	
-	return count-2;
+	return count-1;
 }
 
 iter_t DListInsert(dlist_t *list, iter_t iterator , void *data)
 {
-	node_t *old_node = NULL;
+	node_t *after_node = NULL;
 	node_t *new_node = CreateNode();
 	node_t *b4_old = NULL;
 
@@ -139,14 +138,14 @@ iter_t DListInsert(dlist_t *list, iter_t iterator , void *data)
 		return list->tail;
 	}
 
-	old_node = iterator;
-	b4_old = old_node->prev_node;
+	after_node = iterator;
+	b4_old = after_node->prev_node;
 	
 	new_node->data = data;
-	new_node->next_node = old_node;
+	new_node->next_node = after_node;
 	new_node->prev_node = b4_old;
 	
-	old_node->prev_node = new_node;
+	after_node->prev_node = new_node;
 	b4_old->next_node = new_node;
 
 	if(NULL == new_node->next_node)
@@ -154,7 +153,7 @@ iter_t DListInsert(dlist_t *list, iter_t iterator , void *data)
 		UpdateTail(list, new_node);
 	}
 
-	return old_node->next_node;
+	return b4_old->next_node;
 }
 
 iter_t DListBegin(const dlist_t *list)
@@ -183,24 +182,23 @@ static void UpdateTail(dlist_t *list, node_t *node)
 
 iter_t DListRemove(iter_t iterator)
 {
-	node_t *held_node = NULL;
+	node_t *b4_node = NULL;
 	node_t *remove_node = NULL;
-	node_t *node_after = NULL;
+	node_t *after_node = NULL;
 
 	ASSERT_NOT_NULL(iterator);
 	
-	held_node = iterator;
-	remove_node = held_node->next_node;
-	node_after = remove_node->next_node;	
-	
-	held_node->data = remove_node->data;
-	held_node->next_node = node_after;
-	node_after->prev_node = held_node;
+	remove_node = iterator;
+	b4_node = remove_node->prev_node;
+	after_node = remove_node->next_node;	
+
+	b4_node->next_node = after_node;
+	after_node->prev_node = b4_node;
 
 	free(remove_node);
 	remove_node = NULL;
 	
-	return held_node->next_node;
+	return b4_node->next_node;
 
 }
 
@@ -212,14 +210,6 @@ void *DListGetData(iter_t iterator)
 	return node->data;
 }
 
-void DListSetData(iter_t iterator, void *data)
-{
-	node_t *node = 0;
-	ASSERT_NOT_NULL(iterator);
-	node = iterator;
-	node->data = data;
-}
-
 int DListIsSame(iter_t iterator1, iter_t iterator2)
 {
 	ASSERT_NOT_NULL(iterator1);
@@ -229,7 +219,7 @@ int DListIsSame(iter_t iterator1, iter_t iterator2)
 
 iter_t DListNext(iter_t iterator)
 {
-	node_t *node = 0;
+	node_t *node = NULL;
 	ASSERT_NOT_NULL(iterator);
 	node = iterator;
 	return node->next_node;
@@ -238,7 +228,7 @@ iter_t DListNext(iter_t iterator)
 
 iter_t DListFind(iter_t from, iter_t to, compare_t compare , void* data)
 {
-	node_t *check_node = 0;
+	node_t *check_node = NULL;
 	ASSERT_NOT_NULL(from);
 	ASSERT_NOT_NULL(to);
 	ASSERT_NOT_NULL(compare);
@@ -258,8 +248,8 @@ iter_t DListFind(iter_t from, iter_t to, compare_t compare , void* data)
 
 int DListForEach(iter_t from, iter_t to, action_t action, void *param)
 {
-	node_t *node_from = 0;
-	node_t *node_to = 0;
+	node_t *node_from = NULL;
+	node_t *node_to = NULL;
 	
 	ASSERT_NOT_NULL(from);
 	ASSERT_NOT_NULL(to);
@@ -278,28 +268,6 @@ int DListForEach(iter_t from, iter_t to, action_t action, void *param)
 	}while(!DListIsSame(node_from, node_to));
 
 	return 0;
-}
-
-dlist_t *DListAppend(dlist_t *dest, dlist_t *src)
-{
-	node_t *dest_tail = NULL;
-	node_t *src_head = NULL;
-
-	ASSERT_NOT_NULL(dest);
-	ASSERT_NOT_NULL(src);
-
-	dest_tail = DListEnd(dest);
-	src_head = DListBegin(src);
-
-	dest_tail->data = src_head->data;
-	dest_tail->next_node = DListRemove(src_head);
-	
-	dest->tail = src->tail;
-	
-	free(src);
-	src = NULL;
-
-	return dest;
 }
 
 iter_t DListPushFront(dlist_t *list, void *data)

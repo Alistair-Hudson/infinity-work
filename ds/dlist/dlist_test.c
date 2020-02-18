@@ -41,22 +41,25 @@ static int Stage1Testing()
 static int InsertTest()
 {
 	dlist_t *list_ptr = 0;
-	iter_t header = 0;
+	iter_t tail = 0;
 	int num_of_inserts = 0;
 
 	list_ptr = DListCreate();
-	header = DListBegin(list_ptr);
+	tail = DListEnd(list_ptr);
 
 	while(100 > num_of_inserts)
 	{
-		DListInsert(list_ptr, header, &num_of_inserts);
+
+		DListInsert(list_ptr, tail, &num_of_inserts);
 		++num_of_inserts;
 	}
+
 	if(DListIsEmpty(list_ptr))
 	{
 		printf("Insert Failed\n");
 		return 0;
 	}
+
 	if(100 != DListSize(list_ptr))
 	{
 			printf("Insert Failed\n");
@@ -84,20 +87,20 @@ static int InsertTest()
 static int RemoveTest()
 {
 	dlist_t *list_ptr = 0;
-	iter_t header = 0;
+	iter_t tail = 0;
 	int num_of_inserts = 100;
 
 	list_ptr = DListCreate();
-	header = DListBegin(list_ptr);
+	tail = DListEnd(list_ptr);
 
 	while(0 <= num_of_inserts)
 	{
-		DListInsert(list_ptr, header, &num_of_inserts);
+		DListInsert(list_ptr, tail, &num_of_inserts);
 		--num_of_inserts;
 	}
 	while(50 >= num_of_inserts)
 	{
-		DListRemove(header);
+		DListRemove(DListBegin(list_ptr));
 		++num_of_inserts;
 	}
 
@@ -133,19 +136,19 @@ static int RemoveTest()
 static int GetTest()
 {
 	dlist_t *list_ptr = 0;
-	iter_t header = 0;
+	iter_t tail = 0;
 	int num_of_inserts = 100;
 
 	list_ptr = DListCreate();
-	header = DListBegin(list_ptr);
+	tail = DListBegin(list_ptr);
 
 	while(0 <= num_of_inserts)
 	{
-		DListInsert(list_ptr, header, &num_of_inserts);
+		DListInsert(list_ptr, tail, &num_of_inserts);
 		--num_of_inserts;
 	}
 	
-	if(num_of_inserts != *(int*)DListGetData(header))
+	if(num_of_inserts != *(int*)DListGetData(DListBegin(list_ptr)))
 	{
 		printf("Get Failed\n");
 		return 0;
@@ -200,7 +203,7 @@ static int Stage3Testing()
 	list_ptr = DListCreate();
 	header = DListBegin(list_ptr);
 	tail = DListEnd(list_ptr);
-	iterator = header;
+	
 	
 	if(!DListIsSame(header, tail))
 	{
@@ -210,9 +213,11 @@ static int Stage3Testing()
 
 	while(0 <= num_of_inserts)
 	{
-		DListInsert(list_ptr, header, &num_of_inserts);
+		DListInsert(list_ptr, tail, &num_of_inserts);
 		--num_of_inserts;
 	}
+	header = DListBegin(list_ptr);
+	iterator = header;
 	while(50 >= num_of_inserts)
 	{
 		iterator = DListNext(iterator);
@@ -238,9 +243,9 @@ static int FindTest()
 	int index = 0;
 	
 	list_ptr = DListCreate();
-	header = DListBegin(list_ptr);
+	tail = DListBegin(list_ptr);
 
-	iterator = header;
+	
 
 	for(index = 0; index < 100; ++index)
 	{
@@ -249,21 +254,22 @@ static int FindTest()
 	index = 0;
 	while(100 > index)
 	{
-		DListInsert(list_ptr, header, &array_of_ints[index]);
+		DListInsert(list_ptr, tail, &array_of_ints[index]);
 		++index;
 	}
 	tail = DListEnd(list_ptr);
+	header = DListBegin(list_ptr);
 	index = 0;
-	while(100 > index)
+	do
 	{
 		iterator = DListFind(header, tail, IntComp, &array_of_ints[index]);
 		if(array_of_ints[index] != *(int*)DListGetData(iterator))
 		{
-		printf("Find Failed\n");
-		return 0;
+			printf("Find Failed\n");
+			return 0;
 		}
 		++index;
-	}
+	}while(100 > index);
 	
 	DListDestroy(list_ptr);
 	return 1;
@@ -280,9 +286,9 @@ static int ForEachTest()
 	int added_num = 10;
 
 	list_ptr = DListCreate();
-	header = DListBegin(list_ptr);
+	tail = DListEnd(list_ptr);
 
-	iterator = header;
+
 
 	for(index = 0; index < 100; ++index)
 	{
@@ -291,21 +297,23 @@ static int ForEachTest()
 	index = 0;
 	while(100 > index)
 	{
-		DListInsert(list_ptr, header, &array_of_ints[index]);
+		DListInsert(list_ptr, tail, &array_of_ints[index]);
 		++index;
 	}
-	tail = DListEnd(list_ptr);
-	--index;
+	header = DListBegin(list_ptr);
+	index = 0;
 	DListForEach(header, tail, AddTo, &added_num);
-	while(0 <= index)
+	iterator = header;
+	while(100 > index)
 	{
+
 		if((array_of_ints[index]) != *(int*)DListGetData(iterator))
 		{
 		printf("ForEach Failed\n ");
 		return 0;
 		}
 		iterator = DListNext(iterator);
-		--index;
+		++index;
 	}
 	
 	DListDestroy(list_ptr);
@@ -316,8 +324,8 @@ int SpliceTest()
 {
 	dlist_t *list1 = 0;
 	dlist_t *list2 = 0;
-	iter_t header1 = 0;
-	iter_t header2 = 0;
+	iter_t tail1 = 0;
+	iter_t tail2 = 0;
 	iter_t from = 0;
 	iter_t to = 0;
 	iter_t where = 0;
@@ -325,19 +333,20 @@ int SpliceTest()
 
 	list1 = DListCreate();
 	list2 = DListCreate();
-	header1 = DListBegin(list1);
-	header2 = DListBegin(list2);
-	from = header1;
-	to = header1;
-	where = header2;
+	tail1 = DListEnd(list1);
+	tail2 = DListEnd(list2);
+
 
 	while(100 > num_of_inserts)
 	{
-		DListInsert(list1, header1, &num_of_inserts);
-		DListInsert(list2, header2, &num_of_inserts);
+		DListInsert(list1, tail1, &num_of_inserts);
+		DListInsert(list2, tail2, &num_of_inserts);
 		++num_of_inserts;
 	}
 
+	from = DListBegin(list1);
+	to = DListBegin(list1);
+	where = DListBegin(list2);
 	num_of_inserts = 0;
 	while(50 > num_of_inserts)
 	{
@@ -347,7 +356,7 @@ int SpliceTest()
 	}
 
 	DListSplice(from, to, where);
-	if(151 != DListSize(list2))
+	if(150 != DListSize(list2))
 	{
 			printf("Splice Failed, %ld\n", DListSize(list2));
 			return 0;
