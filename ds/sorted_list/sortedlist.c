@@ -55,21 +55,17 @@ void SortedListDestroy(sorted_list_t *sortedlist)
 sorted_list_iter_t SortedListInsert(sorted_list_t *sorted_list, void* data)
 {
 	sorted_list_iter_t iterator;
-	int compare = 0;
+
 	ASSERT_NOT_NULL(sorted_list);
 	
-	iterator = SortedListBegin(sorted_list);
-	do
-	{
-		compare = sorted_list->cmp(SortedListGetData(iterator), data);
-		if( 0 <= compare)
-		{
-			break;
-		}
-		iterator = SortedListNext(iterator);
-	}while(!SortedListIsSame(iterator, SortedListEnd(sorted_list)));
+
+	
+	iterator =SortedListFindIf(SortedListBegin(sorted_list), 
+							SortedListEnd(sorted_list), sorted_list->cmp, data);
+
 	iterator.dlist_iter_t = DListInsert(sorted_list->list, 
 												iterator.dlist_iter_t, data);
+
 	return iterator;
 }
 
@@ -172,12 +168,24 @@ sorted_list_t * SortedListMerge(sorted_list_t *sortedlist1,
 
 	iter1 = SortedListBegin(sortedlist1);
 	iter2 = SortedListBegin(sortedlist2);
+
 	do
 	{
-				
+		where = SortedListFindIf(iter1, SortedListEnd(sortedlist1), 
+									sortedlist1->cmp, SortedListGetData(iter2));
+
+		from = iter2;
+		to = SortedListFindIf(iter2, SortedListEnd(sortedlist2), 
+									sortedlist1->cmp, SortedListGetData(where));
+		where = SortedListPrev(where);
 		
+		iter1 = SortedListNext(where);
+		iter2 = to;
+
+		DListSplice(from.dlist_iter_t, to.dlist_iter_t, where.dlist_iter_t);
 		
-	}while(!SortedListIsSame(SortedListEnd(sortedlist1), iter1)
+	}while(!SortedListIsSame(SortedListEnd(sortedlist1), iter1));
+	SortedListDestroy(sortedlist2);
 	return sortedlist1;
 }
 
@@ -185,7 +193,17 @@ sorted_list_iter_t SortedListFindIf(sorted_list_iter_t from,
 							sorted_list_iter_t to, compare_t compare, void *key)
 {
 	sorted_list_iter_t iterator;
-	iterator.dlist_iter_t = DListFind(from.dlist_iter_t, to.dlist_iter_t, 
-														compare, key);
+	
+	iterator = from;
+
+	while(!SortedListIsSame(iterator, to))
+	{
+
+		if( 0 <= compare(SortedListGetData(iterator), key))
+		{
+			break;
+		}
+		iterator = SortedListNext(iterator);
+	}
 	return iterator;
 }

@@ -4,7 +4,7 @@
 
 #include "sortedlist.c"
 
-#define MAX_PASS	(9)
+#define MAX_PASS	(10)
 
 int IntComp(void *x, void *y)
 {
@@ -403,7 +403,7 @@ int SpliceTest()
 	return 1;
 }*/
 
-int MergeTest()
+int MergeTest1()
 {
 	sorted_list_t *list1 = 0;
 	sorted_list_t *list2 = 0;
@@ -428,21 +428,72 @@ int MergeTest()
 		SortedListInsert(list2, &array_of_ints[index+75]);
 		++index;
 	}
-	SortedListMerg(list1, list2);
+	SortedListMerge(list1, list2);
 
-	if(100 != SortedListSize(list2))
+	if(100 != SortedListSize(list1))
 	{
-			printf("Merge Failed, %ld\n", SortedListSize(list1));
+			printf("Merge1 Failed, %ld\n", SortedListSize(list1));
 			return 0;
 	}
-	
+
 	iterator = SortedListBegin(list1);
 	index = 0;
 	while(100 > index)
 	{
 		if((array_of_ints[index]) != *(int*)SortedListGetData(iterator))
 		{
-		printf("Merge Failed\n ");
+		printf("Merge1 Failed\n ");
+		return 0;
+		}
+		iterator = SortedListNext(iterator);
+		++index;
+	}
+	
+	SortedListDestroy(list1);
+
+	return 1;
+}
+
+int MergeTest2()
+{
+	sorted_list_t *list1 = 0;
+	sorted_list_t *list2 = 0;
+	sorted_list_iter_t iterator;
+	int array_of_ints[100];
+	int index = 0;
+
+	list1 = SortedListCreate(IntComp);
+	list2 = SortedListCreate(IntComp);
+
+	for(index = 0; index < 100; ++index)
+	{
+		array_of_ints[index] = index;
+	}
+
+	index = 0;
+	while(25 > index)
+	{
+		SortedListInsert(list2, &array_of_ints[index]);
+		SortedListInsert(list1, &array_of_ints[index+25]);
+		SortedListInsert(list2, &array_of_ints[index+50]);
+		SortedListInsert(list1, &array_of_ints[index+75]);
+		++index;
+	}
+	SortedListMerge(list1, list2);
+
+	if(100 != SortedListSize(list1))
+	{
+			printf("Merge2 Failed, %ld\n", SortedListSize(list1));
+			return 0;
+	}
+
+	iterator = SortedListBegin(list1);
+	index = 0;
+	while(100 > index)
+	{
+		if((array_of_ints[index]) != *(int*)SortedListGetData(iterator))
+		{
+		printf("Merge2 Failed\n ");
 		return 0;
 		}
 		iterator = SortedListNext(iterator);
@@ -451,9 +502,8 @@ int MergeTest()
 	
 	SortedListDestroy(list1);
 	return 1;
-
-	return 1;
 }
+
 int main()
 {
 	size_t pass = 0;
@@ -466,7 +516,8 @@ int main()
 	pass += FindTest();
 	pass += ForEachTest();
 	pass += FindIfTest();
-	pass += MergeTest();
+	pass += MergeTest1();
+	pass += MergeTest2();
 
 	if(MAX_PASS == pass)
 	{
