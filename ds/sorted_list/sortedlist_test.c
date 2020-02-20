@@ -8,8 +8,9 @@
 
 int IntComp(void *x, void *y)
 {
-	return ((int*)x - (int*)y);
+	return (*(int*)x - *(int*)y);
 }
+
 
 int AddTo (void *add_to, void *adding)
 {
@@ -344,12 +345,13 @@ static int FindIfTest()
 	index = 0;
 
 	iterator = SortedListFindIf(header, tail, IntComp, &search_val);
-		if(array_of_ints[search_val] != *(int*)SortedListGetData(iterator))
-		{
-			printf("FindIf Failed\n");
-			return 0;
-		}
-	
+
+	if(array_of_ints[search_val] == *(int*)SortedListGetData(iterator))
+	{
+		printf("FindIf Failed\n");
+		return 0;
+	}
+
 	SortedListDestroy(list_ptr);
 	return 1;
 }
