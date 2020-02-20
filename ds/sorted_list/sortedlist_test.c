@@ -324,6 +324,7 @@ static int FindIfTest()
 	sorted_list_iter_t iterator;
 	int array_of_ints[100];
 	int index = 0;
+	int search_val = 25;
 	
 	list_ptr = SortedListCreate(IntComp);
 
@@ -331,6 +332,7 @@ static int FindIfTest()
 	{
 		array_of_ints[index] = index;
 	}
+	array_of_ints[search_val] = 0;
 	index = 0;
 	while(100 > index)
 	{
@@ -340,17 +342,13 @@ static int FindIfTest()
 	tail = SortedListEnd(list_ptr);
 	header = SortedListBegin(list_ptr);
 	index = 0;
-	do
-	{
-		iterator = SortedListFindIf(header, tail, IntComp,
-														 &array_of_ints[index]);
-		if(array_of_ints[index] != *(int*)SortedListGetData(iterator))
+
+	iterator = SortedListFindIf(header, tail, IntComp, &search_val);
+		if(array_of_ints[search_val] != *(int*)SortedListGetData(iterator))
 		{
 			printf("FindIf Failed\n");
 			return 0;
 		}
-		++index;
-	}while(100 > index);
 	
 	SortedListDestroy(list_ptr);
 	return 1;
