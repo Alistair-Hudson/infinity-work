@@ -14,6 +14,8 @@ struct sorted_list
 };
 
 /*******INTERNAL FUNCTIONS AND GLOBAL VARIABLES******/
+static sorted_list_iter_t FindSupportFunction(sorted_list_iter_t from, 
+						sorted_list_iter_t to, compare_t compare, void *key);
 
 /*******FUNCTIONS*******/
 sorted_list_t *SortedListCreate(sorted_compare_t comparator)
@@ -60,7 +62,7 @@ sorted_list_iter_t SortedListInsert(sorted_list_t *sorted_list, void* data)
 	
 
 	
-	iterator =SortedListFindIf(SortedListBegin(sorted_list), 
+	iterator = FindSupportFunction(SortedListBegin(sorted_list), 
 							SortedListEnd(sorted_list), sorted_list->cmp, data);
 
 	iterator.dlist_iter_t = DListInsert(sorted_list->list, 
@@ -138,7 +140,7 @@ sorted_list_iter_t SortedListEnd(const sorted_list_t *sortedlist)
 sorted_list_iter_t SortedListNext(sorted_list_iter_t iter)
 {
 	sorted_list_iter_t iterator;
-	iterator.dlist_iter_t = DListEnd(iter.dlist_iter_t);
+	iterator.dlist_iter_t = DListNext(iter.dlist_iter_t);
 	return iterator;
 }
 
@@ -171,20 +173,29 @@ sorted_list_t * SortedListMerge(sorted_list_t *sortedlist1,
 
 	do
 	{
-		where = SortedListFindIf(iter1, SortedListEnd(sortedlist1), 
+
+		where = FindSupportFunction(iter1, SortedListEnd(sortedlist1), 
 									sortedlist1->cmp, SortedListGetData(iter2));
 
+
 		from = iter2;
-		to = SortedListFindIf(iter2, SortedListEnd(sortedlist2), 
+		to = FindSupportFunction(iter2, SortedListEnd(sortedlist2), 
 									sortedlist1->cmp, SortedListGetData(where));
+	
 		where = SortedListPrev(where);
-		
+
 		iter1 = SortedListNext(where);
 		iter2 = to;
 
 		DListSplice(from.dlist_iter_t, to.dlist_iter_t, where.dlist_iter_t);
-		
+	
+		if(!sortedlist1->cmp(SortedListGetData(iter1),SortedListGetData(iter2)))
+		{
+			iter1 = SortedListNext(iter1);
+		}
+
 	}while(!SortedListIsSame(SortedListEnd(sortedlist1), iter1));
+
 	SortedListDestroy(sortedlist2);
 	return sortedlist1;
 }
@@ -194,16 +205,24 @@ sorted_list_iter_t SortedListFindIf(sorted_list_iter_t from,
 {
 	sorted_list_iter_t iterator;
 	
+	iterator.dlist_iter_t = DListFind(from.dlist_iter_t, to.dlist_iter_t, 
+																compare, key);
+	return iterator;
+}
+
+static sorted_list_iter_t FindSupportFunction(sorted_list_iter_t from, 
+							sorted_list_iter_t to, compare_t compare, void *key)
+{
+	sorted_list_iter_t iterator;
+
 	iterator = from;
 
-	while(!SortedListIsSame(iterator, to))
+	while(!SortedListIsSame(iterator, to) && 
+							(0 >= compare(SortedListGetData(iterator), key)))
 	{
-
-		if( 0 <= compare(SortedListGetData(iterator), key))
-		{
-			break;
-		}
 		iterator = SortedListNext(iterator);
 	}
 	return iterator;
 }
+
+

@@ -11,6 +11,10 @@ int IntComp(void *x, void *y)
 	return (*(int*)x - *(int*)y);
 }
 
+int IntComp2(void *x, void *y)
+{
+	return (*(int*)x > *(int*)y);
+}
 
 int AddTo (void *add_to, void *adding)
 {
@@ -344,14 +348,18 @@ static int FindIfTest()
 	header = SortedListBegin(list_ptr);
 	index = 0;
 
-	iterator = SortedListFindIf(header, tail, IntComp, &search_val);
+	iterator = SortedListFindIf(header, tail, IntComp2, &search_val);
 
 	if(array_of_ints[search_val] == *(int*)SortedListGetData(iterator))
 	{
 		printf("FindIf Failed\n");
 		return 0;
 	}
-
+	if(array_of_ints[search_val+1] != *(int*)SortedListGetData(iterator))
+	{
+		printf("FindIf Failed\n");
+		return 0;
+	}
 	SortedListDestroy(list_ptr);
 	return 1;
 }
@@ -456,12 +464,15 @@ int MergeTest1()
 
 int MergeTest2()
 {
+
 	sorted_list_t *list1 = 0;
 	sorted_list_t *list2 = 0;
 	sorted_list_iter_t iterator;
 	int array_of_ints[100];
 	int index = 0;
 
+	int array1[] = {2, 5, 7};
+	int array2[] = {1, 2, 6, 8, 9};
 	list1 = SortedListCreate(IntComp);
 	list2 = SortedListCreate(IntComp);
 
@@ -471,17 +482,20 @@ int MergeTest2()
 	}
 
 	index = 0;
-	while(25 > index)
+
+	while(3 > index)
 	{
-		SortedListInsert(list2, &array_of_ints[index]);
-		SortedListInsert(list1, &array_of_ints[index+25]);
-		SortedListInsert(list2, &array_of_ints[index+50]);
-		SortedListInsert(list1, &array_of_ints[index+75]);
+		SortedListInsert(list1, &array1[index]);
+		SortedListInsert(list2, &array2[index]);
 		++index;
 	}
+
+	SortedListInsert(list2, &array2[3]);
+	SortedListInsert(list2, &array2[4]);
+
 	SortedListMerge(list1, list2);
 
-	if(100 != SortedListSize(list1))
+	if(8 != SortedListSize(list1))
 	{
 			printf("Merge2 Failed, %ld\n", SortedListSize(list1));
 			return 0;
@@ -489,16 +503,6 @@ int MergeTest2()
 
 	iterator = SortedListBegin(list1);
 	index = 0;
-	while(100 > index)
-	{
-		if((array_of_ints[index]) != *(int*)SortedListGetData(iterator))
-		{
-		printf("Merge2 Failed\n ");
-		return 0;
-		}
-		iterator = SortedListNext(iterator);
-		++index;
-	}
 	
 	SortedListDestroy(list1);
 	return 1;
