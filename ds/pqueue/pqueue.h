@@ -17,13 +17,13 @@ typedef struct pqueue pqueue_t;
  first - data from node of the list, second - compare data
 *Return :"0" - if successful , difference if not equal.
 */
-typedef int (* compare_t)(void* data, void *key);
+typedef int (* pqcompare_t)(void* data, void *key);
 
 /*
 *IsMatch function
 *Input : two void pointers:
  first - data from node of the list, second - compare data
-*Return :"0" - if successful , difference if not equal.
+*Return :"1" - if a match , "0" if not.
 */
 typedef int (* ismatch_t)(void* data, void *key);
 
@@ -33,7 +33,7 @@ typedef int (* ismatch_t)(void* data, void *key);
 * Process: allocate memory for empty list
 * Return: pointer to queue if successful, NULL if failed
 */
-pqueue_t *  PQCreate(compare_t comparator);
+pqueue_t *  PQCreate(pqcompare_t comparator);
 
 /*
 * Input:  pointer to queue
@@ -45,7 +45,7 @@ void PQDestroy(pqueue_t *pqueue);
 /*
 * Input:  pointers to the queue and data to be inserted
 * Process: adds data to the queue preserving internal order.
-* Return: NULL on success, all other values are a failure
+* Return: "0" on success, all other values are a failure
 */
 int PQEnqueue(pqueue_t *pqueue, void* data);
 
@@ -69,7 +69,7 @@ size_t PQSize(const pqueue_t *pqueue);
  * Process: Observe data at front of queue.
  * Return: Pointer to data.
  */
-void *PQPeek(pqueue_t *pqueue);
+void *PQPeek(const pqueue_t *pqueue);
 
 /*
 *Input:  pointer to queue ;
@@ -82,7 +82,7 @@ void PQDequeue(pqueue_t *pqueue);
 *Process: Erase the first element that contains the key from the queue
 *Return: A pointer to the data that was stored in that element, else returns NULL
 */
-void *PQErase(pqueue_t *pqueue, ismatch_t *ismatch, void *key);
+void *PQErase(pqueue_t *pqueue, ismatch_t ismatch, void *key);
 
 /*
 * Input: Pointer to the queue to clear
