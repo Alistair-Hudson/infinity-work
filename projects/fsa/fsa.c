@@ -2,7 +2,7 @@
  *	Title:		Fixed Storage Allocator
  *	Authour:	Alistair Hudson
  *	Reviewer:	Shmuel Pablo
- *	Version:	26.02.2020.0
+ *	Version:	27.02.2020.1
  ******************************************************************************/
 
 /******INCLUDED FILES******/
@@ -21,7 +21,7 @@
 /******TYPEDEFS******/
 struct allocator
 {
-	size_t *next_free;	
+	size_t next_free;	
 };
 
 /******GLOBAL VARIABLES******/
@@ -46,7 +46,7 @@ size_t FSASuggestSize(size_t num_of_blocks, size_t block_size)
 fsa_t *FSAInit(void *buffer, size_t buffer_size, size_t block_size)
 {
 	size_t address_offset = 0;
-	size_t **header = NULL;
+	size_t *header = NULL;
 	fsa_t *new_alloc = NULL;
 
 	ASSERT_NOT_NULL(buffer);
@@ -54,11 +54,11 @@ fsa_t *FSAInit(void *buffer, size_t buffer_size, size_t block_size)
 	address_offset = (HEADER_SIZE + block_size + PADDING(block_size)) 
 																/ HEADER_SIZE;
 	
-	header = (size_t**)buffer;
+	header = (size_t*)buffer;
 	new_alloc = buffer;
 	*header = header + 1;
-	++header;
-	new_alloc->next_free = header;
+	new_alloc->next_free = *header;
+	header = *header;
 
 	while (header < (buffer + buffer_size))
 	{
@@ -79,14 +79,15 @@ void *FSAAlloc(fsa_t *allocator)
 
 	ASSERT_NOT_NULL(allocator);
 
-	header = *allocator->next_free;
+	header = allocator->next_free;
+
 	if (NULL == header)
 	{
 		return NULL;
 	}
 	to_return = header + 1;
-	*allocator->next_free = *header;
-	*header = allocator->next_free;
+	allocator->next_free = *header;
+	*header = allocator;
 
 	return to_return;
 }
@@ -94,30 +95,26 @@ void *FSAAlloc(fsa_t *allocator)
 void FSAFree(void *block)
 {
 	size_t *header = NULL;
-	size_t *next_block = NULL;
+	fsa_t *allocator = NULL;
 
 	ASSERT_NOT_NULL(block);
 
 	header = block - HEADER_SIZE;
-	next_block = *header;
-	*header = *next_block;
-	*next_block = header;
+	allocator = *header;
+	*header = allocator->next_free;
+	allocator->next_free = header;
 
 }
 
 size_t FSANumOfAvailableBlocks(fsa_t *allocator)
 {
 	size_t *header = NULL;
-	size_t count = 1;
+	size_t count = 0;
 	
 	ASSERT_NOT_NULL(allocator);
 
-	header = *allocator->next_free;
+	header = allocator->next_free;
 
-	if (NULL == header)
-	{
-		return 0;
-	}
 	while (NULL != header)
 	{
 		header = *header;
