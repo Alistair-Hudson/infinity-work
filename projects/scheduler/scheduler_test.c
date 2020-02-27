@@ -13,9 +13,9 @@ int Counter(void *count)
 
 int RunTestTask1(void *count)
 {
-	printf("         0<         \n");
+	printf("                    \n");
 	printf("          0<        \n");
-	printf("        >0          \n");
+	printf("                    \n");
 	printf("____________________\n");
 	++*(int*)count;
 	return (*(int*)count != 10);
@@ -23,7 +23,7 @@ int RunTestTask1(void *count)
 
 int RunTestTask2(void *count)
 {
-	printf("            0<      \n");
+	printf("                    \n");
 	printf("   >0               \n");
 	printf("                >0  \n");
 	printf("____________________\n");

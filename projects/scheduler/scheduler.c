@@ -149,7 +149,7 @@ void SchedRemove(sched_t *schedule, ilrd_uid_t uid)
 static int UIDFinder(void *task_ptr, void *uid_key)
 {
 	task_t *task = task_ptr;
-	return (UIDIsSame(task->uid, *(ilrd_uid_t*)uid_key));
+	return !(UIDIsSame(task->uid, *(ilrd_uid_t*)uid_key));
 }
 
 int SchedRun(sched_t *schedule)
@@ -158,7 +158,7 @@ int SchedRun(sched_t *schedule)
 	unsigned int sleep_time = 0;
 
 	ASSERT_NOT_NULL(schedule);
-
+	schedule->run = 1;
 	while(!SchedIsEmpty(schedule) && schedule->run)
 	{
 		schedule->current_task = PQPeek(schedule->pqueue);
