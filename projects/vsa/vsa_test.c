@@ -17,12 +17,16 @@ int main()
 
 	alloc = VSAInit(buff, alloc_size);
 
+	printf("largest chunk = %lu\n", VSABiggestChunk(alloc));
+
 	ptr1 = VSAAlloc(alloc, 10);
 	ptr2 = VSAAlloc(alloc, 20);
 	ptr3 = VSAAlloc(alloc, 16);
 	printf("alloc = %p, \nptr1 = %p,\n ptr2 = %p,\n ptr3 = %p\n ptr4 = %p\n",
 			alloc, ptr1, ptr2, ptr3, ptr4);
+	printf("largest chunk = %lu\n", VSABiggestChunk(alloc));	
 	VSAFree(ptr2);
+	printf("largest chunk = %lu\n", VSABiggestChunk(alloc));
 	VSAFree(ptr1);
 
 	printf("largest chunk = %lu\n", VSABiggestChunk(alloc));
@@ -32,6 +36,12 @@ int main()
 	ptr1 = VSAAlloc(alloc, 20);
 	printf("alloc = %p, \nptr1 = %p,\n ptr2 = %p,\n ptr3 = %p\n ptr4 = %p\n",
 			alloc, ptr1, ptr2, ptr3, ptr4);
+
+	VSAFree(ptr2);
+	VSAFree(ptr3);
+	VSAFree(ptr4);
+
+	printf("largest chunk = %lu\n", VSABiggestChunk(alloc));
 
 	free(buff);
 
