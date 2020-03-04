@@ -1,10 +1,17 @@
+/******************************************************************************
+ *	Title:		Task Scheduler
+ *	Authour:	Alistair Hudson
+ *	Reviewer:	
+ *	Version:	2.0
+ ******************************************************************************/
+
 #include <stdlib.h>
 #include <assert.h>		/* assert */
 #include <unistd.h>		/* sleep */
 
 #include "scheduler.h"
-#include "pqueue.c"
-#include "task.c"
+#include "pqueue.h"
+#include "task.h"
 
 /******MACROS******/
 #define ASSERT_NOT_NULL(ptr)	(assert(NULL != ptr))\
@@ -24,7 +31,6 @@ static int UIDFinder(void *task_ptr, void *uid_key);
 sched_t *SchedCreate()
 {
 	sched_t *new_sched = malloc(sizeof(struct sched));
-
 	if (NULL == new_sched)
 	{
 		return 0;
@@ -33,8 +39,7 @@ sched_t *SchedCreate()
 	new_sched->current_task = NULL;
 	new_sched->pqueue = PQCreate(TimeExecCmp);
 	new_sched->run = 1;
-	
-	if(NULL == new_sched->pqueue)
+	if (NULL == new_sched->pqueue)
 	{
 		free(new_sched);
 		return 0;
@@ -59,35 +64,26 @@ static int TimeExecCmp(void *task, void *task_key)
 
 void SchedDestroy(sched_t *schedule)
 {
-	size_t nodes_to_destroy = 0;
-	task_t *task = 0;
-
 	ASSERT_NOT_NULL(schedule);
 	
-	nodes_to_destroy = SchedSize(schedule);
-	
-	while (0 != nodes_to_destroy)
-	{
-		task = PQPeek(schedule->pqueue);
-		PQDequeue(schedule->pqueue);
-		TaskDestroy(task);
-		--nodes_to_destroy;
-	}
-	
+	SchedClear(scheduler);
+	schedule->current_task = NULL;
+
 	PQDestroy(schedule->pqueue);
+	schedule->pqueue = NULL;
+
 	free(schedule);
-	task = NULL;
 	schedule = NULL;
 }
 
 size_t SchedSize(const sched_t *schedule)
 {
-	return PQSize(schedule->pqueue);
+	return PQSize(schedule->pqueue) + (NULL != schedule->current_task);
 }
 
 int SchedIsEmpty(const sched_t *schedule)
 {
-	return PQIsEmpty(schedule->pqueue);
+	return PQIsEmpty(schedule->pqueue) && (NULL == schedule->current_task);
 }
 
 ilrd_uid_t SchedAdd(sched_t *schedule, int (*action)(void*), void *param, 
@@ -99,15 +95,14 @@ ilrd_uid_t SchedAdd(sched_t *schedule, int (*action)(void*), void *param,
 	ASSERT_NOT_NULL(action);
 	
 	new_task = TaskCreate(action, param, freq, exec_time);
-
-	if(UIDIsSame(TaskGetUID(new_task), bad_uid))
+	if (UIDIsSame(TaskGetUID(new_task), bad_uid))
 	{
 		free(new_task);
 		new_task = NULL;
 		return bad_uid;
 	}
 
-	if(PQEnqueue(schedule->pqueue, new_task))
+	if (PQEnqueue(schedule->pqueue, new_task))
 	{
 		free(new_task);
 		new_task = NULL;
@@ -159,13 +154,18 @@ int SchedRun(sched_t *schedule)
 
 	ASSERT_NOT_NULL(schedule);
 	schedule->run = 1;
+
 	while(!SchedIsEmpty(schedule) && schedule->run)
 	{
 		schedule->current_task = PQPeek(schedule->pqueue);
-		sleep_time = TaskGetSchdTime(schedule->current_task) - time(NULL);
-		sleep(sleep_time);
+		while (sleep_time = TaskGetSchdTime(schedule->current_task) 
+																- time(NULL))
+		{
+			sleep(sleep_time);
+		}
+
 		PQDequeue(schedule->pqueue);
-		resched = TaskExecute(schedule->current_task);
+		resched = TaskExecute(schedule->current_task);		
 		if(resched)
 		{
 			TaskReschd(schedule->current_task);
@@ -179,11 +179,9 @@ int SchedRun(sched_t *schedule)
 	return 0;
 }
 
-int SchedStop(void *schedule)
+void SchedStop(sched_t *schedule)
 {
-	sched_t *sched = schedule;
-	sched->run = 0;
-	return 0;
+	schedule->run = 0;
 }
 
 
