@@ -109,7 +109,7 @@ int DListIsEmpty(const dlist_t *list)
 
 size_t DListSize(const dlist_t *list)
 {
-	size_t count = NULL;
+	size_t count = 0;
 	node_t *node_next = NULL;
 
 	ASSERT_NOT_NULL(list);
@@ -282,15 +282,13 @@ iter_t DListPushBack(dlist_t *list, void *data)
 	return DListInsert(list, DListEnd(list), data);
 }
 
-void *DListPopFront(dlist_t *list)
+void DListPopFront(dlist_t *list)
 {
 	ASSERT_NOT_NULL(list);
 	DListRemove(DListBegin(list));
-	
-	return 0;
 }
 
-void *DListPopBack(dlist_t *list)
+void DListPopBack(dlist_t *list)
 {
 	node_t *tail_node = NULL;
 	node_t *remove_node = NULL;
@@ -301,8 +299,6 @@ void *DListPopBack(dlist_t *list)
 	remove_node = tail_node->prev_node;
 	DListRemove(DListBegin(list));
 	UpdateTail(list, remove_node);
-	
-	return 0;
 }
 
 iter_t DListSplice(iter_t from, iter_t to, iter_t where)

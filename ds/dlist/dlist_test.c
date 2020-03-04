@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "dlist.c"
+#include "dlist.h"
 
 #define MAX_PASS	(8)
 
@@ -158,7 +158,7 @@ static int GetTest()
 	return 1;
 }
 
-static int SetTest()
+/*static int SetTest()
 {
 	dlist_t *list_ptr = 0;
 	iter_t header = 0;
@@ -190,7 +190,7 @@ static int SetTest()
 
 	DListDestroy(list_ptr);
 	return 1;
-}
+}*/
 
 static int Stage3Testing()
 {
