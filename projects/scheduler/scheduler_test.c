@@ -1,14 +1,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "scheduler.c"
+#include "scheduler.h"
 
 #define ALL_PASS		(5)
 
 int Counter(void *count)
 {
 	--*(int*)count;
-	return (count > 0);
+	return (*(int*)count > 0);
 }
 
 int RunTestTask1(void *count)
@@ -39,6 +39,12 @@ int RunTestTask3(void *count)
 	printf("___________________\n");;
 	++*(int*)count;
 	return (*(int*)count != 10);
+}
+
+int Stop(void *sched)
+{
+	SchedStop((sched_t*) sched);
+	return 0;
 }
 
 int Stage1Test()
@@ -173,7 +179,7 @@ int StopTest()
 	SchedAdd(sched_ptr, RunTestTask1, &count1, 2, time(NULL));
 	SchedAdd(sched_ptr, RunTestTask2, &count2, 3, time(NULL));
 	SchedAdd(sched_ptr, RunTestTask3, &count3, 4, time(NULL));
-	SchedAdd(sched_ptr, SchedStop, sched_ptr, 0, time(NULL)+10);
+	SchedAdd(sched_ptr, Stop, sched_ptr, 0, time(NULL)+10);
 
 	SchedRun(sched_ptr);
 

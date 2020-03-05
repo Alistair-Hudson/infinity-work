@@ -58,7 +58,7 @@ ssize_t CBuffWrite(cbuff_t *cbuff, const void *source, size_t nbytes)
 	ASSERT_NOT_NULL(cbuff);
 	ASSERT_NOT_NULL(source);
 	
-	if(0 == CBuffFreespace(cbuff)
+	if(0 == CBuffFreespace(cbuff))
 	{
 		return -1;
 	}
@@ -88,7 +88,7 @@ ssize_t CBuffRead(cbuff_t *cbuff, void *dest, size_t nbytes)
 	ASSERT_NOT_NULL(cbuff);
 	ASSERT_NOT_NULL(dest);
 	
-	if(CBuffIsEmpty(cbuff)
+	if(CBuffIsEmpty(cbuff))
 	{
 		return -1;
 	}

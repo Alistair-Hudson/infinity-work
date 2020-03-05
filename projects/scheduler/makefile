@@ -1,21 +1,21 @@
-IDIR =../ds/pqueue
+IDIR =../../ds/include
 CC=gcc
 CFLAGS= -ansi -pedantic-errors -Wall -Wextra -g -I$(IDIR)
 
-ODIR=obj
-LDIR =../lib
+ODIR=../../ds/obj
+LDIR =../../ds/lib
 
-_DEPS = scheduler.h dlist.h pqueue.h
+_DEPS = scheduler.h dlist.h pqueue.h task.h uid.h sorted_list.h
 DEPS = $(patsubst %,$(IDIR)/%,$(_DEPS))
 
-OBJ = scheduler.o dlist.o pqueue.o
+_OBJ = scheduler.o dlist.o pqueue.o task.o uid.o sortedlist.o
+OBJ = $(patsubst %,$(ODIR)/%,$(_OBJ))
 
 
-
-%.o: %.c $(DEPS)
+$(ODIR)/%.o: $(LDIR)/%.c $(DEPS)
 	$(CC) -c -o $@ $< $(CFLAGS)
 
-scheduler: $(OBJ)
+scheduler: scheduler_test.c $(OBJ) 
 	$(CC) -o $@ $^ $(CFLAGS)
 
 .PHONY: clean

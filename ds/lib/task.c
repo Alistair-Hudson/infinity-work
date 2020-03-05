@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <assert.h>		/* assert */
 
-#include "uid.c"		/* UID functions */
+#include "uid.h"		/* UID functions */
 #include "task.h"
 
 /******MACROS******/
@@ -72,6 +72,9 @@ int TaskReschd(task_t *task)
 	return 0;
 }
 
-
+time_t TaskGetExecTime(task_t *task)
+{
+	return task->exec_time;
+}
 
 

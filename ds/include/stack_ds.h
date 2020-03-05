@@ -1,6 +1,7 @@
 #ifndef __STACK_DS__
 #define __STACK_DS__
 
+#include <stddef.h>  /* size_t */
 
 /* pointer to the structure that represents stack */
 typedef struct stack stack_t;

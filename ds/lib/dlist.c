@@ -226,6 +226,15 @@ iter_t DListNext(iter_t iterator)
 	
 }
 
+iter_t DListPrev(iter_t iterator)
+{
+	node_t *node = NULL;
+	ASSERT_NOT_NULL(iterator);
+	node = iterator;
+	return node->prev_node;
+	
+}
+
 iter_t DListFind(iter_t from, iter_t to, compare_t compare , void* data)
 {
 	node_t *check_node = NULL;
@@ -332,3 +341,4 @@ iter_t DListSplice(iter_t from, iter_t to, iter_t where)
 
 	return last_node;
 }
+

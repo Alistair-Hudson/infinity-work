@@ -59,14 +59,14 @@ static int TimeExecCmp(void *task, void *task_key)
 	task1 = task;
 	task2 = task_key;
 
-	return task1->exec_time - task2->exec_time;
+	return TaskGetExecTime(task1) - TaskGetExecTime(task2);
 }
 
 void SchedDestroy(sched_t *schedule)
 {
 	ASSERT_NOT_NULL(schedule);
 	
-	SchedClear(scheduler);
+	SchedClear(schedule);
 	schedule->current_task = NULL;
 
 	PQDestroy(schedule->pqueue);
@@ -144,7 +144,7 @@ void SchedRemove(sched_t *schedule, ilrd_uid_t uid)
 static int UIDFinder(void *task_ptr, void *uid_key)
 {
 	task_t *task = task_ptr;
-	return !(UIDIsSame(task->uid, *(ilrd_uid_t*)uid_key));
+	return !(UIDIsSame(TaskGetUID(task), *(ilrd_uid_t*)uid_key));
 }
 
 int SchedRun(sched_t *schedule)

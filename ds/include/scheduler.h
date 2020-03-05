@@ -136,7 +136,7 @@ void SchedRemove(sched_t *schedule, ilrd_uid_t uid);
  *       Return:  Always returns 0. 
  * =============================================================================
  */
-int SchedStop(void *schedule);
+void SchedStop(sched_t *schedule);
 
 
 /* 

@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "pqueue.c"
+#include "pqueue.h"
 
 #define MAX_PASS	(5)
 

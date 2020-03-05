@@ -8,6 +8,8 @@
 #ifndef __BIT_ARRAY_H__
 #define __BIT_ARRAY_H__
 
+#include <stddef.h>  /* size_t */
+
 typedef size_t bitsarr_t;
 
 /*Sets all bits to 1   */

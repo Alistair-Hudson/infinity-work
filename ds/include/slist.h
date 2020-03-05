@@ -130,5 +130,5 @@ iter_t SListNext(iter_t iter);
  */
 int SListIsEqual(iter_t iter1, iter_t iter2);
 
-
+list_t *SListAppend(list_t *dest, list_t *src);
 #endif /* __SLIST_H__ */

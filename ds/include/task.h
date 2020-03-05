@@ -64,6 +64,11 @@ int TaskReschd(task_t *task);
 int  TaskExecute(task_t *task);
 
 
+/*
+ * Input: pointer to task
+ * Return: the task execution time
+ */
+time_t TaskGetExecTime(task_t *task);
 
 #endif /* __TASK_H__ */
 

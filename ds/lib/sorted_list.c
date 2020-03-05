@@ -1,7 +1,7 @@
 #include <stdlib.h>		/* malloc */
 #include <assert.h>		/*assert, NDEBUG*/
 #include "sorted_list.h"
-
+#include "dlist.h"
 
 /******MACROS*******/
 #define ASSERT_NOT_NULL(ptr)		(assert(NULL != ptr))
