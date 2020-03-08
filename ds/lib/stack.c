@@ -1,6 +1,6 @@
 #include <stdlib.h>/*malloc*/
 #include <assert.h>/*assert*/
-#include "stack_ds.h"
+#include "stack.h"
 
 /*****MACROS*****/
 #define ELEMENT_SIZE (sizeof(void*))
