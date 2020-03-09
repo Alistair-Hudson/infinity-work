@@ -3,7 +3,7 @@
 
 #include "sort.h"
 
-#define ALL_PASS		(4)
+#define ALL_PASS		(6)
 
 int AreArraysTheSame(int *arr1, size_t size1, int *arr2, size_t size2)
 {
@@ -204,6 +204,96 @@ int InsertionTest()
 
 }
 
+int CountTest()
+{
+	int exp[] = {1, 2, 3, 5, 5, 6, 8, 8, 9};
+	int rand[] = {5, 3, 9, 5, 1, 2, 8, 8, 6};
+	int rev[] = {9, 8, 8, 6, 5, 5, 3, 2, 1};
+	int sort[] = {1, 2, 3, 5, 5, 6, 8, 8, 9};
+	int almost[] = {1, 2, 3, 9, 5, 5, 8, 6, 8};
+	size_t size = 9;
+
+	printf("\n\n\nCount Test\n");
+
+	CountingSort(rand, size, 1, 9);
+	if (!AreArraysTheSame(exp, size, rand, size))
+	{
+		printf("rand failed\n");
+		return 0;
+	}
+
+	CountingSort(rev, size, 1, 9);
+	if (!AreArraysTheSame(exp, size, rev, size))
+	{
+		printf("rev failed\n");
+		return 0;
+	}
+
+	CountingSort(sort, size, 1, 9);
+	if (!AreArraysTheSame(exp, size, sort, size))
+	{
+		printf("sort failed\n");
+		return 0;
+	}
+
+	CountingSort(almost, size, 1, 9);
+	if (!AreArraysTheSame(exp, size, almost, size))
+	{
+		printf("almost failed\n");
+		return 0;
+	}
+
+	printf("Count passed\n");
+
+	return 1;
+
+}
+
+int RadixTest()
+{
+	int exp[] = {1, 2, 3, 4, 5, 6, 7, 8, 9};
+	int rand[] = {5, 3, 9, 4, 1, 2, 8, 7, 6};
+	int rev[] = {9, 8, 7, 6, 5, 4, 3, 2, 1};
+	int sort[] = {1, 2, 3, 4, 5, 6,7, 8, 9};
+	int almost[] = {1, 2, 3, 9, 4, 5, 8, 6, 7};
+	size_t size = 9;
+
+	printf("\n\n\nRadix Test\n");
+
+	RadixSort(rand, size, 2);
+	if (!AreArraysTheSame(exp, size, rand, size))
+	{
+		printf("rand failed\n");
+		return 0;
+	}
+
+	RadixSort(rev, size, 2);
+	if (!AreArraysTheSame(exp, size, rev, size))
+	{
+		printf("rev failed\n");
+		return 0;
+	}
+
+	RadixSort(sort, size, 2);
+	if (!AreArraysTheSame(exp, size, sort, size))
+	{
+		printf("sort failed\n");
+		return 0;
+	}
+
+	RadixSort(almost, size, 2);
+	if (!AreArraysTheSame(exp, size, almost, size))
+	{
+		printf("almost failed\n");
+		return 0;
+	}
+
+	printf("Radix passed\n");
+
+	return 1;
+
+}
+
 int main()
 {
 	size_t pass = 0;
@@ -212,6 +302,8 @@ int main()
 	pass += OptBubTest();
 	pass += SelectionTest();
 	pass += InsertionTest();
+	pass += CountTest();
+	pass += RadixTest();
 
 	if (pass == ALL_PASS)
 	{

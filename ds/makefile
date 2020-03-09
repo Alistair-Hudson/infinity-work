@@ -1,9 +1,20 @@
-IDIR =../include
+IDIR = include
 CC=gcc
 CFLAGS= -ansi -pedantic-errors -Wall -Wextra -I$(IDIR)
+#ifeq ($(DBG), debug)
+#	CFLAGS= -ansi -pedantic-errors -Wall -Wextra -g -I$(IDIR)
+#else ifeq ($(DBG), release)
+#	CFLAGS= -ansi -pedantic-errors -Wall -Wextra -O3 -I$(IDIR)
+#else ifeq ($(DBG), all)
+#	CFLAGS= -ansi -pedantic-errors -Wall -Wextra -O3 -I$(IDIR)
+#else ifeq ($(DBG), test)
+#	CFLAGS= -ansi -pedantic-errors -Wall -Wextra -O3 -I$(IDIR)
+#endif
 
-ODIR=../obj
-LDIR =../lib
+ODIR= obj
+LDIR = lib
+BDIR = bin
+TDIR = test
 
 _DEPS = $(wildcard *.h)
 DEPS = $(patsubst %,$(IDIR)/%,$(_DEPS))
@@ -14,24 +25,22 @@ OBJ = $(patsubst %,$(ODIR)/%,$(_OBJ))
 _SRC =  *.c
 SRC = $(patsubst %,$(LDIR)/%,$(_SRC))
 
-mains = *.c makefile
+_TEST = %_test.c
+TEST = $(patsubst %,$(TDIR)/%,$(_TEST))
 
 $(ODIR)/%.o: $(SRC) $(DEPS)
 	$(CC) -c -o $@ $< $(CFLAGS)
 
-all: %
+.PHONY: clean debug release all test
 
-.PHONY: clean
-.PHONY: debug
-.PHONY: all
-
-%: %_test.c $(OBJ) $(SRC)
-	$(CC) -o $@ $^ $(CFLAGS)
+%: $(TEST) $(OBJ) $(SRC)
+	$(CC) -o $(BDIR)/$@ $^ $(CFLAGS)
 
 clean:
-	rm -f $(ODIR)/*.o *~ core $(IDIR)/*~ $(filter-out $(mains), *)
+	rm -f $(ODIR)/*.o $(BDIR)/* *~ core $(IDIR)/*~
 
-debug: CFLAGS += -g -DDEBUG
-debug: *
+debug: CFLAGS += -g
+debug: $(BDIR)/debug/%
 
-
+$(BDIR)/debug/%: $(TEST) $(OBJ) $(SRC)
+	$(CC) -o $@ $^ $(CFLAGS)
