@@ -3,132 +3,142 @@
 #define __OL85_BINARY_TREE_H__
 
 /*******************************************************************************
-                                 *  OL85 API FOR BINARY TREE
-                                 * version 10.03.2020.0
- ******************************************************************************/
+                                * OL85 API FOR BINARY SEARCH TREE
+                                * version 11.03.2020.0
+******************************************************************************/
 
-typedef struct btree btree_t;
-typedef iter iter_t;
+typedef struct btree bst_t;
+typedef struct node bst_node_t;
 
-/*
- *Input: two pieces of information  to be comapared
- *Process: compares the two pieces of data
- *Return: The difference betweeen the data
- */
-typedef (int)(*cmp_funct)(void*, void*);
+typedef struct iter
+{
+    bst_node_t* bst_node;
+}bst_iter_t;
 
-/*
- *Input: the data to be acted upon, the data that is acting
- *Process: Perform the desired action using the provided data
- *Return: 0 if success, all other values indicate failure
- */
-typedef (int)(*action)(void*, void*);
 
 /*
- * Input: pointer to the compare function used for sorting the binary tree
- * Process: Create a binary tree
- * Returns: pointer to the binary tree
- */
-btree_t *BTreeCreate(cmp_funct comparison);
+* Input: pointer to the compare function used for sorting the binary tree
+          *Compare Function
+          *Input: two pieces of information to be comapared
+          *Process: compares the two pieces of data
+          *Return: The difference betweeen the data.
+          *
+* Process: Create a binary tree
+* Returns: pointer to the binary tree
+*/
+bst_t *BSTCreate(int(*cmp_funct)(void* data1, void* data2));
 
 /*
- * Input: pointer to the binary tree
- * Process: free the binary tree and all elements in it.
- * Returns: none.
- */
-void BTreeDestroy(btree_t *btree);
+* Input: pointer to the binary tree
+* Process: free the binary tree and all elements in it.
+* Returns: none.
+*/
+void BSTDestroy(bst_t *btree);
 
 /*
- * Input: pointer to the binary tree
- * Process: traverse binary tree and calculate number of nodes 
- * Returns: size of the tree
- */
-size_t BTreeSize(const btree_t *btree);
+* Input: pointer to the binary tree
+* Process: traverse binary tree and calculate number of nodes
+* Returns: size of the tree
+*/
+size_t BSTSize(const bst_t *btree);
 
 /*
- * Input: pointer to the binary tree
- * Process: check if node exist
- * Returns: 1 if empty/ 0 if not
- */
-int BTreeIsEmpty(const btree_t *btree);
+* Input: pointer to the binary tree
+* Process: check if node exist
+* Returns: 1 if empty/ 0 if not
+*/
+int BSTIsEmpty(const bst_t *btree);
 
 /*
- * Input: pointer to data 
- * Process: traverse tree to find position for new node
- * based upon the data
- * Returns: 0 successful / 1 if failed
- */
-int BTreeInsert(btree_t *btree, void *data);
+* Input: pointer to binary tree, pointer to data
+* Process: traverse tree to find position for new node
+* based upon the data
+* Returns: valid iter if successful / iter to the end  if failed
+*/
+bst_iter_t BSTInsert(bst_t *btree, void *data);
 
 /*
- * Input: iterartor to data to be removed
- * Process: free data in the given iterator
- * Returns: none
- */
-void BTreeRemove(iter_t iter);
+* Input: Iterator (bst_iter_t)
+* Process: free the given iterator
+* Returns: none
+*/
+void BSTRemove(bst_iter_t iter);
 
 /*
- * Input: pointer to binary tree 
- * Process: find node with the smallest data
- * Returns: iterator to the first element in the binary 
- * tree
- */
-iter_t BTreeBegin(btree_t *btree);
+* Input: pointer to binary tree
+* Process: find node with the smallest data
+* Returns: iterator to the first element in the binary
+* tree
+*/
+bst_iter_t BSTBegin(const bst_t *btree);
 
 /*
- * Input: pointer to binary tree 
- * Process: find node with the biggest data
- * Returns: iterator to the last element in the binary 
- * tree
- */
-iter_t BTreeEnd(btree_t *btree);
+* Input: pointer to binary tree
+* Process: find node with the biggest data
+* Returns: iterator to the last element in the binary
+* tree
+*/
+bst_iter_t BSTEnd(const bst_t *btree);
 
 /*
- * Input:  Pointer to iterator
- * Process: find node with the closest smallest data to
- * given iterator.
- * Return: pointer to previous node
- */
-iter_t BTreePrev(iter_t iter);
+* Input:  Iterator (bst_iter_t)
+* Process: find node with the closest smallest data to
+* given iterator.
+* Return: pointer to previous node
+*/
+bst_iter_t BSTPrev(bst_iter_t iter);
 
 /*
- * Input:  Pointer to iterator
- * Process: find node with the closest biggest data to
- * given iterator.
- * Return: pointer to next node
- */
-iter_t BTreeNext(iter_t iter);
+* Input:  Iterator (bst_iter_t)
+* Process: find node with the closest biggest data to
+* given iterator.
+* Return: pointer to next node
+*/
+bst_iter_t BSTNext(bst_iter_t iter);
 
 /*
- * Input:  Pointer to iterator1, pointer to iterator2
- * Process: Compare 2 iterators
- * Return: 1 if nodes are equal/ 0 if not
- */
-int BTreeIterIsEqual(iter_t iter1, iter_t iter2);
+* Input:  Iterator1 (bst_iter_t), iterator2 (bst_iter_t)
+* Process: Compare 2 iterators
+* Return: 1 if nodes are equal/ 0 if not
+*/
+int BSTIterIsEqual(bst_iter_t iter1, bst_iter_t iter2);
 
 /*
- * Input:  Pointer to iterator
- * Process: Obtain data stored in iterator 
- * Return: pointer to the data 
- */
-void *BTreeGetData(iter_t iter);
+* Input:  iterator (bst_iter_t)
+* Process: Obtain data stored in iterator
+* Return: pointer to the data
+*/
+void *BSTGetData(bst_iter_t iter);
 
 /*
- * Input:  Pointer to the binary tree, pointer to search function that 
- * compare key with the elements in the binary tree, pointer to key. 
- * Process: Traverse tree looking for desired data
- * Return: pointer to data stored in the node found
- */
-iter_t BTreeFind(btree_t *btree, int *search(void*)(void*), void *key);
+* Input:  Pointer to the binary tree, pointer to search function that
+* compare key with the elements in the binary tree, pointer to key.
+        * Search Function
+        * Input: two pieces of information to be comapared
+        * Process: compares the two pieces of data
+        * Return: The difference betweeen the data.
+        *
+* Process: Traverse tree looking for desired data
+* Returns: valid iter if successful / iter to the end  if failed
+*/
+bst_iter_t BSTFind(bst_t *btree, int(*search)(void* data, void* to_find),
+                    void *to_find);
 
 /*
- * Input:  Pointer to the binary tree, pointer to action function that 
- * performs actions with the elements of binary tree, pointer to parameter 
- * for function. 
- * Process: Perform actions with the elements of binary tree
- * Return: 0 if action was succesfull, other values if failed
- */
-int BTForEach(btree_t *btree, int *action(void*)(void), void* param); 
+* Input: Iter from, iter to, pointer to action function that
+* performs actions with the elements of binary tree, pointer to parameter
+* for function.
+        *Action Function
+        *Input: the data to be acted upon, the data that is acting
+        *Process: Perform the desired action using the provided data
+        *Return: 0 if success, all other values indicate failure
+        *
+* Process: Perform actions with the elements of binary tree in from(included)
+* to to(exluded)
+* Return: 0 if action was successful, other values from user function if failed
+*/
+int BSTForEach(bst_iter_t from, bst_iter_t to, int (*action)(void*, void*), void* param);
 
 
 #endif /* __OL85_BINARY_TREE_H__ */
+

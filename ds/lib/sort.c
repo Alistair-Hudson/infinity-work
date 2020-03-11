@@ -22,6 +22,9 @@ static size_t ABSRange(int max, int min);
 
 static size_t BitRange(size_t num_of_bits);
 
+static int RadixSortLoop(int *array, size_t array_size, int *BitLUT, 
+						int *buffer, int mask, size_t shift, size_t bit_range);
+
 /******FUNCTIONS******/
 static void Swap(int *x, int *y)
 {
@@ -63,6 +66,7 @@ void BubbleSortOpt(int *array, size_t array_size)
 				sorted = 0;
 			}
 		}
+		--array_size;
 	}
 }
 
@@ -140,7 +144,6 @@ int RadixSort(int *array, size_t array_size, size_t num_of_bits)
 	size_t bit_range = 0;
 	int *buffer = NULL;
 	size_t shift = 0;
-	size_t index = 0;
 	int *BitLUT = NULL;
 	
 	bit_range = BitRange(num_of_bits);
@@ -162,41 +165,11 @@ int RadixSort(int *array, size_t array_size, size_t num_of_bits)
 	mask = bit_range - 1;
 	while(0 != mask)
 	{
-		int steps = 0;
-		
-		for (index = 0; index <= bit_range; ++index)
-		{
-			BitLUT[index] = 0;
-		}
-		for (index = 0; index < array_size; ++index)
-		{
-			int temp = array[index] & mask;
-			temp >>= shift;
-			BitLUT[temp] += 1;
-		}
-		steps = BitLUT[0];
-		BitLUT[0] = 0;
-		for (index = 1; index <= bit_range; ++index)
-		{
-			int next_steps = BitLUT[index] + steps;
-			BitLUT[index] = steps;
-			steps = next_steps;
-		}
-		for (index = 0; index < array_size; ++index)
-		{
-			int temp = array[index] & mask;
-			temp >>= shift;
-			buffer[BitLUT[temp]] = array[index];
-			BitLUT[temp] += 1;
-		}
-
-		for (index = 0; index < array_size; ++index)
-		{
-			array[index] = buffer[index];
-		}
-
+		RadixSortLoop(array, array_size, BitLUT, buffer, 
+								mask, shift, bit_range);
 		shift += num_of_bits;
 		mask <<= num_of_bits;
+
 	}
 
 	free(BitLUT);
@@ -230,14 +203,51 @@ static size_t ABSRange(int max, int min)
 
 static size_t BitRange(size_t num_of_bits)
 {
-	size_t range = 1;
-
-	while (0 < num_of_bits)
-	{
-		range *= 2;
-		--num_of_bits;
-	}
-
-	return range;
+	return (1 << num_of_bits);
 }
+
+static int RadixSortLoop(int *array, size_t array_size, int *BitLUT, 
+						int *buffer, int mask, size_t shift, size_t bit_range)
+{
+	size_t index = 0;
+	int steps = 0;
+		
+		for (index = 0; index <= bit_range; ++index)
+		{
+			BitLUT[index] = 0;
+		}
+		for (index = 0; index < array_size; ++index)
+		{
+			int temp = array[index] & mask;
+			temp >>= shift;
+			BitLUT[temp] += 1;
+		}
+		steps = BitLUT[0];
+		BitLUT[0] = 0;
+		for (index = 1; index <= bit_range; ++index)
+		{
+			int next_steps = BitLUT[index] + steps;
+			BitLUT[index] = steps;
+			steps = next_steps;
+		}
+		for (index = 0; index < array_size; ++index)
+		{
+			int temp = array[index] & mask;
+			temp >>= shift;
+			buffer[BitLUT[temp]] = array[index];
+			BitLUT[temp] += 1;
+		}
+
+		for (index = 0; index < array_size; ++index)
+		{
+			array[index] = buffer[index];
+		}
+
+	return 0;
+}
+
+
+
+
+
 
