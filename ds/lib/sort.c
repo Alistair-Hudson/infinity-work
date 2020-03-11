@@ -2,9 +2,9 @@
  *	Title:		Sorting Algortims
  *	Authour:	Alistair Hudson
  *	Reviewer:	Ivana
- *	Version:	08.03.2020.0
+ *	Version:	09.03.2020.1
  ******************************************************************************/
-#include <stdio.h>		/*TODO*/
+
 #include <stdlib.h>
 #include <assert.h>		/* assert */
 
@@ -141,53 +141,66 @@ int RadixSort(int *array, size_t array_size, size_t num_of_bits)
 	int *buffer = NULL;
 	size_t shift = 0;
 	size_t index = 0;
-	int insert = 0;
 	int *BitLUT = NULL;
 	
 	bit_range = BitRange(num_of_bits);
-	buffer = (int*)malloc(array_size * sizeof(int));
-	if (NULL == buffer)
+	
+	BitLUT = (int*)malloc(bit_range * sizeof(int));
+	if(NULL == BitLUT)
 	{
 		return 1;
 	}
+	CreateLUT(BitLUT, bit_range);
+
+	buffer = (int*)malloc(array_size * sizeof(int));
+	if (NULL == buffer)
+	{
+		free(BitLUT);
+		return 2;
+	}
 
 	mask = bit_range - 1;
-
-	while (0 != mask)
+	while(0 != mask)
 	{
-		for(index = 0; index < array_size; ++index)
-		{
-			buffer[index] = array[index] & (mask << shift);
-			buffer[index] >>= shift;
-		}
-		if (CountingSort(buffer, array_size, 0, mask))
-		{
-			free(buffer);
-			return 2;
-		}
+		int steps = 0;
 		
+		for (index = 0; index <= bit_range; ++index)
+		{
+			BitLUT[index] = 0;
+		}
 		for (index = 0; index < array_size; ++index)
 		{
-			buffer[index] <<= shift;
+			int temp = array[index] & mask;
+			temp >>= shift;
+			BitLUT[temp] += 1;
 		}
-		
-		index = 0;
-		for (insert = 0; insert <= bit_range; ++insert)
+		steps = BitLUT[0];
+		BitLUT[0] = 0;
+		for (index = 1; index <= bit_range; ++index)
 		{
-			while(0 < BitLUT[insert])
-			{
-				buffer[index] |= insert << shift;
-				++index;
-				BitLUT[insert] -= 1;
-			}
+			int next_steps = BitLUT[index] + steps;
+			BitLUT[index] = steps;
+			steps = next_steps;
 		}
+		for (index = 0; index < array_size; ++index)
+		{
+			int temp = array[index] & mask;
+			temp >>= shift;
+			buffer[BitLUT[temp]] = array[index];
+			BitLUT[temp] += 1;
+		}
+
+		for (index = 0; index < array_size; ++index)
+		{
+			array[index] = buffer[index];
+		}
+
 		shift += num_of_bits;
+		mask <<= num_of_bits;
 	}
-	
-	for (index = 0; index < array_size; ++index)
-	{
-		array[index] = buffer[index];
-	}
+
+	free(BitLUT);
+	free(buffer);
 
 	return 0;
 }
@@ -222,6 +235,7 @@ static size_t BitRange(size_t num_of_bits)
 	while (0 < num_of_bits)
 	{
 		range *= 2;
+		--num_of_bits;
 	}
 
 	return range;
