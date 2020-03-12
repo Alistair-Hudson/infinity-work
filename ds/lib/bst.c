@@ -54,7 +54,7 @@ bst_t *BSTCreate(int(*cmp_funct)(void* data1, void* data2))
 		return NULL;
 	}
 
-	new_bst->stub = CreateNewNode((bst_node_t*)new_bst, (void*)END);
+	new_bst->stub = CreateNewNode(NULL, (void*)END);
 	new_bst->compare = cmp_funct;
 
 	return new_bst;
@@ -101,9 +101,13 @@ size_t BSTSize(const bst_t *btree)
 
 int BSTIsEmpty(const bst_t *btree)
 {
+	bst_node_t *stub = NULL;
+
 	ASSERT_NOT_NULL(btree);
 
-	return (NULL == btree->stub->children[LEFT]);
+	stub = btree->stub;
+
+	return (NULL == stub->children[LEFT]);
 }
 
 bst_iter_t BSTInsert(bst_t *btree, void *data)

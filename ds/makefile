@@ -1,6 +1,6 @@
 IDIR = include
 CC=gcc
-CFLAGS= -ansi -pedantic-errors -Wall -Wextra -I$(IDIR)
+CFLAGS= -ansi -pedantic-errors -Wall -Wextra -g -I$(IDIR)
 #ifeq ($(DBG), debug)
 #	CFLAGS= -ansi -pedantic-errors -Wall -Wextra -g -I$(IDIR)
 #else ifeq ($(DBG), release)

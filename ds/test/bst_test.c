@@ -22,18 +22,18 @@ int Stage1Test()
 		printf("Create faile\n");
 		return 0;
 	}
-
+printf("b");
 	if (!BSTIsEmpty(btree))
 	{
 		printf("Is Empty failed\n");
 		return 0;
 	}
-
+printf("c");
 	if (0 != BSTSize(btree))
 	{
 		printf("Size failed\n");
 	}
-		
+printf("d");		
 
 	BSTDestroy(btree);
 
