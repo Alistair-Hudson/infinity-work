@@ -2,7 +2,7 @@
  *	Title:		Binary Search Tree
  *	Authour:	Alistair Hudson
  *	Reviewer:	Dmitry
- *	Version:	10.03.2020.0
+ *	Version:	15.03.2020.0
  ******************************************************************************/
 #include <stdio.h>		/*TODO*/
 #include <stdlib.h>
@@ -15,9 +15,9 @@
 #define END						(~0)
 
 /******TYPEDEFS, GLOBAL VARIABLES AND INTERNAL FUNCTIONS******/
-enum {LEFT, RIGHT, NUM_CHILDREN};
+enum DIRECTION{LEFT, RIGHT, NUM_CHILDREN};
 
-typedef struct node
+struct node
 {
 	void *data;
 	bst_node_t *parent;
@@ -27,22 +27,27 @@ typedef struct node
 struct btree
 {
 	bst_node_t *stub;
-	int (*compare)(void*, void*);
+	int (*compare)(const void*, const void*);
 };
 
 static bst_node_t *CreateNewNode(bst_node_t *parent, void *data);
 
-static int DirectionCheck(bst_t *btree, bst_iter_t parent, void *data);
+static int DirectionCheck(bst_t *btree, bst_iter_t parent, const void *data);
 
-static void ReorganiseNodes(bst_iter_t to_remove, bst_iter_t to_hold, 
-																int direction);
+static bst_iter_t ClimbUpTree(bst_iter_t start, enum DIRECTION direction);
 
-static bst_iter_t ClimbUpTree(bst_iter_t start, int direction);
+static bst_iter_t ClimbDownTree(bst_iter_t start, enum DIRECTION direction);
 
-static bst_iter_t ClimbDownTree(bst_iter_t start, int direction);
+static int IsEndNext(bst_iter_t iter, enum DIRECTION direction);
+
+static void RemoveLeaf(bst_iter_t iter);
+
+static void RemoveEnd(bst_iter_t iter);
+
+static void RemoveSubtree(bst_iter_t iter);
 
 /******FUNCTIONS******/
-bst_t *BSTCreate(int(*cmp_funct)(void* data1, void* data2))
+bst_t *BSTCreate(int(*cmp_funct)(const void* data1, const void* data2))
 {
 	bst_t *new_bst = NULL;
 
@@ -54,7 +59,7 @@ bst_t *BSTCreate(int(*cmp_funct)(void* data1, void* data2))
 		return NULL;
 	}
 
-	new_bst->stub = CreateNewNode(NULL, (void*)END);
+	new_bst->stub = CreateNewNode(NULL, NULL);
 	new_bst->compare = cmp_funct;
 
 	return new_bst;
@@ -64,19 +69,29 @@ void BSTDestroy(bst_t *btree)
 {
 	bst_iter_t to_remove;
 	bst_iter_t next_node;
-
+	
 	ASSERT_NOT_NULL(btree);
 
 	to_remove = BSTBegin(btree);
-	do
+	while (NULL != to_remove.bst_node->parent)
 	{
-		next_node = BSTNext(to_remove);
-		BSTRemove(to_remove);
-		to_remove = next_node;
-	}while (END != *(int*)BSTGetData(to_remove));
-
-	BSTRemove(to_remove);
-	
+		if (NULL != to_remove.bst_node->children[LEFT])
+		{
+			to_remove.bst_node = to_remove.bst_node->children[LEFT];
+		}
+		else if (NULL != to_remove.bst_node->children[RIGHT]
+												&& !IsEndNext(to_remove, RIGHT))
+		{
+			to_remove.bst_node = to_remove.bst_node->children[RIGHT];
+		}
+		else
+		{
+			next_node.bst_node = to_remove.bst_node->parent;
+			BSTRemove(to_remove);
+			to_remove.bst_node = next_node.bst_node;
+		}
+	}
+	free(btree->stub);
 	free(btree);
 	btree = NULL;
 }
@@ -113,14 +128,13 @@ int BSTIsEmpty(const bst_t *btree)
 bst_iter_t BSTInsert(bst_t *btree, void *data)
 {
 	bst_iter_t current_parent;
-	bst_iter_t next_node;
+	bst_node_t *new_node = NULL;
 	bst_node_t *append_end = NULL;
-	int direction = 0;
+	enum DIRECTION direction = LEFT;
 
 	ASSERT_NOT_NULL(btree);
 
-	current_parent.bst_node = (bst_node_t*)btree->stub;
-	next_node.bst_node = current_parent.bst_node->children[direction];
+	current_parent.bst_node = btree->stub;
 
 	if (BSTIsEmpty(btree))
 	{
@@ -136,62 +150,55 @@ bst_iter_t BSTInsert(bst_t *btree, void *data)
 		return current_parent;
 	}
 
-
 	do
-	{
-		current_parent.bst_node = next_node.bst_node;
+	{	
+		current_parent.bst_node = current_parent.bst_node->children[direction];
 		if (0 == btree->compare(BSTGetData(current_parent), data))
 		{
 			return BSTEnd(btree);
 		}
 		direction = DirectionCheck(btree, current_parent, data);
-		next_node.bst_node = current_parent.bst_node->children[direction];
+		
 	}while (NULL != current_parent.bst_node->children[direction] 
-			|| END != *(int*)BSTGetData(next_node));
+									&& !IsEndNext(current_parent, direction));
 	
 	append_end = current_parent.bst_node->children[direction];
 
-	current_parent.bst_node->children[direction] = 	
-								CreateNewNode(current_parent.bst_node, data);
-	if (NULL == current_parent.bst_node->children[direction])
+	new_node = CreateNewNode(current_parent.bst_node, data);
+	if (NULL == new_node)
 	{
 		return BSTEnd(btree);
 	}
+	
+	current_parent.bst_node->children[direction] = new_node;
+	new_node->children[direction] = append_end;
 
-	current_parent.bst_node->children[direction]->children[direction] = 
-																	append_end;
-	current_parent.bst_node = current_parent.bst_node->children[direction];
+	current_parent.bst_node = new_node;
 	return current_parent;
 }
 
 void BSTRemove(bst_iter_t iter)
 {
-	bst_iter_t to_remove;
-	bst_iter_t node;
-	bst_iter_t to_hold;
-	bst_iter_t parent;
-	int direction = 0;
-	
-	node = iter;
-	to_hold.bst_node = node.bst_node->children[RIGHT];
-	to_remove.bst_node = node.bst_node->children[LEFT];
-	parent.bst_node = node.bst_node->parent;
 
-	if (BSTGetData(to_remove) < BSTGetData(parent))
+	if (NULL == iter.bst_node->children[LEFT] 
+									&&	NULL == iter.bst_node->children[RIGHT])
 	{
-		direction = 1;
-		to_hold.bst_node = node.bst_node->children[LEFT];
-		to_remove.bst_node = node.bst_node->children[RIGHT];
+		RemoveLeaf(iter);
+		return;
+	}
+	
+	if (IsEndNext(iter, RIGHT))
+	{
+		RemoveEnd(iter);
+		return;
 	}
 
-	ReorganiseNodes(to_remove, to_hold, direction);
-
-	node.bst_node->data = to_remove.bst_node->data;
-	node.bst_node->children[LEFT] = to_remove.bst_node->children[LEFT];
-	node.bst_node->children[RIGHT] = to_remove.bst_node->children[RIGHT];
-
-	free(to_remove.bst_node);
-	to_remove.bst_node = NULL;
+	if (NULL != iter.bst_node->children[LEFT] 
+									||	NULL != iter.bst_node->children[RIGHT])
+	{
+		RemoveSubtree(iter);
+		return;
+	}
 }
 
 bst_iter_t BSTBegin(const bst_t *btree)
@@ -228,6 +235,11 @@ bst_iter_t BSTEnd(const bst_t *btree)
 
 bst_iter_t BSTPrev(bst_iter_t iter)
 {
+	if (NULL == iter.bst_node->parent->parent)
+	{
+		iter.bst_node = iter.bst_node->parent;
+		return iter;
+	}
 	if (NULL == iter.bst_node->children[LEFT])
 	{
 		return ClimbUpTree(iter, RIGHT);
@@ -238,17 +250,26 @@ bst_iter_t BSTPrev(bst_iter_t iter)
 
 bst_iter_t BSTNext(bst_iter_t iter)
 {
+
 	if (NULL == iter.bst_node->children[RIGHT])
 	{
 		return ClimbUpTree(iter, LEFT);
 	}
-	
+	else if (NULL == iter.bst_node->children[RIGHT]->parent)
+	{
+		iter.bst_node = iter.bst_node->children[RIGHT];
+		return iter;
+	}	
 	return ClimbDownTree(iter, LEFT);
 	
 }
 
 int BSTIterIsEqual(bst_iter_t iter1, bst_iter_t iter2)
 {
+	if (NULL == iter1.bst_node || NULL == iter2.bst_node)
+	{
+		return 0;
+	}
 	return (iter1.bst_node == iter2.bst_node);
 }
 
@@ -267,7 +288,7 @@ bst_iter_t BSTFind(bst_t *btree, int(*search)(void* data, void* to_find),
 	current_node = BSTBegin(btree);
 
 	while (!BSTIterIsEqual(current_node, BSTEnd(btree)) 
-								&& search(BSTGetData(current_node), to_find))
+								&& (*search)(BSTGetData(current_node), to_find))
 	{
 		current_node = BSTNext(current_node);
 	}
@@ -285,11 +306,40 @@ int BSTForEach(bst_iter_t from, bst_iter_t to, int (*action)(void*, void*),
 
 	while (!BSTIterIsEqual(current_node, to) && !status)
 	{
-		status = action(BSTGetData(current_node), param);
+		status = (*action)(BSTGetData(current_node), param);
 		current_node = BSTNext(current_node);
 	}
 
 	return status;
+}
+
+bst_iter_t BSTGet(bst_t *btree, const void *data)
+{
+	bst_iter_t current_parent;
+	enum DIRECTION direction = LEFT;
+
+	ASSERT_NOT_NULL(btree);
+
+	current_parent.bst_node = btree->stub;
+
+	if (BSTIsEmpty(btree))
+	{
+		return current_parent;
+	}
+
+	do
+	{	
+		current_parent.bst_node = current_parent.bst_node->children[direction];
+		if (0 == btree->compare(BSTGetData(current_parent), data))
+		{
+			return current_parent;
+		}
+		direction = DirectionCheck(btree, current_parent, data);
+		
+	}while (NULL != current_parent.bst_node->children[direction] 
+									&& !IsEndNext(current_parent, direction));
+	
+	return BSTEnd(btree);
 }
 
 static bst_node_t *CreateNewNode(bst_node_t *parent, void *data)
@@ -310,9 +360,9 @@ static bst_node_t *CreateNewNode(bst_node_t *parent, void *data)
 	return new_node;
 }
 
-static int DirectionCheck(bst_t *btree, bst_iter_t parent, void *data)
+static int DirectionCheck(bst_t *btree, bst_iter_t parent, const void *data)
 {
-	if (0 > btree->compare(BSTGetData(parent), data))
+	if (0 < btree->compare(BSTGetData(parent), data))
 	{
 		return LEFT;
 	}
@@ -320,18 +370,7 @@ static int DirectionCheck(bst_t *btree, bst_iter_t parent, void *data)
 	return RIGHT;
 }
 
-static void ReorganiseNodes(bst_iter_t to_remove, bst_iter_t to_hold, 
-																int direction)
-{
-	while (NULL != to_remove.bst_node->children[direction])
-	{
-		to_remove.bst_node = to_remove.bst_node->children[direction];
-	}
-
-	to_remove.bst_node->children[direction] = to_hold.bst_node;
-}
-
-static bst_iter_t ClimbUpTree(bst_iter_t start, int direction)
+static bst_iter_t ClimbUpTree(bst_iter_t start, enum DIRECTION direction)
 {
 	bst_iter_t parent;
 	bst_iter_t parent_direct;
@@ -348,16 +387,105 @@ static bst_iter_t ClimbUpTree(bst_iter_t start, int direction)
 	return parent;
 }
 
-static bst_iter_t ClimbDownTree(bst_iter_t start, int direction)
+static bst_iter_t ClimbDownTree(bst_iter_t start, enum DIRECTION direction)
 {
 	start.bst_node = start.bst_node->children[-(direction - 1)];
-
+	
 	while (NULL != start.bst_node->children[direction])
 	{
 		start.bst_node = start.bst_node->children[direction];
 	}
 	return start;
 }
+
+static int IsEndNext(bst_iter_t iter, enum DIRECTION direction)
+{
+	if (NULL == iter.bst_node->children[direction])
+	{
+		return 0;
+	}
+	
+	if (NULL != iter.bst_node->children[direction]->parent)
+	{
+		return 0;
+	}
+	
+	return 1;
+}
+
+static void RemoveLeaf(bst_iter_t iter)
+{
+	bst_iter_t parent;
+	enum DIRECTION direction = LEFT;
+	bst_iter_t check_child;
+
+	parent.bst_node = iter.bst_node->parent;
+	check_child.bst_node = parent.bst_node->children[direction];
+
+	if (!BSTIterIsEqual(check_child, iter))
+	{
+		direction = RIGHT;
+	}
+	
+	parent.bst_node->children[direction] = NULL;
+
+	free(iter.bst_node);
+}
+
+static void RemoveEnd(bst_iter_t iter)
+{
+	bst_node_t *parent = iter.bst_node->parent;
+	if (NULL == iter.bst_node->children[LEFT])
+	{
+		parent->children[RIGHT] = iter.bst_node->children[RIGHT];
+	}
+	else
+	{
+		parent->children[RIGHT] = iter.bst_node->children[LEFT];
+		while (NULL != parent->children[RIGHT])
+		{
+			parent = parent->children[RIGHT];
+		}
+		parent->children[RIGHT] = iter.bst_node->children[RIGHT];
+	}
+	free(iter.bst_node);
+}
+
+static void RemoveSubtree(bst_iter_t iter)
+{
+	bst_iter_t parent;
+	enum DIRECTION direction = LEFT;
+	bst_iter_t check_child;
+
+	parent.bst_node = iter.bst_node->parent;
+	check_child.bst_node = parent.bst_node->children[direction];
+
+	if (!BSTIterIsEqual(check_child, iter))
+	{
+		direction = RIGHT;
+	}
+
+	if (NULL == iter.bst_node->children[LEFT])
+	{
+		parent.bst_node->children[direction] = iter.bst_node->children[RIGHT];
+	}
+	else
+	{
+		parent.bst_node->children[direction] = iter.bst_node->children[LEFT];
+		parent.bst_node = iter.bst_node->children[LEFT];
+
+		while (NULL != parent.bst_node->children[RIGHT])
+		{
+			parent.bst_node = parent.bst_node->children[RIGHT];
+		}
+		parent.bst_node->children[RIGHT] = iter.bst_node->children[RIGHT];
+	}
+	free(iter.bst_node);
+}
+
+
+
+
 
 
 

@@ -26,7 +26,7 @@ typedef struct iter
 * Process: Create a binary tree
 * Returns: pointer to the binary tree
 */
-bst_t *BSTCreate(int(*cmp_funct)(void* data1, void* data2));
+bst_t *BSTCreate(int(*cmp_funct)(const void* data1, const void* data2));
 
 /*
 * Input: pointer to the binary tree
@@ -122,7 +122,7 @@ void *BSTGetData(bst_iter_t iter);
 * Returns: valid iter if successful / iter to the end  if failed
 */
 bst_iter_t BSTFind(bst_t *btree, int(*search)(void* data, void* to_find),
-                    void *to_find);
+                    											void *to_find);
 
 /*
 * Input: Iter from, iter to, pointer to action function that
@@ -137,8 +137,15 @@ bst_iter_t BSTFind(bst_t *btree, int(*search)(void* data, void* to_find),
 * to to(exluded)
 * Return: 0 if action was successful, other values from user function if failed
 */
-int BSTForEach(bst_iter_t from, bst_iter_t to, int (*action)(void*, void*), void* param);
+int BSTForEach(bst_iter_t from, bst_iter_t to, 
+									int (*action)(void*, void*), void* param);
 
+/*
+ *Input: bst to get from, data to look for
+ *Process: searches the tree for the data in O(log(n))
+ *Return: the iterator that meets the exact data, end if the data doesn't exist
+ */
+bst_iter_t BSTGet(bst_t *btree, const void *data);
 
 #endif /* __OL85_BINARY_TREE_H__ */
 
