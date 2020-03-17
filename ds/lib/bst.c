@@ -86,7 +86,9 @@ void BSTDestroy(bst_t *btree)
 		}
 		else
 		{
-			next_node.bst_node = to_remove.bst_node->parent;
+/*sleep(5);
+printf("data removed = %d\n", *(int*)BSTGetData(to_remove));
+*/			next_node.bst_node = to_remove.bst_node->parent;
 			BSTRemove(to_remove);
 			to_remove.bst_node = next_node.bst_node;
 		}
