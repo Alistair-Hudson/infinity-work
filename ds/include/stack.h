@@ -72,7 +72,7 @@ size_t StackSize(const stack_t *stack);
  * 0 - the stack is non-empty
  * 
  * */
-int IsStackEmpty(const stack_t *stack);
+int StackIsEmpty(const stack_t *stack);
 
 
 /*
