@@ -5,7 +5,7 @@
 
 int main()
 {
-	char equation[] = "3*2+5";
+	char equation[] = "3*(4+5)-7";
 	double result = 0;
 	
 	Calculator(equation, &result);

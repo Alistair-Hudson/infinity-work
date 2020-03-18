@@ -62,7 +62,7 @@ void *StackPeek(stack_t *stack)
 	assert(NULL != stack);
 	if(StackIsEmpty(stack))
 	{
-		return 0;
+		return NULL;
 	}
 	return stack->elements[stack->top - 1];
 }
