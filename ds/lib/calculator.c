@@ -1,10 +1,9 @@
 /******************************************************************************
  *	Title:		Calculator
  *	Authour:	Alistair Hudson
- *	Reviewer:	
+ *	Reviewer:	Shmuel
  *	Version:	18.03.2020.0
  ******************************************************************************/
-#include <stdio.h>		/*TODO*/
 #include <stdlib.h>
 #include <assert.h>		/* assert */
 #include <string.h>		/* strlen */
@@ -59,6 +58,8 @@ static calc_status_t Multiply(double* multipliee, double* multiplier);
 
 static calc_status_t Division(double* divisee, double* diviser);
 
+static calc_status_t Exponent(double* base, double* index);
+
 static calc_status_t PushOperand(calc_t* calc, char* expression);
 
 static calc_status_t PushOperatorDM(calc_t* calc, char* operatr, 
@@ -71,6 +72,9 @@ static calc_status_t PushOpenBracket(calc_t* calc, char* expression);
 
 static calc_status_t PushClosedBracket(calc_t* calc, char* operatr, 
 																double* result);
+
+static calc_status_t PushExponent(calc_t* calc, char* operatr, double* result);
+
 static calc_status_t Calculate(calc_t* calc, double* result);
 
 /******FUNCTIONS******/
@@ -127,12 +131,17 @@ static calc_status_t PushOperand(calc_t* calc, char* expression)
 
 static calc_status_t PushOperatorDM(calc_t* calc, char* operatr, double* result)
 {
+	calc_status_t status = SUCCESS;
 	char *optr = malloc(sizeof(char));
+	while (!StackIsEmpty(calc->operator_stack) && 
+			('^' == *(char*)StackPeek(calc->operator_stack)))
+	{
+		status = Calculate(calc, result);		
+	}
 	*optr = ASCII_TABLE[*operatr];
     StackPush(calc->operator_stack, optr);
 	calc->state = WAIT_OPERAND;
-	return SUCCESS;
-}
+	return status;}
 
 static calc_status_t PushOperatorAS(calc_t* calc, char* operatr, double* result)
 {
@@ -140,7 +149,8 @@ static calc_status_t PushOperatorAS(calc_t* calc, char* operatr, double* result)
 	char *optr = malloc(sizeof(char));
 	while (!StackIsEmpty(calc->operator_stack) && 
 			('*' == *(char*)StackPeek(calc->operator_stack) || 
-			'/' == *(char*)StackPeek(calc->operator_stack)))
+			'/' == *(char*)StackPeek(calc->operator_stack) ||
+			'^' == *(char*)StackPeek(calc->operator_stack)))
 	{
 		status = Calculate(calc, result);		
 	}
@@ -148,6 +158,15 @@ static calc_status_t PushOperatorAS(calc_t* calc, char* operatr, double* result)
     StackPush(calc->operator_stack, optr);
 	calc->state = WAIT_OPERAND;
 	return status;
+}
+
+static calc_status_t PushExponent(calc_t* calc, char* operatr, double* result)
+{
+	char *optr = malloc(sizeof(char));
+	*optr = ASCII_TABLE[*operatr];
+    StackPush(calc->operator_stack, optr);
+	calc->state = WAIT_OPERAND;
+	return SUCCESS;	
 }
 
 static calc_status_t Add(double* addee, double* adder)
@@ -178,6 +197,25 @@ static calc_status_t Division(double* divisee, double* diviser)
 	return SUCCESS;
 }
 
+static calc_status_t Exponent(double* base, double* index)
+{
+	double result = 1;
+	int i = 1;
+
+	if (0 >= *index)
+	{
+		*index *= -1;
+		*base = 1 / *base;
+	}
+
+	for (i = 1; i <= *index; ++i)
+	{
+		result *= *base;
+	}
+	
+	*base = result;
+	return SUCCESS;
+}
 static calc_status_t PushOpenBracket(calc_t* calc, char* expression)
 {
 	char* buffer = expression;
@@ -221,6 +259,7 @@ static void SetOperatorLUT(calc_status_t (*lookup_array[])(calc_t*,
 	lookup_array['-'] = PushOperatorAS;
 	lookup_array['*'] = PushOperatorDM;
 	lookup_array['/'] = PushOperatorDM;
+	lookup_array['^'] = PushExponent;
 }
 
 static void SetOperandLUT(calc_status_t(*lookup_array[])(calc_t*, char*))
@@ -244,6 +283,7 @@ static void SetFunctionLUT(calc_status_t (*lookup_array[])(double*, double*))
 	lookup_array['-'] = Subtract;
 	lookup_array['*'] = Multiply;
 	lookup_array['/'] = Division;
+	lookup_array['^'] = Exponent;
 
 }
 
