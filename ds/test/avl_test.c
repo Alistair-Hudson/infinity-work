@@ -21,6 +21,12 @@ int AddTo(void *data, void *added)
 	return 0;
 }
 
+int PrintTree(void* data, void* y)
+{
+	printf("%d\n", *(int*)data);
+	return 0;
+}
+
 int Stage1Test()
 {
 	avl_t *btree = NULL;
@@ -114,6 +120,7 @@ int InsertTest()
 		AVLDestroy(btree);
 		return 0;
 	}
+
 	AVLDestroy(btree);
 
 	printf("passed\n");
@@ -125,27 +132,16 @@ int RemoveTest()
 	avl_t *btree = NULL;
 	int array[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14};
 	size_t size = 0;
+	int i = 0;
 
 	printf("\n\nRemove test\n");
 
 	btree = AVLCreate(CmpInts);
 
-	AVLInsert(btree, &array[7]);
-	AVLInsert(btree, &array[11]);
-	AVLInsert(btree, &array[3]);
-	AVLInsert(btree, &array[1]);
-	AVLInsert(btree, &array[0]);
-	AVLInsert(btree, &array[2]);
-	AVLInsert(btree, &array[5]);
-	AVLInsert(btree, &array[4]);
-	AVLInsert(btree, &array[6]);
-	AVLInsert(btree, &array[14]);
-	AVLInsert(btree, &array[12]);
-	AVLInsert(btree, &array[13]);
-	AVLInsert(btree, &array[9]);
-	AVLInsert(btree, &array[8]);
-	AVLInsert(btree, &array[10]);
-	
+	for (i = 0; i <= 14; ++i)
+	{
+		AVLInsert(btree, &array[i]);
+	}
 	size = AVLSize(btree);
 
 	AVLRemove(btree, &array[2]);	
@@ -208,27 +204,16 @@ int FindTest()
 	int num9 = 9;
 	int num5 = 5;
 	int array[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14};
+	int i = 0;
 
 	printf("\n\nFind test\n");
 
 	btree = AVLCreate(CmpInts);
 
-	AVLInsert(btree, &array[7]);
-	AVLInsert(btree, &array[11]);
-	AVLInsert(btree, &array[3]);
-	AVLInsert(btree, &array[1]);
-	AVLInsert(btree, &array[0]);
-	AVLInsert(btree, &array[2]);
-	AVLInsert(btree, &array[5]);
-	AVLInsert(btree, &array[4]);
-	AVLInsert(btree, &array[6]);
-	AVLInsert(btree, &array[14]);
-	AVLInsert(btree, &array[12]);
-	AVLInsert(btree, &array[13]);
-	AVLInsert(btree, &array[9]);
-	AVLInsert(btree, &array[8]);
-	AVLInsert(btree, &array[10]);
-
+	for (i = 0; i <= 14; ++i)
+	{
+		AVLInsert(btree, &array[i]);
+	}
 	find9 = *(int*)AVLFind(btree, &num9);
 	
 	if (find9 != num9)
@@ -251,28 +236,18 @@ int ForEachTest()
 	int array[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14};
 	int adding = 10;
 	int index = 0;
-
+	int i = 0;
 	printf("\n\nFor Each test\n");
 
 	btree = AVLCreate(CmpInts);
 
-	AVLInsert(btree, &array[7]);
-	AVLInsert(btree, &array[11]);
-	AVLInsert(btree, &array[3]);
-	AVLInsert(btree, &array[1]);
-	AVLInsert(btree, &array[0]);
-	AVLInsert(btree, &array[2]);
-	AVLInsert(btree, &array[5]);
-	AVLInsert(btree, &array[4]);
-	AVLInsert(btree, &array[6]);
-	AVLInsert(btree, &array[14]);
-	AVLInsert(btree, &array[12]);
-	AVLInsert(btree, &array[13]);
-	AVLInsert(btree, &array[9]);
-	AVLInsert(btree, &array[8]);
-	AVLInsert(btree, &array[10]);
+	for (i = 0; i <= 14; ++i)
+	{
+		AVLInsert(btree, &array[i]);
+	}
 
 	AVLForEach(btree, AddTo, &adding, PRE_ORDER);
+
 	for (index = 0; index <= 14; ++index)
 	{
 		if (array[index] != index + adding)

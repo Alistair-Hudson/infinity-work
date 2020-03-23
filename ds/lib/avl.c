@@ -2,9 +2,8 @@
  *	Title:		AVL Tree
  *	Authour:	Alistair Hudson
  *	Reviewer:	Yurri
- *	Version:	22.03.2020.0
+ *	Version:	23.03.2020.1
  ******************************************************************************/
-#include <stdio.h>		/*TODO*/
 #include <stdlib.h>
 #include <assert.h>		/* assert */
 
@@ -81,10 +80,10 @@ static int Balance(avl_node_t* node)
 static avl_node_t* RightRotate(avl_node_t* node)
 {
 	avl_node_t* left_node = node->children[LEFT];
-	avl_node_t* right_node = node->children[RIGHT];
+	avl_node_t* right_of_left = left_node->children[RIGHT];
 
 	left_node->children[RIGHT] = node;
-	node->children[LEFT] = right_node;
+	node->children[LEFT] = right_of_left;
 
 	node->height = 1 + MaxHeight(NodeHeight(node->children[LEFT]), 
 								NodeHeight(node->children[RIGHT]));
@@ -96,11 +95,11 @@ static avl_node_t* RightRotate(avl_node_t* node)
 
 static avl_node_t* LeftRotate(avl_node_t* node)
 {
-	avl_node_t* left_node = node->children[LEFT];
 	avl_node_t* right_node = node->children[RIGHT];
+	avl_node_t* left_of_right = right_node->children[LEFT];
 
 	right_node->children[LEFT] = node;
-	node->children[RIGHT] = left_node;
+	node->children[RIGHT] = left_of_right;
 
 	node->height = 1 + MaxHeight(NodeHeight(node->children[LEFT]), 
 								NodeHeight(node->children[RIGHT]));
@@ -179,6 +178,7 @@ static void DestroySupport(avl_node_t* node)
 		DestroySupport(node->children[RIGHT]);
 	}
 	free(node);
+	node = NULL;
 }
 
 avl_node_t* FindSmallestNode(avl_node_t* node)
@@ -197,14 +197,14 @@ avl_node_t* RemoveNode(avl_node_t *node, void* data,
 	{
 		return node;
 	}
-	if (is_before(node->data, data))
+	if (is_before(data, node->data))
 	{
 		node->children[LEFT] = RemoveNode(node->children[LEFT], 
 															data, is_before);
 	}
 	else if (!is_before(data, node->data))
 	{
-		if (is_before(data, node->data) == is_before(data, node->data))
+		if (is_before(node->data, data) == is_before(data, node->data))
 		{
 			if (NULL == node->children[LEFT] || NULL == node->children[RIGHT])
 			{
@@ -219,25 +219,30 @@ avl_node_t* RemoveNode(avl_node_t *node, void* data,
 				else
 				{
 					*node = *temp;
-					free(temp);
 				}
+					free(temp);
+					temp = NULL;
 			}
 			else
 			{
 				avl_node_t* temp = FindSmallestNode(node->children[RIGHT]);
-				temp->data = node->data;
-				node->children[RIGHT] = RemoveNode(node->children[RIGHT], data, 
-																	is_before);
-			}
-			
-			if (NULL == node)
-			{
-				return node;
+				node->data = temp->data;
+				node->children[RIGHT] = RemoveNode(node->children[RIGHT], 
+														temp->data, is_before);
 			}
 		}
-		node->children[RIGHT] = RemoveNode(node->children[RIGHT], 
+		else
+		{
+			node->children[RIGHT] = RemoveNode(node->children[RIGHT], 
 															data, is_before);
+		}
 	}
+
+	if (NULL == node)
+	{
+		return node;
+	}
+
 	node->height = 1 + MaxHeight(NodeHeight(node->children[LEFT]),
 											NodeHeight(node->children[RIGHT]));
 
@@ -301,7 +306,7 @@ static avl_node_t* CreateNewNode(void* data)
 	}
 	
 	new_node->data = data;
-	new_node->height = 0;
+	new_node->height = 1;
 	new_node->children[LEFT] = NULL;
 	new_node->children[RIGHT] = NULL;
 
@@ -332,7 +337,7 @@ static avl_node_t* InsertNode(avl_node_t* node, void* data,
 	}
 	node->height = 1 + MaxHeight(NodeHeight(node->children[LEFT]),
 											NodeHeight(node->children[RIGHT]));
-/*
+
 	if (Balance(node) > 1 && is_before(data, node->children[LEFT]->data))
 	{
 		return RightRotate(node);
@@ -353,7 +358,7 @@ static avl_node_t* InsertNode(avl_node_t* node, void* data,
 		node->children[RIGHT] = RightRotate(node->children[RIGHT]);
 		return LeftRotate(node);
 	}
-*/
+
 	return node;
 }
 
@@ -400,7 +405,7 @@ size_t AVLSize(const avl_t *btree)
 
 size_t AVLHeight(const avl_t *btree)
 {
-	return NodeHeight(btree->root);
+	return NodeHeight(btree->root) - 1;
 }
 
 int AVLIsEmpty(const avl_t *btree)
@@ -416,7 +421,7 @@ int AVLInsert(avl_t *btree, void *data)
 
 void AVLRemove(avl_t *btree, void *data)
 {
-	RemoveNode(btree->root, data, btree->compare);
+	btree->root = RemoveNode(btree->root, data, btree->compare);
 }
 
 void *AVLFind(avl_t *btree, void *to_find)

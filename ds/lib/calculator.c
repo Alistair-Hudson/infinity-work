@@ -432,8 +432,8 @@ calc_status_t Calculator(const char* expression, double* result)
 
 		if('\0' == *eqptr)
 		{
-			if ('+' == StackPeek(calculator->operand_stack) || 
-				'-' == StackPeek(calculator->operand_stack))
+			if ('+' == *(char*)StackPeek(calculator->operand_stack) || 
+				'-' == *(char*)StackPeek(calculator->operand_stack))
 			{
 				return SYNTAX_ERROR;
 			}
