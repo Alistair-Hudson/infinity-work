@@ -2,7 +2,7 @@
  *	Title:		Calculator
  *	Authour:	Alistair Hudson
  *	Reviewer:	Shmuel
- *	Version:	18.03.2020.0
+ *	Version:	19.03.2020.1
  ******************************************************************************/
 #include <stdlib.h>
 #include <assert.h>		/* assert */
@@ -24,6 +24,7 @@ typedef struct calculator
 	stack_t* operator_stack;
 	stack_t* operand_stack;
 	state_t state;
+	int positive;
 }calc_t;
 
 static char ASCII_TABLE[ASCII_RANGE] = {0};
@@ -35,12 +36,12 @@ static calc_status_t SyntaxErrorOperator(calc_t* calc, char* expression,
 static calc_status_t SystemError(double* actor, double* actee);
 
 static calc_status_t(*OperandLUT[ASCII_RANGE])(calc_t* calc, char* expression)
-														= {SyntaxErrorOperand};
+																	= {NULL};
 static calc_status_t(*OperatorLUT[ASCII_RANGE])(calc_t* calc, char* operatr, 
-										double* result) = {SyntaxErrorOperator};
+													double* result) = {NULL};
                                     
 static calc_status_t(*FunctionLUT[ASCII_RANGE])(double* actee, double* actor) 
-																= {SystemError};
+																	= {NULL};
 
 static void SetOperatorLUT(calc_status_t (*lookup_array[])(calc_t*, char*, 
 																	double*));
@@ -75,6 +76,10 @@ static calc_status_t PushClosedBracket(calc_t* calc, char* operatr,
 
 static calc_status_t PushExponent(calc_t* calc, char* operatr, double* result);
 
+static calc_status_t PushNegative(calc_t* calc, char* expression);
+
+static calc_status_t PushPositive(calc_t* calc, char* expression);
+
 static calc_status_t Calculate(calc_t* calc, double* result);
 
 /******FUNCTIONS******/
@@ -108,7 +113,7 @@ static calc_status_t Calculate(calc_t* calc, double* result)
 
 	actee = (double*)StackPeek(calc->operand_stack);
 
-	status = FunctionLUT[*operatr](actee, actor);
+	status = FunctionLUT[*(int*)operatr](actee, actor);
 
 	*result = *actee;
 	free(operatr);
@@ -122,10 +127,16 @@ static calc_status_t PushOperand(calc_t* calc, char* expression)
 {
     char* buffer = NULL;
     double *operand = malloc(sizeof(double));
+	if (NULL == operand)
+	{
+		return SYSTEM_ERROR;
+	}
 	*operand = strtod(expression, &buffer);
+	*operand *= calc->positive;
 	StackPush(calc->operand_stack, operand);
 	strcpy(expression, buffer);
 	calc->state = WAIT_OPERATOR;
+	calc->positive = 1;
 	return SUCCESS;
 }
 
@@ -133,12 +144,21 @@ static calc_status_t PushOperatorDM(calc_t* calc, char* operatr, double* result)
 {
 	calc_status_t status = SUCCESS;
 	char *optr = malloc(sizeof(char));
+	if (NULL == optr)
+	{
+		return SYSTEM_ERROR;
+	}
 	while (!StackIsEmpty(calc->operator_stack) && 
 			('^' == *(char*)StackPeek(calc->operator_stack)))
 	{
 		status = Calculate(calc, result);		
 	}
-	*optr = ASCII_TABLE[*operatr];
+	if (!StackIsEmpty(calc->operator_stack) && '/' == *(char*)StackPeek(calc->operator_stack))
+	{
+		status = Calculate(calc, result);
+	}
+
+	*optr = ASCII_TABLE[*(int*)operatr];
     StackPush(calc->operator_stack, optr);
 	calc->state = WAIT_OPERAND;
 	return status;}
@@ -147,6 +167,10 @@ static calc_status_t PushOperatorAS(calc_t* calc, char* operatr, double* result)
 {
 	calc_status_t status = SUCCESS;
 	char *optr = malloc(sizeof(char));
+	if (NULL == optr)
+	{
+		return SYSTEM_ERROR;
+	}
 	while (!StackIsEmpty(calc->operator_stack) && 
 			('*' == *(char*)StackPeek(calc->operator_stack) || 
 			'/' == *(char*)StackPeek(calc->operator_stack) ||
@@ -154,7 +178,11 @@ static calc_status_t PushOperatorAS(calc_t* calc, char* operatr, double* result)
 	{
 		status = Calculate(calc, result);		
 	}
-	*optr = ASCII_TABLE[*operatr];
+	if (!StackIsEmpty(calc->operator_stack) && '-' == *(char*)StackPeek(calc->operator_stack))
+	{
+		status = Calculate(calc, result);
+	}
+	*optr = ASCII_TABLE[*(int*)operatr];
     StackPush(calc->operator_stack, optr);
 	calc->state = WAIT_OPERAND;
 	return status;
@@ -163,7 +191,12 @@ static calc_status_t PushOperatorAS(calc_t* calc, char* operatr, double* result)
 static calc_status_t PushExponent(calc_t* calc, char* operatr, double* result)
 {
 	char *optr = malloc(sizeof(char));
-	*optr = ASCII_TABLE[*operatr];
+	if (NULL == optr)
+	{
+		return SYSTEM_ERROR;
+	}
+	ASSERT_NOT_NULL(result);
+	*optr = ASCII_TABLE[*(int*)operatr];
     StackPush(calc->operator_stack, optr);
 	calc->state = WAIT_OPERAND;
 	return SUCCESS;	
@@ -176,7 +209,7 @@ static calc_status_t Add(double* addee, double* adder)
 }
 
 static calc_status_t Subtract(double* subtractee, double* subtracter)
-{
+{	
 	*subtractee -= *subtracter;
 	return SUCCESS;
 }
@@ -220,6 +253,10 @@ static calc_status_t PushOpenBracket(calc_t* calc, char* expression)
 {
 	char* buffer = expression;
     char *operatr = malloc(sizeof(char));
+	if (NULL == operatr)
+	{
+		return SYSTEM_ERROR;
+	}
 	*operatr = '(';
 	StackPush(calc->operator_stack, operatr);
 	++buffer;
@@ -251,9 +288,31 @@ static calc_status_t PushClosedBracket(calc_t* calc, char* operatr,
 
 }
 
+static calc_status_t PushNegative(calc_t* calc, char* expression)
+{
+	char* buffer = expression;
+	calc->positive *= -1;
+	++buffer;
+	strcpy(expression, buffer);
+	calc->state = WAIT_OPERAND;
+	return SUCCESS;	
+}
+
+static calc_status_t PushPositive(calc_t* calc, char* expression)
+{
+	ASSERT_NOT_NULL(expression);
+	calc->state = WAIT_OPERAND;
+	return SUCCESS;
+}
+
 static void SetOperatorLUT(calc_status_t (*lookup_array[])(calc_t*, 
 											                   char*, double*))
 {
+	int index = 0;
+	for (index = 0; index < ASCII_RANGE; ++index)
+	{
+		lookup_array[index] = SyntaxErrorOperator;
+	}
 	lookup_array[')'] = PushClosedBracket;
 	lookup_array['+'] = PushOperatorAS;
 	lookup_array['-'] = PushOperatorAS;
@@ -264,7 +323,14 @@ static void SetOperatorLUT(calc_status_t (*lookup_array[])(calc_t*,
 
 static void SetOperandLUT(calc_status_t(*lookup_array[])(calc_t*, char*))
 {
+	int index = 0;
+	for (index = 0; index < ASCII_RANGE; ++index)
+	{
+		lookup_array[index] = SyntaxErrorOperand;
+	}
 	lookup_array['('] = PushOpenBracket;
+	lookup_array['+'] = PushPositive;
+	lookup_array['-'] = PushNegative;
 	lookup_array['0'] = PushOperand;
 	lookup_array['1'] = PushOperand;
 	lookup_array['2'] = PushOperand;
@@ -279,6 +345,11 @@ static void SetOperandLUT(calc_status_t(*lookup_array[])(calc_t*, char*))
 
 static void SetFunctionLUT(calc_status_t (*lookup_array[])(double*, double*))
 {
+	int index = 0;
+	for (index = 0; index < ASCII_RANGE; ++index)
+	{
+		lookup_array[index] = SystemError;
+	}
 	lookup_array['+'] = Add;
 	lookup_array['-'] = Subtract;
 	lookup_array['*'] = Multiply;
@@ -334,6 +405,7 @@ calc_status_t Calculator(const char* expression, double* result)
 	calculator->operator_stack = StackCreate(length);
 	calculator->operand_stack = StackCreate(length);
 	calculator->state = WAIT_OPERAND;
+	calculator->positive = 1;
 
 	SetOperatorLUT(OperatorLUT);
 	SetOperandLUT(OperandLUT);
@@ -348,7 +420,7 @@ calc_status_t Calculator(const char* expression, double* result)
 				break;
 			case (WAIT_OPERATOR):
 				operatr = *eqptr;
-				status = OperatorLUT[operatr](calculator, &operatr, result);
+				status = OperatorLUT[(int)operatr](calculator, &operatr, result);
 				++eqptr;
 				break;
 		}
@@ -360,10 +432,16 @@ calc_status_t Calculator(const char* expression, double* result)
 
 		if('\0' == *eqptr)
 		{
+			if ('+' == StackPeek(calculator->operand_stack) || 
+				'-' == StackPeek(calculator->operand_stack))
+			{
+				return SYNTAX_ERROR;
+			}
 			while (!StackIsEmpty(calculator->operator_stack) && 
 									!StackIsEmpty(calculator->operand_stack))
 			{
 				status = Calculate(calculator, result);
+
 			}
 			while (!StackIsEmpty(calculator->operand_stack))
 			{

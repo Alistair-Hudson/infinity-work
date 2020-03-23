@@ -1,7 +1,7 @@
 /******************************************************************************
  *	Title:		Recusion Exercises
  *	Authour:	Alistair Hudson
- *	Reviewer:	
+ *	Reviewer:	Ivana
  *	Version:	18.03.2020.0
  ******************************************************************************/
 #include <stdio.h>		
@@ -177,23 +177,4 @@ int IterFibonacci(int element_index)
 		++iteration;
 	}
 	return result;
-}
-
-int main()
-{
-	int fib_num = 9;
-	char str[20] = "Hello";
-	char str2[20] = "hello";
-
-
-	printf("RecFib result for %d = %d\n", fib_num, RecFibonacci(fib_num));
-	printf("IterFib result for %d = %d\n", fib_num, IterFibonacci(fib_num));
-	printf("length of %s = %lu\n", str, RecStrlen(str));
-	printf("compare %s w %s = %d\n", str, str, RecStrcmp(str, str));
-	printf("compare %s w %s = %d\n", str, str2, RecStrcmp(str, str2));
-	
-	RecStrcpy(str, str2);
-	printf("copy = %d\n",  RecStrcmp(str, str2));
-
-	return 0;
 }

@@ -5,7 +5,7 @@
 
 int main()
 {
-	char equation[] = "3^2*(4+5)-7";
+	char equation[] = "1^2^3^4";
 	double result = 0;
 	
 	Calculator(equation, &result);
