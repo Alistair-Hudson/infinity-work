@@ -2,7 +2,7 @@
  *	Title:		Sorting Algortims
  *	Authour:	Alistair Hudson
  *	Reviewer:	Ivana
- *	Version:	09.03.2020.1
+ *	Version:	26.03.2020.2
  ******************************************************************************/
 
 #include <stdlib.h>
@@ -25,7 +25,185 @@ static size_t BitRange(size_t num_of_bits);
 static int RadixSortLoop(int *array, size_t array_size, int *BitLUT, 
 						int *buffer, int mask, size_t shift, size_t bit_range);
 
+static int QuickSortImp(int* array, size_t low, size_t high);
+
+static size_t Partion(int* array, size_t low, size_t high);
+
+static int MergeSortImp(int* array, size_t left, size_t right);
+
+static void Merge(int* array, size_t left, size_t middle, size_t right);
+
+static int SearchRec(int* array, size_t index, size_t size, int key);
+
 /******FUNCTIONS******/
+int BinarySearchIt(int* array, size_t size, int key)
+{
+	size_t jump = size / 2;
+	size_t index = jump;
+	int SEARCHING = 1;
+
+	while (SEARCHING)
+	{
+		if(0 == jump)
+		{
+			SEARCHING = 0;
+		}
+		if (array[index] > key)
+		{
+			jump /= 2;
+			index -= jump;
+		}
+		else if (array[index] < key)
+		{
+			jump /= 2;
+			index += jump;
+		}
+		else if (array[index] == key)
+		{
+			return index;
+		}
+	}
+	return -1;
+}
+
+int BinarySearchRec(int* array, size_t size, int key)
+{
+	return SearchRec(array, size, size, key);
+}
+
+static int SearchRec(int* array, size_t index, size_t size, int key)
+{
+	index = index / 2;
+	if (array[index] > key)
+	{
+		if (0 == index)
+		{
+			return -1;
+		}	
+		return SearchRec(array, index, size, key);
+	}
+	else if (array[index] < key)
+	{
+		if (array[index] == array[size-1])
+		{
+			return -1;
+		}
+		return SearchRec(array, (size + index), size, key);
+	}
+	else if (array[index] == key)
+	{
+		return index;
+	}
+}
+
+int MergeSort(int* array, size_t size)
+{
+
+	return MergeSortImp(array, 0, size - 1);
+}
+
+static int MergeSortImp(int* array, size_t left, size_t right)
+{
+	if (left < right)
+	{
+		size_t middle = (left + right)/2;
+
+		MergeSortImp(array, left, middle);
+		MergeSortImp(array, middle + 1, right);
+
+		Merge(array, left, middle, right);
+	}
+	return 0;
+}
+
+static void Merge(int* array, size_t left, size_t middle, size_t right)
+{
+	size_t i = 0, j = 0, k = left;
+	size_t n1 = middle - left + 1;
+	size_t n2 = right - middle;
+
+	int* LEFT = malloc(n1 * sizeof(int));
+	int* RIGHT = malloc(n2 * sizeof(int));
+
+	for (i = 0; i < n1; ++i)
+	{
+		LEFT[i] = array[left + i];
+	}
+	for (j = 0; j < n2; ++j)
+	{
+		RIGHT[j] = array[middle+1+j];
+	}
+
+	i = 0;
+	j = 0;
+
+	while (i < n1 && j < n2)
+	{
+		if (LEFT[i] <= RIGHT[j])
+		{
+			array[k] = LEFT[i];
+			++i;
+		}
+		else
+		{
+			array[k] = RIGHT[j];
+			++j;
+		}
+		++k;
+	}
+
+	while(i < n1)
+	{
+		array[k] = LEFT[i];
+		++i;
+		++k;
+	}
+	while(j < n2)
+	{
+		array[k] = RIGHT[j];
+		++j;
+		++k;
+	}
+	free(LEFT);
+	free(RIGHT);
+}
+
+int QuickSort(int* array, size_t size)
+{
+	return QuickSortImp(array, 0, size-1);
+}
+
+static int QuickSortImp(int* array, size_t low, size_t high)
+{
+
+	if (low < high)
+	{
+		int part_index = Partion(array, low, high);
+
+		QuickSortImp(array, low, part_index - 1);
+		QuickSortImp(array, part_index + 1, high);
+	}
+	return 0;
+}
+
+static size_t Partion(int* array, size_t low, size_t high)
+{
+	int pivot = array[high];
+	int i = low - 1;
+	size_t j = low;
+
+	for (j = low; j <= high; ++j)
+	{
+		if(array[j] < pivot)
+		{
+			++i;
+			Swap(&array[i], &array[j]);
+		}
+	}
+	Swap(&array[i + 1], &array[high]);
+	return i + 1;
+}
+
 static void Swap(int *x, int *y)
 {
 	int temp = *x;

@@ -50,4 +50,38 @@ int CountingSort(int *array, size_t array_size, int min, int max);
  */
 int RadixSort(int *array, size_t array_size, size_t num_of_bits);
 
+/*
+ * Input:  Pointer to array, size of array,
+ * Process: Sorts the intergers in the array in order
+ * using the Merge sort method
+ * Returns 0 on success or -1 on failure.
+ */
+int MergeSort(int * array, size_t size);
+
+/*
+ * Input:  Pointer to array, size of array,
+ * Process: Sorts the intergers in the array in order
+ * using the quick sort method
+ * Returns 0 on success or -1 on failure.
+ */
+int QuickSort(int * array, size_t size);
+
+
+/*
+ * Input:  Pointer to array, size of array, search key
+ * Process: Searches the array using iterative binary search.
+ * Returns index of found element or -1 if not found.
+ */
+int BinarySearchIt(int * array, size_t size, int key);
+
+
+/*
+ * Input:  Pointer to array, size of array, search key
+ * Process: Searches the array using recursive binary search.
+ * Returns index of found element or -1 if not found.
+ */
+int BinarySearchRec(int * array, size_t size, int key);
+
+
+
 #endif /* __OL85_SORTING_ALG_H__ */

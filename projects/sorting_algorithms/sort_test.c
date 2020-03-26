@@ -3,7 +3,7 @@
 
 #include "sort.h"
 
-#define ALL_PASS		(6)
+#define ALL_PASS		(9)
 
 int AreArraysTheSame(int *arr1, size_t size1, int *arr2, size_t size2)
 {
@@ -294,6 +294,137 @@ int RadixTest()
 
 }
 
+int MergeTest()
+{
+	int exp[] = {1, 2, 3, 4, 5, 6, 7, 8, 9};
+	int rand[] = {5, 3, 9, 4, 1, 2, 8, 7, 6};
+	int rev[] = {9, 8, 7, 6, 5, 4, 3, 2, 1};
+	int sort[] = {1, 2, 3, 4, 5, 6,7, 8, 9};
+	int almost[] = {1, 2, 3, 9, 4, 5, 8, 6, 7};
+	size_t size = 9;
+
+	printf("\n\n\nMerge Test\n");
+
+	MergeSort(rand, size);
+	if (!AreArraysTheSame(exp, size, rand, size))
+	{
+		printf("rand failed\n");
+		return 0;
+	}
+
+	MergeSort(rev, size);
+	if (!AreArraysTheSame(exp, size, rev, size))
+	{
+		printf("rev failed\n");
+		return 0;
+	}
+
+	MergeSort(sort, size);
+	if (!AreArraysTheSame(exp, size, sort, size))
+	{
+		printf("sort failed\n");
+		return 0;
+	}
+
+	MergeSort(almost, size);
+	if (!AreArraysTheSame(exp, size, almost, size))
+	{
+		printf("almost failed\n");
+		return 0;
+	}
+
+	printf("Merge passed\n");
+
+	return 1;
+
+}
+
+int QuickTest()
+{
+	int exp[] = {1, 2, 3, 4, 5, 6, 7, 8, 9};
+	int rand[] = {5, 3, 9, 4, 1, 2, 8, 7, 6};
+	int rev[] = {9, 8, 7, 6, 5, 4, 3, 2, 1};
+	int sort[] = {1, 2, 3, 4, 5, 6,7, 8, 9};
+	int almost[] = {1, 2, 3, 9, 4, 5, 8, 6, 7};
+	size_t size = 9;
+
+	printf("\n\n\nQuick Test\n");
+
+	QuickSort(rand, size);
+	if (!AreArraysTheSame(exp, size, rand, size))
+	{
+		printf("rand failed\n");
+		return 0;
+	}
+
+/*	QuickSort(rev, size);
+	if (!AreArraysTheSame(exp, size, rev, size))
+	{
+		printf("rev failed\n");
+		return 0;
+	}
+*/
+	QuickSort(sort, size);
+	if (!AreArraysTheSame(exp, size, sort, size))
+	{
+		printf("sort failed\n");
+		return 0;
+	}
+
+	QuickSort(almost, size);
+	if (!AreArraysTheSame(exp, size, almost, size))
+	{
+		printf("almost failed\n");
+		return 0;
+	}
+
+	printf("Quick passed\n");
+
+	return 1;
+
+}
+
+int BSearchTest()
+{
+	int array[] = {1, 2, 3, 4, 5, 6,7, 8, 9};
+	int find = 0;
+	int key = 2;
+	int alt_key = 12;
+	size_t size = 9;
+
+	printf("\n\n\nBSearch Test\n");
+
+	find = BinarySearchIt(array, size, key);
+	if (array[find] != key)
+	{
+		printf("Iterative search failed\n");
+		return 0;
+	}
+
+	find = BinarySearchIt(array, size, alt_key);
+	if ((-1) != find)
+	{
+		printf("failed iterative search failed %d\n", find);
+		return 0;
+	}
+
+	find = BinarySearchRec(array, size, key);
+	if (array[find] != key)
+	{
+		printf("Rec search failed\n");
+		return 0;
+	}
+
+	find = BinarySearchRec(array, size, alt_key);
+	if ((-1) != find)
+	{
+		printf("failed rec search failed\n");
+		return 0;
+	}
+
+	printf("BSearch Passed\n");
+	return 1;
+}
 int main()
 {
 	size_t pass = 0;
@@ -304,6 +435,9 @@ int main()
 	pass += InsertionTest();
 	pass += CountTest();
 	pass += RadixTest();
+	pass += MergeTest();
+	pass += QuickTest();
+	pass += BSearchTest();
 
 	if (pass == ALL_PASS)
 	{

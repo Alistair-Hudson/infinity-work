@@ -113,39 +113,61 @@ static avl_node_t* LeftRotate(avl_node_t* node)
 static int PreOrder(avl_node_t* node, 
 							int (*action)(void* data, void* param), 
 							void* param)
-{
+{	
+	int status = 0;
+
 	if (NULL != node)
-	{
-		action(node->data, param);
-		PreOrder(node->children[LEFT], action, param);
-		PreOrder(node->children[RIGHT], action, param);
+	{	
+		status = action(node->data, param);
+		if (!status)
+		{		
+			status = PreOrder(node->children[LEFT], action, param);
+		}
+		if (!status)
+		{
+			status = PreOrder(node->children[RIGHT], action, param);
+		}
 	}
-	return 0;
+	return status;
 }
 static int InOrder(avl_node_t* node, 
 							int (*action)(void* data, void* param), 
 							void* param)
 {
+	int status = 0;
 	if (NULL != node)
 	{
-		InOrder(node->children[LEFT], action, param);
-		action(node->data, param);
-		InOrder(node->children[RIGHT], action, param);
+		status = InOrder(node->children[LEFT], action, param);
+		if (!status)
+		{		
+			status = action(node->data, param);
+		}
+		if (!status)
+		{
+			status = InOrder(node->children[RIGHT], action, param);
+		}
 	}
-	return 0;
+	return status;
 }
 
 static int PostOrder(avl_node_t* node, 
 							int (*action)(void* data, void* param), 
 							void* param)
 {
+	int status = 0;
 	if (NULL != node)
 	{
-		PostOrder(node->children[LEFT], action, param);
-		PostOrder(node->children[RIGHT], action, param);
-		action(node->data, param);
+		status = PostOrder(node->children[LEFT], action, param);
+		if(!status)
+		{		
+			status = PostOrder(node->children[RIGHT], action, param);
+		}
+		if (!status)
+		{
+			status = action(node->data, param);
+		}
 	}
-	return 0;
+	return status;
 }
 
 static size_t SizeSupport(avl_node_t* node)

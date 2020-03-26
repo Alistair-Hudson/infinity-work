@@ -8,28 +8,22 @@
 /*****STRUCTURE TO HANDLE THE STACK******/
 struct vector
 {
-	void *base;
-	void *max;
-	void *top;
+	size_t capacity;
+	size_t top;
+	void** elements;
 };
 
 /******FUNCTION DEFINITIONS********/
 vector_t *VectorCreate(size_t capacity)
 {
-	vector_t *_vector = malloc(sizeof(struct vector) * ELEMENT_SIZE);
+	vector_t *_vector = malloc(sizeof(struct vector) + capacity * ELEMENT_SIZE);
 	if(NULL == _vector)
 	{
 		return NULL;
 	}
-	_vector->base = malloc(capacity * ELEMENT_SIZE);
-	if(NULL == _vector->base)
-	{
-		free(_vector);
-		_vector = NULL;
-		return NULL;
-	}
-	_vector->max = (size_t *)_vector->base + capacity;
-	_vector->top = _vector->base;
+	_vector->capacity = capacity;
+	_vector->top = 0;
+	_vector->elements = (void**)malloc(capacity * ELEMENT_SIZE);
 
 	return _vector;
 }
@@ -37,9 +31,9 @@ vector_t *VectorCreate(size_t capacity)
 void VectorDestroy(vector_t *vector)
 {
 	assert(NULL != vector);
-	assert(NULL != vector->base);
-	free(vector->base);
-	vector->base = NULL;
+	assert(NULL != vector->elements);
+	free(vector->elements);
+	vector->elements = NULL;
 	free(vector);
 	vector = NULL;
 }
@@ -47,23 +41,22 @@ void VectorDestroy(vector_t *vector)
 int VectorIsEmpty(const vector_t *vector)
 {
 	assert(NULL != vector);
-	if(vector->base == vector->top) {return 1;}
+	if(0 == vector->top) {return 1;}
 	return 0;
 }
 
 size_t VectorCapacity(const vector_t *vector)
 {
 	assert(NULL != vector);
-	return (((size_t)vector->max - (size_t)vector->base) / ELEMENT_SIZE);
+	return vector->capacity;
 }
 
 int VectorPushBack(vector_t *vector, void *data)
 {
 	int reserve_check = 0;
-	size_t next_top_loc = (size_t)vector->top + ELEMENT_SIZE;
 
 	assert(NULL != vector);
-	if ((size_t)vector->max < next_top_loc)
+	if (VectorSize(vector) == VectorCapacity(vector))
 	{
 		reserve_check = VectorReserve(vector, PUSH_ADJST);
 		if(reserve_check)
@@ -71,8 +64,8 @@ int VectorPushBack(vector_t *vector, void *data)
 			return 1;
 		}
 	}
-	*(size_t**)vector->top = data;
-	*(size_t*)&vector->top += ELEMENT_SIZE;
+	vector->elements[vector->top] = data;
+	++vector->top;
 	return 0;
 }
 
@@ -80,26 +73,26 @@ void *VectorGetElement(vector_t *vector, size_t pos)
 {
 	assert(NULL != vector);
 
-	return (void*)((size_t)(vector->base)+(pos * ELEMENT_SIZE));
+	return vector->elements[pos];
 }
 
 size_t VectorSize(const vector_t *vector)
 {
 	assert(NULL != vector);
-	return (((size_t)vector->top - (size_t)vector->base) / ELEMENT_SIZE);
+	return vector->top;
 }
 
 void VectorPopBack(vector_t *vector)
 {
 	assert(NULL != vector);
-	*(size_t*)&vector->top -= ELEMENT_SIZE;
+	--vector->top;
 
 }
 
 void VectorSetElement(vector_t *vector, size_t pos, void *data)
 {
 	assert(NULL != vector);
-	*(size_t**)((size_t)vector->base + (pos * ELEMENT_SIZE)) = data;
+	vector->elements[pos] = data;
 }
 
 int VectorShrinkToFit(vector_t *vector)
@@ -123,20 +116,18 @@ int VectorShrinkToFit(vector_t *vector)
 int VectorReserve(vector_t *vector, size_t new_capacity)
 {
 	size_t size = 0;
-	void *buffer = 0;
+	void** buffer = 0;
 	
 	assert(NULL != vector);
 	size = VectorSize(vector);	
-	buffer = realloc(vector->base, (new_capacity * ELEMENT_SIZE));
+	buffer = (void**)realloc(vector->elements, (new_capacity * ELEMENT_SIZE));
 	if(0 == buffer)
 	{
 		return 1;
 	}
 
-	vector->base = buffer;
+	vector->elements = buffer;
 
-	vector->max = (size_t *)vector->base + new_capacity;
-	vector->top = (size_t *)vector->base + size;
-
+	vector->capacity = new_capacity;
 	return 0;
 }
