@@ -8,7 +8,7 @@
 
 int IntComp(void *x, void *y)
 {
-	return (*(int*)x - *(int*)y);
+	return (*(int*)x > *(int*)y);
 }
 
 int Match(void *x, void *y)
@@ -93,6 +93,7 @@ static int RemoveTest()
 	if(49 != PQSize(que_ptr))
 	{
 			printf("Remove Failed\n");
+			printf("size = %u\n", PQSize(que_ptr));
 			return 0;
 	}
 

@@ -5,10 +5,10 @@ CFLAGS= -ansi -pedantic-errors -Wall -Wextra -g -I$(IDIR)
 ODIR=../../ds/obj
 LDIR =../../ds/lib
 
-_DEPS = scheduler.h dlist.h pqueue.h task.h uid.h sorted_list.h
+_DEPS = scheduler.h dlist.h pqueue.h task.h uid.h heap.h vector.h
 DEPS = $(patsubst %,$(IDIR)/%,$(_DEPS))
 
-_OBJ = scheduler.o dlist.o pqueue.o task.o uid.o sortedlist.o
+_OBJ = scheduler.o dlist.o pqueue.o task.o uid.o heap.o vector.o
 OBJ = $(patsubst %,$(ODIR)/%,$(_OBJ))
 
 

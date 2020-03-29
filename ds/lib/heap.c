@@ -2,9 +2,8 @@
  *	Title:		Heap
  *	Authour:	Alistair Hudson
  *	Reviewer:	Anya
- *	Version:	26.03.2020.0
+ *	Version:	29.03.2020.1
  ******************************************************************************/
-#include <stdio.h>		/*TODO*/
 #include <stdlib.h>
 #include <assert.h>		/* assert */
 
@@ -23,6 +22,14 @@ struct heap
 static void Swap(vector_t* vector, size_t index1, size_t index2);
 
 static int Parent(int index);
+
+static void Heapify(heap_t* heap, size_t index);
+
+static size_t Left(size_t index);
+
+static size_t Right(size_t index);
+
+static int FixHeap(heap_t* heap, size_t index);
 
 /******FUNCTIONS******/
 static void Swap(vector_t* vector, size_t index1, size_t index2)
@@ -77,19 +84,66 @@ int HeapPush(heap_t* heap, void* data)
 	index = HeapSize(heap);
 	VectorPushBack(heap->vector, data);
 	
+	return FixHeap(heap, index);
+}
+
+void HeapPop(heap_t* heap)
+{
+	size_t index = 0;
+
+	ASSERT_NOT_NULL(heap);
+	
+	if (HeapIsEmpty(heap))
+	{
+		return;
+	}
+	index = HeapSize(heap);
+	Swap(heap->vector, 0, index-1);
+	VectorPopBack(heap->vector);
+	Heapify(heap, 0);
+	
+}
+
+static void Heapify(heap_t* heap, size_t index)
+{
+	size_t left = Left(index);
+	size_t right = Right(index);
+	size_t smallest = index;
+
+	if(left < HeapSize(heap) && heap->cmp(VectorGetElement(heap->vector, index), 											VectorGetElement(heap->vector, left)))
+	{
+		smallest = left;
+	}
+	if(right < HeapSize(heap) && heap->cmp(VectorGetElement(heap->vector, index), 											VectorGetElement(heap->vector, right)))
+	{
+		smallest = right;
+	}
+	if(smallest != index)
+	{
+		Swap(heap->vector, smallest, index);
+		Heapify(heap, smallest);
+	}
+}
+
+static size_t Left(size_t index)
+{
+	return 2*index + 1;
+}
+
+static size_t Right(size_t index)
+{
+	return 2*index + 2;
+}
+
+static int FixHeap(heap_t* heap, size_t index)
+{
 	while (0 != index && 
 						heap->cmp(VectorGetElement(heap->vector, Parent(index)), 											VectorGetElement(heap->vector, index)))
 	{
 		Swap(heap->vector, Parent(index), index);
 		index = Parent(index);
 	}
-/*printf("%d\n", *(int*)data);
-printf("%d\n", *(int*)VectorGetElement(heap->vector, 0));
-*/	return 0;
-}
-
-void HeapPop(heap_t* heap)
-{
+	return 0;
 
 }
 
@@ -117,9 +171,22 @@ int HeapIsEmpty(const heap_t* heap)
 }
 
 void* HeapRemove(heap_t* heap, 
-			int(*is_match)(const void* data, const void* param), void* param)
+			int(*is_match)(void* data, void* param), void* param)
 {
-	return NULL;
+	size_t index = 0;
+	void* removed = NULL;
+	
+	ASSERT_NOT_NULL(heap);
+
+	while (!is_match(VectorGetElement(heap->vector, index), param))
+	{
+		++index;
+	}
+	removed = VectorGetElement(heap->vector, index);
+	Swap(heap->vector, index, HeapSize(heap)-1);
+	VectorPopBack(heap->vector);
+	Heapify(heap, HeapSize(heap));
+	return removed;
 }
 
 

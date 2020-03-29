@@ -14,7 +14,7 @@
 * Input: pointers to two sets of data to cmmpare
 * Return: 1 if before, 0 if not;
 */
-typedef int(*heap_cmp_t)(const void* lhs, const void* rhs);
+typedef int(*heap_cmp_t)(void* lhs, void* rhs);
 
 typedef struct heap heap_t;
 
@@ -67,7 +67,8 @@ int HeapIsEmpty(const heap_t* heap);
 /*
 * Input: pointer to the heap to remove from, pointer to the data to remove
 * Process: locate and remove data fromt he heap
+* Return: pointer to data removed, NULL if failed
 */
-void* HeapRemove(heap_t* heap, int(*is_match)(const void* data, const void* param), void* param);
+void* HeapRemove(heap_t* heap, int(*is_match)(void* data, void* param), void* param);
 
 #endif /* __OL85_HEAP_H__ */

@@ -59,7 +59,7 @@ static int TimeExecCmp(void *task, void *task_key)
 	task1 = task;
 	task2 = task_key;
 
-	return TaskGetExecTime(task1) - TaskGetExecTime(task2);
+	return TaskGetExecTime(task1) > TaskGetExecTime(task2);
 }
 
 void SchedDestroy(sched_t *schedule)

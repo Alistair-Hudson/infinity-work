@@ -3,7 +3,6 @@
 
 #include "pqueue.h"
 #include "sorted_list.h"	/* sorted list functions and types */
-#include "heap.h"			/* heap functions and types */
 
 /*****MACROS*****/
 #define ASSERT_NOT_NULL(ptr)	(assert(NULL != ptr))
@@ -12,14 +11,14 @@
 
 struct pqueue
 {
-	heap_t *heap;
-	heap_cmp_t cmp;
+	sorted_list_t *list;
+	sorted_compare_t cmp;
 };
 
 /*****FUNcTIONS******/
 pqueue_t *PQCreate(pqcompare_t compare)
 {
-	pqueue_t *new_queue = (pqueue_t*)HeapCreate(compare);
+	pqueue_t *new_queue = (pqueue_t*)SortedListCreate(compare);
 
 	return new_queue;
 }
@@ -27,27 +26,27 @@ pqueue_t *PQCreate(pqcompare_t compare)
 void PQDestroy(pqueue_t *pqueue)
 {
 	ASSERT_NOT_NULL(pqueue);
-	HeapDestroy((heap_t*) pqueue);
+	SortedListDestroy((sorted_list_t*) pqueue);
 }
 
 int PQIsEmpty(const pqueue_t *pqueue)
 {
 	ASSERT_NOT_NULL(pqueue);
 	
-	return HeapIsEmpty((heap_t*) pqueue);
+	return SortedListIsEmpty((sorted_list_t*) pqueue);
 }
 
 size_t PQSize(const pqueue_t *pqueue)
 {
 	ASSERT_NOT_NULL(pqueue);
 	
-	return HeapSize((heap_t*) pqueue);
+	return SortedListSize((sorted_list_t*) pqueue);
 }
 
 int PQEnqueue(pqueue_t *pqueue, void *data)
 {
 	ASSERT_NOT_NULL(pqueue);
-	HeapPush((heap_t *) pqueue, data);
+	SortedListInsert((sorted_list_t *) pqueue, data);
 	
 	return 0;
 }
@@ -55,33 +54,43 @@ int PQEnqueue(pqueue_t *pqueue, void *data)
 void PQDequeue(pqueue_t *pqueue)
 {
 	ASSERT_NOT_NULL(pqueue);
-	HeapPop((heap_t *) pqueue);
+	SortedListPopFront((sorted_list_t *) pqueue);
 }
 
 void *PQPeek(const pqueue_t *pqueue)
 {
 	ASSERT_NOT_NULL(pqueue);
-	return HeapPeek((heap_t *) pqueue);
+	return SortedListGetData(SortedListBegin((sorted_list_t *) pqueue));
 }
 
 void *PQErase(pqueue_t *pqueue, ismatch_t ismatch, void *key)
 {
+	sorted_list_iter_t iterator;
 	void *data = NULL;
 
 	ASSERT_NOT_NULL(pqueue);
 	
-	data = HeapRemove((heap_t *) pqueue, ismatch, key);
+	iterator =  SortedListFindIf(SortedListBegin((sorted_list_t *) pqueue),
+									SortedListEnd((sorted_list_t *) pqueue),
+									ismatch,
+									key);
+	data = SortedListGetData(iterator);
+
+	SortedListRemove(iterator);
 	
 	return data;
 }
 
 void PQClear(pqueue_t *pqueue)
 {
+	sorted_list_iter_t iterator;
+
 	ASSERT_NOT_NULL(pqueue);
 
-	while(!HeapIsEmpty((heap_t *) pqueue))
+	iterator = SortedListBegin((sorted_list_t *) pqueue);
+	while(!SortedListIsSame(iterator, SortedListEnd((sorted_list_t *) pqueue)))
 	{
-		HeapPop((heap_t *) pqueue);
+		iterator = SortedListRemove(iterator);
 	}
 }
 

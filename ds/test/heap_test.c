@@ -5,7 +5,7 @@
 
 #define ALL_PASS (3)
 
-int CmpInts(const void *lhs, const void* rhs)
+int CmpInts(void *lhs, void* rhs)
 {
 	return *(int*)lhs > *(int*)rhs;
 }
@@ -101,72 +101,52 @@ int InsertTest()
 
 int RemoveTest()
 {
-/*	avl_t *btree = NULL;
-	int array[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14};
+	heap_t *heap = NULL;
+	int array[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
 	size_t size = 0;
-	int i = 0;
-
 	printf("\n\nRemove test\n");
 
-	btree = AVLCreate(CmpInts);
+	heap = HeapCreate(CmpInts);
 
-	for (i = 0; i <= 14; ++i)
-	{
-		AVLInsert(btree, &array[i]);
-	}
-	size = AVLSize(btree);
+	HeapPush(heap, &array[5]);
+	HeapPush(heap, &array[4]);
+	HeapPush(heap, &array[7]);
+	HeapPush(heap, &array[5]);
+	HeapPush(heap, &array[2]);
+	HeapPush(heap, &array[6]);
+	HeapPush(heap, &array[3]);
+	HeapPush(heap, &array[5]);
+	HeapPush(heap, &array[9]);	
+	HeapPush(heap, &array[2]);
 
-	AVLRemove(btree, &array[2]);	
-	--size;
-	if (size != AVLSize(btree))
-	{
-		printf("Remove leaf failed\n");
-		printf("size = %lu\n", AVLSize(btree));
-		AVLDestroy(btree);
-		return 0;
-	}
-	
-	AVLRemove(btree, &array[5]);
-	--size;	
-	if (size != AVLSize(btree))
-	{
-		printf("Remove node with two leaves failed\n");
-		AVLDestroy(btree);
-		return 0;
-	}
+	size = HeapSize(heap);
 
-	AVLRemove(btree, &array[0]);
-	--size;
-	if (size != AVLSize(btree))
+	while (!HeapIsEmpty(heap))
 	{
-		printf("Remove End failed\n");
-		AVLDestroy(btree);
-		return 0;
-	}
-	
-	AVLRemove(btree, &array[6]);
-	--size;
-	if (size != AVLSize(btree))
-	{
-		printf("Remove subtree failed\n");
-		AVLDestroy(btree);
-		return 0;
+		printf("next = %d\n", *(int*)HeapPeek(heap));
+		HeapPop(heap);
+		--size;
+		if (size != HeapSize(heap))
+		{
+			printf("Pop failed\n");
+			HeapDestroy(heap);
+			return 0;
+		}
 	}
 
-	AVLRemove(btree, &array[7]);
-	--size;
-	if (size != AVLSize(btree))
+/*	HeapRemove(heap, Search, &array[6]);
+	if (7 != HeapSize(heap))
 	{
-		printf("Remove root failed\n");
-		AVLDestroy(btree);
+		printf("Remove failed\n");
+		HeapDestroy(heap);
 		return 0;
 	}
+*/	
+	HeapDestroy(heap);
 
 	printf("passed\n");
+	return 1;
 
-	AVLDestroy(btree);
-
-*/	return 1;
 }
 
 int main()
