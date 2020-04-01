@@ -2,8 +2,9 @@
  *	Title:		DHCP
  *	Authour:	Alistair Hudson
  *	Reviewer:	Shmuel
- *	Version:	30.03.2020.0
+ *	Version:	01.04.2020.0
  ******************************************************************************/
+#include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>		/* assert */
 
@@ -11,10 +12,11 @@
 
 /******MACROS******/
 #define ASSERT_NOT_NULL(ptr)	(assert(NULL != ptr))
-#define MAX_BITS				(32)
-#define FULL_MASK				(~0x0)
+#define MAX_BITS				(31) /*The 0th bit is included in this number*/
+#define FULL_MASK				(0xFFFFFFFF)
 #define BIT_MASK				(1)
 #define BYTE_SHIFT				(8)
+#define CHAR_MAX				(255)
 
 /******TYPEDEFS, GLOBAL VARIABLES AND INTERNAL FUNCTIONS******/
 struct dhcp
@@ -39,15 +41,21 @@ static ip_t server_add = {255, 255, 255, 254};
 
 static DHCP_status_t AllocateImp(trie_node_t* node, size_t address, size_t shift);
 
+static DHCP_status_t IsFreeAddress(trie_node_t* node, size_t address, size_t shift);
+
 static trie_node_t* CreateNode(void);
+
+static void CopyAddress(ip_t src, ip_t des);
 
 static void FreeImp(trie_node_t* node, size_t address, size_t shift);
 
-static size_t SizeSupport(trie_node_t* node);
+static size_t CountSupport(trie_node_t* node, size_t level);
 
 static void DestroySupport(trie_node_t* node);
 
 static size_t ConvertAddress(ip_t address);
+
+static void IncrementReturn(ip_t return_addr, int index);
 
 /******FUNCTIONS******/
 dhcp_t *DHCPCreate(ip_t network, size_t subnet_num_of_bits)
@@ -59,11 +67,7 @@ dhcp_t *DHCPCreate(ip_t network, size_t subnet_num_of_bits)
 	{
 		return NULL;
 	}
-
-	new_dhcp->network[0] = network[0];
-	new_dhcp->network[1] = network[1];
-	new_dhcp->network[2] = network[2];
-	new_dhcp->network[3] = network[3];
+	CopyAddress(network, new_dhcp->network);
 	new_dhcp->subnet_num_of_bits = subnet_num_of_bits;
 
 	new_dhcp->root = CreateNode();
@@ -108,8 +112,8 @@ static size_t ConvertAddress(ip_t address)
 	int index = 0;
 	for (index = 0; index < CHARIP_SIZE; ++index)
 	{
-		output |= address[index];
 		output <<= BYTE_SHIFT;
+		output |= address[index];
 	}
 	return output;
 }
@@ -140,24 +144,97 @@ static void DestroySupport(trie_node_t* node)
 
 DHCP_status_t DHCPAllocate(dhcp_t *dhcp, ip_t propose_addr, ip_t return_addr)
 {
-	size_t MASK = 0;
+	size_t MASK = FULL_MASK;
+	DHCP_status_t status = SYSTEM_FAIL;
 
 	ASSERT_NOT_NULL(dhcp);
-	
-	if (dhcp->network != 0/*start of propose_addr*/)
+
+	MASK >>= dhcp->subnet_num_of_bits;
+	MASK ^= FULL_MASK;	
+	if ((ConvertAddress(dhcp->network) & MASK) != 
+			(ConvertAddress(propose_addr) & MASK) && 
+			0 != ConvertAddress(propose_addr))
 	{
 		return SYSTEM_FAIL;
 	}
-	MASK = FULL_MASK >> dhcp->subnet_num_of_bits;
+	MASK ^= FULL_MASK;
+	if (dhcp->root->is_full)
+	{
+		return SUB_NET_FULL;
+	}
+	if(0 == ConvertAddress(propose_addr))
+	{
+		CopyAddress(dhcp->network, return_addr);
+		++return_addr[CHARIP_SIZE - 1];
+	}
+	else
+	{
+		CopyAddress(propose_addr, return_addr);
+	}
+	while (SUCCESS != 
+		(status = IsFreeAddress(dhcp->root, ConvertAddress(return_addr) & MASK, 
+		MAX_BITS - dhcp->subnet_num_of_bits)))
+	{
+		if(((ConvertAddress(broadcast_add) & MASK) == (ConvertAddress(return_addr) & MASK)) || 
+		((ConvertAddress(server_add) & MASK) == (ConvertAddress(return_addr) & MASK)))
+		{
+			CopyAddress(dhcp->network, return_addr);
+		}
 
-	return AllocateImp(dhcp->root, ConvertAddress(propose_addr) & MASK, 
+		IncrementReturn(return_addr, CHARIP_SIZE - 1);
+	}	
+	status = AllocateImp(dhcp->root, ConvertAddress(return_addr) & MASK, 
 										MAX_BITS - dhcp->subnet_num_of_bits);
+	return status;
+}
 
+static void IncrementReturn(ip_t return_addr, int index)
+{
+	if (0 > index)
+	{
+		return;
+	}
+	if (CHAR_MAX == return_addr[index])
+	{
+		IncrementReturn(return_addr, index - 1);
+		return_addr[index] = 0;
+	}
+	else 
+	{
+		++return_addr[index];
+	}
+}
+
+static void CopyAddress(ip_t src, ip_t dest)
+{
+	size_t index = 0;
+	for (index = 0; index < CHARIP_SIZE; ++index)
+	{
+		dest[index] = src[index];
+	}
+}
+
+static DHCP_status_t IsFreeAddress(trie_node_t* node, size_t address, size_t shift)
+{
+	size_t direction = (address >> shift) & BIT_MASK;
+
+	if (node->is_full)
+	{
+		return SUB_NET_FULL;
+	}
+	if(NULL == node->children[direction])
+	{
+		return SUCCESS;
+	}
+	return IsFreeAddress(node->children[direction], address, shift - 1);
+	
 }
 
 static DHCP_status_t AllocateImp(trie_node_t* node, size_t address, size_t shift)
 {
 	size_t direction = (address >> shift) & BIT_MASK;
+	DHCP_status_t status = SUCCESS;
+
 	if(NULL == node->children[direction])
 	{
 		if (0 == shift)
@@ -170,18 +247,19 @@ static DHCP_status_t AllocateImp(trie_node_t* node, size_t address, size_t shift
 		{
 			return SYSTEM_FAIL;
 		}
-		return AllocateImp(node->children[direction], address, shift - 1);
-	}
-	if (node->is_full)
-	{
-		return SUB_NET_FULL;
-	}	
-	if(SUB_NET_FULL == AllocateImp(node->children[direction], address, shift - 1))
-	{
-		return AllocateImp(node->children[direction ^ BIT_MASK], address, shift - 1);
 	}
 
-	return AllocateImp(node->children[direction], address, shift - 1);
+	status = AllocateImp(node->children[direction], address, shift - 1);
+
+	if ((SUCCESS == status) && (NULL != node->children[direction ^ BIT_MASK]))
+	{
+		if (node->children[ZERO]->is_full && node->children[ONE]->is_full)
+		{
+			node->is_full = 1;
+		}
+	}
+
+	return status;
 }
 
 static trie_node_t* CreateNode(void)
@@ -199,22 +277,26 @@ static trie_node_t* CreateNode(void)
 
 void DHCPFree(dhcp_t *dhcp, ip_t key)
 {
-	size_t MASK = 0;
+	size_t MASK = FULL_MASK;
 
 	ASSERT_NOT_NULL(dhcp);
-	if (dhcp->network != 0/*start of propose_addr*/)
+	MASK >>= dhcp->subnet_num_of_bits;
+	MASK ^= FULL_MASK;
+	if ((ConvertAddress(dhcp->network) & MASK) != 
+											(ConvertAddress(key) & MASK))
 	{
 		return;
 	}
-	
-	if(/*network address*/0 == key || 0/*broadcast address*/ == key || 
-													0/*server address*/ == key)
+	MASK ^= FULL_MASK;	
+	if(((ConvertAddress(network_add) & MASK) == (ConvertAddress(key) & MASK)) || 
+	((ConvertAddress(broadcast_add) & MASK) == (ConvertAddress(key) & MASK)) || 
+		((ConvertAddress(server_add) & MASK) == (ConvertAddress(key) & MASK)))
 	{
 		return;
 	}
-	MASK = FULL_MASK >> dhcp->subnet_num_of_bits;
 
-	FreeImp(dhcp->root, (ConvertAddress(network_add) % MASK), 
+
+	FreeImp(dhcp->root, (ConvertAddress(key) & MASK), 
 										MAX_BITS - dhcp->subnet_num_of_bits);
 	
 }
@@ -232,20 +314,35 @@ static void FreeImp(trie_node_t* node, size_t address, size_t shift)
 
 size_t CountFree(dhcp_t *dhcp)
 {
-	return 0;
+	size_t max_adds = 0;
+	
+	ASSERT_NOT_NULL(dhcp);
+	
+	max_adds = (BIT_MASK << (MAX_BITS - dhcp->subnet_num_of_bits + 1)) - 1;
+	return max_adds - CountSupport(dhcp->root, MAX_BITS - dhcp->subnet_num_of_bits);
 }
 
-static size_t CountSupport(trie_node_t* node)
+static size_t CountSupport(trie_node_t* node, size_t level)
 {
-/*	if (NULL != node->children[ZERO])
+	size_t count = 0;
+	if (node->is_full)
 	{
-		count += CountSupport(node->children[ZERO]);
+		return BIT_MASK << level;
 	}
-	if (NULL != node->children[ONE])
+	if (0 == level)
 	{
-		count += node->children[ONE];
+		return 0;
 	}
-*/	return 0;
+	if(NULL != node->children[ZERO])
+	{
+		count += CountSupport(node->children[ZERO], level -1);
+	}
+	if(NULL != node->children[ONE])
+	{
+		count += CountSupport(node->children[ONE], level -1);
+	}
+
+	return count;
 }
 
 

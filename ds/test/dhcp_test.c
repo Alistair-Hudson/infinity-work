@@ -5,11 +5,24 @@
 
 #define ALL_PASS (3)
 
+int AddressIsEqual(ip_t add1, ip_t add2)
+{
+	size_t index = 0;
+	for(index = 0; index < CHARIP_SIZE; ++index)
+	{
+		if (add1[index] != add2[index])
+		{
+			return 0;
+		}
+	}
+	return 1;
+}
+
 int Stage1Test()
 {
 	dhcp_t *dhcp = NULL;
-	ip_t network = {192, 168, 0, 0};
-	size_t subnet_bits = 10;
+	ip_t network = {192, 168, 1, 0};
+	size_t subnet_bits = 24;
 
 	printf("\n\nStage 1 test\n");
 
@@ -20,12 +33,13 @@ int Stage1Test()
 		return 0;
 	}
 
-/*	if (0 != CountFree(dhcp))
+	if (253 != CountFree(dhcp))
 	{
 		printf("Count Free failed\n");
+		printf("%d\n",CountFree(dhcp));
 	}
 		
-*/
+
 	DHCPDestroy(dhcp);
 	
 	printf("passed\n");
@@ -34,141 +48,151 @@ int Stage1Test()
 
 int AllocateTest()
 {
-/*	avl_t *btree = NULL;
-	int array[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+	dhcp_t *dhcp = NULL;
+	ip_t network = {192, 168,1, 0};
+	ip_t not_in_network = {193, 165, 1, 5};
+	ip_t auto_add = {0, 0, 0, 0};
+	ip_t added_add = {192, 168, 1, 68};
+	ip_t broadcast_add = {192, 168, 1, 255};
+	ip_t return_addr = {0, 0, 0, 0};
+	size_t subnet_bits = 24;
 
-	printf("\n\nInsert test\n");
 
-	btree = AVLCreate(CmpInts);
+	printf("\n\nAllocate test\n");
+	dhcp = DHCPCreate(network, subnet_bits);
 
-	AVLInsert(btree, &array[5]);
-
-	if (AVLIsEmpty(btree))
+	if (SYSTEM_FAIL != DHCPAllocate(dhcp, not_in_network, return_addr))
 	{
-		printf("Insert first failed\n");
-		AVLDestroy(btree);
-		return 0;
-	}	
-	if (1 != AVLSize(btree))
-	{
-		printf("Size of 1 failed\n");
-		AVLDestroy(btree);
-		return 0;
-	}
-	if (0 != AVLHeight(btree))
-	{
-		printf("Height of 1 node failed\n");
-		AVLDestroy(btree);
-		return 0;		
-	}
-	
-	AVLInsert(btree, &array[2]);
-	if (2 != AVLSize(btree))
-	{
-		printf("Insert left failed\n");
-		AVLDestroy(btree);
-		return 0;
-	}
-	if (1 != AVLHeight(btree))
-	{
-		printf("Height of 2 nodes failed\n");
-		AVLDestroy(btree);
-		return 0;		
-	}
-	
-	AVLInsert(btree, &array[6]);
-	AVLInsert(btree, &array[4]);
-	if (4 != AVLSize(btree))
-	{
-		printf("Insert right failed\n");
-		printf("size = %u\n", AVLSize(btree));
-		AVLDestroy(btree);
+		printf("Allocate to wrong network failed\n");
+		DHCPDestroy(dhcp);
 		return 0;
 	}
 	
-	AVLInsert(btree, &array[9]);
-	if (5 != AVLSize(btree))
+	if (SUCCESS != DHCPAllocate(dhcp, added_add, return_addr))
 	{
-		printf("Insert to end failed\n");
-		printf("size = %u\n", AVLSize(btree));
-		AVLDestroy(btree);
+		printf("Allocate w/out success failed\n");
+		DHCPDestroy(dhcp);
+		return 0;
+	}
+	if (!AddressIsEqual(added_add, return_addr))
+	{
+		printf("Allocate failed\n");
+		DHCPDestroy(dhcp);
 		return 0;
 	}
 
-	AVLDestroy(btree);
+	if (SUCCESS != DHCPAllocate(dhcp, broadcast_add, return_addr))
+	{
+		printf("Allocate Broadcast address w/out success failed\n");
+		DHCPDestroy(dhcp);
+		return 0;
+	}
+	printf("%d, %d, %d, %d\n", return_addr[0], return_addr[1], return_addr[2], return_addr[3]);
+	if (AddressIsEqual(broadcast_add, return_addr))
+	{
+		printf("Allocate broadcast address failed\n");
+		DHCPDestroy(dhcp);
+		return 0;
+	}
+
+	if (SUCCESS != DHCPAllocate(dhcp, added_add, return_addr))
+	{
+		printf("Allocate taken address w/out success failed\n");
+		DHCPDestroy(dhcp);
+		return 0;
+	}
+	added_add[3] += 2;
+	if (!AddressIsEqual(added_add, return_addr))
+	{
+		printf("Allocate taken address failed\n");
+		DHCPDestroy(dhcp);
+		return 0;
+	}
+
+	if (SUCCESS != DHCPAllocate(dhcp, auto_add, return_addr))
+	{
+		printf("Allocate auto address w/out success failed\n");
+		DHCPDestroy(dhcp);
+		return 0;
+	}
+	DHCPAllocate(dhcp, auto_add, return_addr);
+	auto_add[0] = network[0];
+	auto_add[1] = network[1];
+	auto_add[2] = network[2];
+	auto_add[3] = network[3];
+	auto_add[3] += 6;
+	if (!AddressIsEqual(auto_add, return_addr))
+	{
+		printf("Allocate auto address failed\n");
+		printf("%d, %d, %d, %d\n", return_addr[0], return_addr[1], return_addr[2], return_addr[3]);
+		DHCPDestroy(dhcp);
+		return 0;
+	}
+
+	DHCPDestroy(dhcp);
 
 	printf("passed\n");
-*/	return 1;
+	return 1;
 }
 
 int FreeTest()
 {
-/*	avl_t *btree = NULL;
-	int array[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14};
-	size_t size = 0;
-	int i = 0;
+	dhcp_t *dhcp = NULL;
+	ip_t network = {192, 168, 0, 0};
+	ip_t broadcast = {192, 168,  255, 255};
+	ip_t server = {192, 168, 255, 254};
+	ip_t not_in_network = {193, 165, 1, 5};
+	ip_t return_addr = {0, 0, 0, 0};
+	ip_t auto_add = {0, 0, 0, 0};
+	size_t subnet_bits = 16;
+	size_t num_free = 0;
 
-	printf("\n\nRemove test\n");
-
-	btree = AVLCreate(CmpInts);
-
-	for (i = 0; i <= 14; ++i)
-	{
-		AVLInsert(btree, &array[i]);
-	}
-	size = AVLSize(btree);
-
-	AVLRemove(btree, &array[2]);	
-	--size;
-	if (size != AVLSize(btree))
-	{
-		printf("Remove leaf failed\n");
-		printf("size = %lu\n", AVLSize(btree));
-		AVLDestroy(btree);
-		return 0;
-	}
+	printf("\n\nFree test\n");
+	dhcp = DHCPCreate(network, subnet_bits);
+	num_free = CountFree(dhcp);
 	
-	AVLRemove(btree, &array[5]);
-	--size;	
-	if (size != AVLSize(btree))
+	DHCPFree(dhcp, not_in_network);
+	if (num_free != CountFree(dhcp))
 	{
-		printf("Remove node with two leaves failed\n");
-		AVLDestroy(btree);
+		printf("Free from wrong network failed\n");
+		DHCPDestroy(dhcp);
+		return 0;
+	}
+	DHCPFree(dhcp, network);
+	if (num_free != CountFree(dhcp))
+	{
+		printf("Attempt to Free network failed\n");
+		DHCPDestroy(dhcp);
+		return 0;
+	}
+	DHCPFree(dhcp, broadcast);
+	if (num_free != CountFree(dhcp))
+	{
+		printf("Attempt to Free broadcast failed\n");
+		DHCPDestroy(dhcp);
+		return 0;
+	}
+	DHCPFree(dhcp, server);
+	if (num_free != CountFree(dhcp))
+	{
+		printf("Atempt to Free server failed\n");
+		DHCPDestroy(dhcp);
+		return 0;
+	}
+	DHCPAllocate(dhcp, auto_add, return_addr);
+	DHCPAllocate(dhcp, auto_add, return_addr);
+	DHCPFree(dhcp, return_addr);
+	if ((num_free - 1) != CountFree(dhcp))
+	{
+		printf("Atempt to Free failed\n");
+		DHCPDestroy(dhcp);
 		return 0;
 	}
 
-	AVLRemove(btree, &array[0]);
-	--size;
-	if (size != AVLSize(btree))
-	{
-		printf("Remove End failed\n");
-		AVLDestroy(btree);
-		return 0;
-	}
-	
-	AVLRemove(btree, &array[6]);
-	--size;
-	if (size != AVLSize(btree))
-	{
-		printf("Remove subtree failed\n");
-		AVLDestroy(btree);
-		return 0;
-	}
-
-	AVLRemove(btree, &array[7]);
-	--size;
-	if (size != AVLSize(btree))
-	{
-		printf("Remove root failed\n");
-		AVLDestroy(btree);
-		return 0;
-	}
+	DHCPDestroy(dhcp);
 
 	printf("passed\n");
-
-	AVLDestroy(btree);
-
-*/	return 1;
+	return 1;
 }
 
 int main()
