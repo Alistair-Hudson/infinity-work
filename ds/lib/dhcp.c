@@ -70,7 +70,7 @@ dhcp_t *DHCPCreate(ip_t network, size_t subnet_num_of_bits)
 	CopyAddress(network, new_dhcp->network);
 	new_dhcp->subnet_num_of_bits = subnet_num_of_bits;
 
-	new_dhcp->root = CreateNode();
+	new_dhcp->root = CreateNode();/*TODO*/
 	if (NULL == new_dhcp->root)
 	{
 		free(new_dhcp);
@@ -174,7 +174,7 @@ DHCP_status_t DHCPAllocate(dhcp_t *dhcp, ip_t propose_addr, ip_t return_addr)
 	while (SUCCESS != 
 		(status = IsFreeAddress(dhcp->root, ConvertAddress(return_addr) & MASK, 
 		MAX_BITS - dhcp->subnet_num_of_bits)))
-	{
+	{/*TODO sto at system failure*/
 		if(((ConvertAddress(broadcast_add) & MASK) == (ConvertAddress(return_addr) & MASK)) || 
 		((ConvertAddress(server_add) & MASK) == (ConvertAddress(return_addr) & MASK)))
 		{
@@ -263,7 +263,7 @@ static DHCP_status_t AllocateImp(trie_node_t* node, size_t address, size_t shift
 }
 
 static trie_node_t* CreateNode(void)
-{
+{/*TODO*/
 	trie_node_t* new_node = malloc(sizeof(struct trie_node));
 	if(NULL == new_node)
 	{
