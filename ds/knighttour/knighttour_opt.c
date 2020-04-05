@@ -69,6 +69,8 @@ static int KTSolve(size_t visitation_map,
 			sort moves from lowest next possible to highest
 ----------------------------------------------------------------------------*/
 	/*for warnsdorff_move index 0 until 8
+			if 8 == warnsdorff[index]
+				return fail
 			if success == KTSolve(visitation_map, warnsdorff_move[index], path + 1, step - 1)
 				record step
 				return success
@@ -105,7 +107,8 @@ static int KTNextMove(int location, size_t move)
 }
 
 static void WarnsdorffSoln(int location, int *warnsdorff_moves, size_t visitation_map)
-{
+{	/*8 Signals that there are no more possible moves as the maximum possible
+		moves is 7*/
 	/*for move 0 until 8
 		if move ILLEGAL_MOVE
 			moves_after[move] = 8
