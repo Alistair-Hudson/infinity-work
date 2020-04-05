@@ -62,9 +62,14 @@ static int KTSolve(size_t visitation_map,
 
 	/*Set location in visitation_map to visited*/
 
-	/*for moves 0 until 8
-		if NextMove not ILLEGAL_MOVE
-			if success == KTSolve(visitation_map, NextMove, path + 1, step - 1)
+	/*Warnsdorff soln*/
+/*-----------------------------------------------------------------------------
+		for move 0 until 8
+			find how many possible moves are avaliable at this next location
+			sort moves from lowest next possible to highest
+----------------------------------------------------------------------------*/
+	/*for warnsdorff_move index 0 until 8
+			if success == KTSolve(visitation_map, warnsdorff_move[index], path + 1, step - 1)
 				record step
 				return success
 	*/
@@ -99,7 +104,25 @@ static int KTNextMove(int location, size_t move)
 	/*return location + LUT[x][move] + 8*LUT[y][move]*/
 }
 
-
+static void WarnsdorffSoln(int location, int *warnsdorff_moves, size_t visitation_map)
+{
+	/*for move 0 until 8
+		if move ILLEGAL_MOVE
+			moves_after[move] = 8
+		if move visited
+			moves_after[move] = 8
+		for next_move 0 until 8
+			if NextMove is not ILLEGAL_MOVE
+				if NextMove not visited
+					++moves_after[move]
+	*/
+	/*for move 0 until 8
+		if move has smallest after
+			*warnsdirff_moves = move
+			++warnsdorff_moves
+			move_after = 8
+	*/		
+}
 
 
 
