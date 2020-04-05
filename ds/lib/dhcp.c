@@ -1,352 +1,415 @@
-/******************************************************************************
- *	Title:		DHCP
- *	Authour:	Alistair Hudson
- *	Reviewer:	Shmuel
- *	Version:	01.04.2020.0
- ******************************************************************************/
-#include <stdio.h>
+/*******************************************************************************
+                                 * DHCP * 
+*******************************************************************************/
+#include "dhcp.h"	/* size_t */
 #include <stdlib.h>
-#include <assert.h>		/* assert */
+#include <stdio.h>
+/*enum child_t TODO this is an issue on my end
+{
+    ZERO,
+    ONE,
+    NUM_OF_CHILDREN
+};
 
-#include "dhcp.h"
-
-/******MACROS******/
-#define ASSERT_NOT_NULL(ptr)	(assert(NULL != ptr))
-#define MAX_BITS				(31) /*The 0th bit is included in this number*/
-#define FULL_MASK				(0xFFFFFFFF)
-#define BIT_MASK				(1)
-#define BYTE_SHIFT				(8)
-#define CHAR_MAX				(255)
-
-/******TYPEDEFS, GLOBAL VARIABLES AND INTERNAL FUNCTIONS******/
+typedef struct trie_node
+{
+    struct trie_node *children[NUM_OF_CHILDREN];
+    int is_full;
+} trie_node_t; TODO you redefined here, trie_node_t is defined in the .h file
+*/
 struct dhcp
 {
     ip_t network;
-    size_t subnet_num_of_bits;
+    size_t height;
     trie_node_t *root;
 };
+/******************************************************************************/
+#define SIZE_IP (32)
+#define RESERVED (3)
 
-struct trie_node
-{
-    trie_node_t* children[NUM_OF_CHILDREN];
-    int is_full;
-};
+void Destroy                        (trie_node_t *node);
+int NoPropose                       (ip_t propose_addr);
+size_t  LeafCount                   (trie_node_t *node);
+static void PrintBitArr             (int bitarr);
 
-static ip_t network_add = {0, 0, 0, 0};
+static trie_node_t *CreateNode      (void);
+static int IsFULL                   (trie_node_t *node);
+static int IsExist                  (trie_node_t * node);
+static int IsNextWasZero            (int path, size_t height);
 
-static ip_t broadcast_add = {255, 255, 255, 255};
+static void CopyIP                  (unsigned char* source, unsigned char* dest);
+static int ConvertToBitarr          (dhcp_t *server, ip_t ip);
+static void ConvertToIP             (dhcp_t *server, int path , ip_t ip);
+static int IsFullFamily             (trie_node_t*node);
 
-static ip_t server_add = {255, 255, 255, 254};
+static void ReverseStr              (unsigned char* str, size_t size);
+static void SwapChar                (unsigned char *ch1, unsigned char*ch2);
 
+static int SubRemove                (int path,size_t height ,trie_node_t *node);
+static DHCP_status_t FillReservedIP (dhcp_t * dhcp);
+DHCP_status_t  IPPath               (trie_node_t **node, int *path,size_t height);
 
-static DHCP_status_t AllocateImp(trie_node_t* node, size_t address, size_t shift);
-
-static DHCP_status_t IsFreeAddress(trie_node_t* node, size_t address, size_t shift);
-
-static trie_node_t* CreateNode(void);
-
-static void CopyAddress(ip_t src, ip_t des);
-
-static void FreeImp(trie_node_t* node, size_t address, size_t shift);
-
-static size_t CountSupport(trie_node_t* node, size_t level);
-
-static void DestroySupport(trie_node_t* node);
-
-static size_t ConvertAddress(ip_t address);
-
-static void IncrementReturn(ip_t return_addr, int index);
-
-/******FUNCTIONS******/
+/*******************************************************************************
+*Input: ip_t address to the network, and the number of bits of the subnet
+*Process:
+* - The following addresses are reserve:
+    0.0.0.0
+    255.255.255.255 for broadcast
+    255.255.255.254 for server
+*Return: dhcp_t struct that contains pointer to the root, ip_t network, and
+*number of bits at the subnet.
+*******************************************************************************/
 dhcp_t *DHCPCreate(ip_t network, size_t subnet_num_of_bits)
 {
-	size_t MASK = 0;
+    dhcp_t *server = malloc(sizeof(dhcp_t));
+    if (NULL == server)
+    {
+        return NULL;
+    }
 
-	dhcp_t* new_dhcp = malloc(sizeof(struct dhcp));
-	if(NULL == new_dhcp)
-	{
-		return NULL;
-	}
-	CopyAddress(network, new_dhcp->network);
-	new_dhcp->subnet_num_of_bits = subnet_num_of_bits;
+    server->root = CreateNode();
+    if(NULL == server->root)
+    {
+        free(server->root);
+        server->root = NULL;
+        
+        return NULL;
+    }
 
-	new_dhcp->root = CreateNode();/*TODO*/
-	if (NULL == new_dhcp->root)
-	{
-		free(new_dhcp);
-		return NULL;
-	}
+    CopyIP((unsigned char*)network, (unsigned char*)server->network);
+    server->height = SIZE_IP - subnet_num_of_bits;
+    
+    if (SYSTEM_FAIL == FillReservedIP(server))
+    {
+        DHCPDestroy(server);
+        return NULL;
+    }
 
-	MASK = FULL_MASK >> subnet_num_of_bits;
-	/*ALLOCATE NETWORK*/
-	if (SUCCESS != AllocateImp(new_dhcp->root, (ConvertAddress(network_add) & MASK), 
-										MAX_BITS - new_dhcp->subnet_num_of_bits))
-	{
-		DestroySupport(new_dhcp->root);
-		free(new_dhcp);
-		return NULL;	
-	}
-	/*ALLOCATE BROADCAST*/
-	if (SUCCESS != AllocateImp(new_dhcp->root, (ConvertAddress(broadcast_add) & MASK), 
-										MAX_BITS - new_dhcp->subnet_num_of_bits))
-	{
-		DestroySupport(new_dhcp->root);
-		free(new_dhcp);
-		return NULL;	
-	}
-	/*ALLOCATE SERVER*/
-	if (SUCCESS != AllocateImp(new_dhcp->root, (ConvertAddress(server_add) & MASK), 
-										MAX_BITS - new_dhcp->subnet_num_of_bits))
-	{
-		DestroySupport(new_dhcp->root);
-		free(new_dhcp);
-		return NULL;	
-	}
-	
-	return new_dhcp;
+    return server;
 }
-
-static size_t ConvertAddress(ip_t address)
-{
-	size_t output = 0;
-	int index = 0;
-	for (index = 0; index < CHARIP_SIZE; ++index)
-	{
-		output <<= BYTE_SHIFT;
-		output |= address[index];
-	}
-	return output;
-}
-
+/*******************************************************************************
+*Input: pointer to dhcp_t struct
+*Process: free the dhcp_t struct
+*******************************************************************************/
 void DHCPDestroy(dhcp_t *dhcp)
 {
-	ASSERT_NOT_NULL(dhcp);
-	if (NULL != dhcp->root)
-	{
-		DestroySupport(dhcp->root);
-	}
-	free(dhcp);
+    Destroy(dhcp->root);
+    
+    free(dhcp);
+    dhcp = NULL;
 }
 
-static void DestroySupport(trie_node_t* node)
+void Destroy(trie_node_t *node)
 {
-	if (NULL != node->children[ZERO])
-	{
-		DestroySupport(node->children[ZERO]);
-	}
-	if (NULL != node->children[ONE])
-	{
-		DestroySupport(node->children[ONE]);
-	}
-	free(node);
-	node = NULL;
+    if (NULL == node)
+    {
+        return;
+    }
+    
+    Destroy(node->children[ZERO]);
+    Destroy(node->children[ONE]);
+    
+    free(node);
+    node = NULL;
 }
+
+/*******************************************************************************
+*Input: pointer to dhcp_t struct, a propose_address to be allocated, the final
+* address where the address will be allocated.
+*Process: The program will look it the propose_address is free and allocated an
+* address with this Ip. If the propose_address occupied, the following closet
+* address will be use.
+* Return: DHCP_status_t can be:
+                                SUCCESS,
+                                SYSTEM_FAIL,
+                                SUB_NET_FULL,
+*******************************************************************************/
 
 DHCP_status_t DHCPAllocate(dhcp_t *dhcp, ip_t propose_addr, ip_t return_addr)
 {
-	size_t MASK = FULL_MASK;
-	DHCP_status_t status = SYSTEM_FAIL;
+    DHCP_status_t status = SUCCESS;
+    size_t size = CountFree(dhcp);
+    int path = 0;
+    
+    if (size == 0)
+    {
+        return SUB_NET_FULL;
+    }
 
-	ASSERT_NOT_NULL(dhcp);
+    path = ConvertToBitarr(dhcp,propose_addr);
 
-	MASK >>= dhcp->subnet_num_of_bits;
-	MASK ^= FULL_MASK;	
-	if ((ConvertAddress(dhcp->network) & MASK) != 
-			(ConvertAddress(propose_addr) & MASK) && 
-			0 != ConvertAddress(propose_addr))
-	{
-		return SYSTEM_FAIL;
-	}
-	MASK ^= FULL_MASK;
-	if (dhcp->root->is_full)
-	{
-		return SUB_NET_FULL;
-	}
-	if(0 == ConvertAddress(propose_addr))
-	{
-		CopyAddress(dhcp->network, return_addr);
-		++return_addr[CHARIP_SIZE - 1];
-	}
-	else
-	{
-		CopyAddress(propose_addr, return_addr);
-	}
-	while (SUCCESS != 
-		(status = IsFreeAddress(dhcp->root, ConvertAddress(return_addr) & MASK, 
-		MAX_BITS - dhcp->subnet_num_of_bits)))
-	{/*TODO sto at system failure*/
-		if(((ConvertAddress(broadcast_add) & MASK) == (ConvertAddress(return_addr) & MASK)) || 
-		((ConvertAddress(server_add) & MASK) == (ConvertAddress(return_addr) & MASK)))
-		{
-			CopyAddress(dhcp->network, return_addr);
-		}
+    status = IPPath(&(dhcp->root),&path ,dhcp->height);
+    
+    ConvertToIP(dhcp, path, return_addr);
 
-		IncrementReturn(return_addr, CHARIP_SIZE - 1);
-	}	
-	status = AllocateImp(dhcp->root, ConvertAddress(return_addr) & MASK, 
-										MAX_BITS - dhcp->subnet_num_of_bits);
-	return status;
+    return status; 
 }
 
-static void IncrementReturn(ip_t return_addr, int index)
+DHCP_status_t  IPPath(trie_node_t **node, int *path, size_t height)
+{/*TODO warning reaches end of non-void, see if you can remake the if/else
+	into a way where when all else fails return*/
+    int side = IsOn(*path, height-1);
+    int returned_path = *path;
+    DHCP_status_t status = SUCCESS; 
+
+    if (!IsExist(*node))
+    {
+        *node = CreateNode();
+        if (!IsExist(*node))
+        {
+           return SYSTEM_FAIL; 
+        }
+
+        if (0 == height && !IsFULL(*node))
+        {
+            (*node)->is_full = 1;
+            return SUCCESS;
+        }
+
+        status = SUCCESS;
+    }
+    if (IsFULL(*node))
+    {
+        return  PROPOSE_FULL;/*TODO what is this, not in the .h file*/
+    }
+
+    if (SUCCESS == (status = IPPath(&((*node)->children[side]), path, height-1)))
+    {
+       if( IsFullFamily(*node))
+        {
+            (*node)->is_full = 1;
+        }
+
+        return status;
+    }
+    else if (!IsNextWasZero(*path, height))
+    {
+        return PROPOSE_FULL;
+    }
+    else 
+    {
+        while(!IsOn(*path, height-1))
+        {
+            (*path)+=1;
+        }
+        
+        status = IPPath(&((*node)->children[IsOn(*path, height-1)]), path, height-1);
+        if (status == SUCCESS)
+        {
+            if( IsFullFamily(*node))
+            {
+                (*node)->is_full = 1;
+            }
+        }
+       
+        return status; 
+    }
+   
+}
+
+/******************************************************************************/
+int IsOn(int bits_array, int index)
 {
-	if (0 > index)
-	{
-		return;
-	}
-	if (CHAR_MAX == return_addr[index])
-	{
-		IncrementReturn(return_addr, index - 1);
-		return_addr[index] = 0;
-	}
-	else 
-	{
-		++return_addr[index];
-	}
+    return (0 !=(bits_array &(1 << index)));
 }
 
-static void CopyAddress(ip_t src, ip_t dest)
+static int IsFULL(trie_node_t *node)
 {
-	size_t index = 0;
-	for (index = 0; index < CHARIP_SIZE; ++index)
-	{
-		dest[index] = src[index];
-	}
+    return (node->is_full);
 }
 
-static DHCP_status_t IsFreeAddress(trie_node_t* node, size_t address, size_t shift)
+static int IsExist(trie_node_t * node)
 {
-	size_t direction = (address >> shift) & BIT_MASK;
-
-	if (node->is_full)
-	{
-		return SUB_NET_FULL;
-	}
-	if(NULL == node->children[direction])
-	{
-		return SUCCESS;
-	}
-	return IsFreeAddress(node->children[direction], address, shift - 1);
-	
+    return NULL != node;
 }
 
-static DHCP_status_t AllocateImp(trie_node_t* node, size_t address, size_t shift)
+static int IsNextWasZero(int path, size_t height)
 {
-	size_t direction = (address >> shift) & BIT_MASK;
-	DHCP_status_t status = SUCCESS;
-
-	if(NULL == node->children[direction])
-	{
-		if (0 == shift)
-		{
-			node->is_full = 1;
-			return SUCCESS;
-		}
-		node->children[direction] = CreateNode();
-		if(NULL == node->children[direction])
-		{
-			return SYSTEM_FAIL;
-		}
-	}
-
-	status = AllocateImp(node->children[direction], address, shift - 1);
-
-	if ((SUCCESS == status) && (NULL != node->children[direction ^ BIT_MASK]))
-	{
-		if (node->children[ZERO]->is_full && node->children[ONE]->is_full)
-		{
-			node->is_full = 1;
-		}
-	}
-
-	return status;
+    return !IsOn(path, height -1);
 }
 
-static trie_node_t* CreateNode(void)
-{/*TODO*/
-	trie_node_t* new_node = malloc(sizeof(struct trie_node));
-	if(NULL == new_node)
-	{
-		return NULL;
-	}
-	new_node->children[ZERO] = NULL;
-	new_node->children[ONE] = NULL;
-	new_node->is_full = 0;	
-	return new_node;
-}
-
+/*******************************************************************************
+*Input: pointer to dhcp_t struct and the Ip address (key) to be free
+*Process: free the location of the given ip address
+*******************************************************************************/
 void DHCPFree(dhcp_t *dhcp, ip_t key)
 {
-	size_t MASK = FULL_MASK;
+    int path = ConvertToBitarr(dhcp,key);
 
-	ASSERT_NOT_NULL(dhcp);
-	MASK >>= dhcp->subnet_num_of_bits;
-	MASK ^= FULL_MASK;
-	if ((ConvertAddress(dhcp->network) & MASK) != 
-											(ConvertAddress(key) & MASK))
-	{
-		return;
-	}
-	MASK ^= FULL_MASK;	
-	if(((ConvertAddress(network_add) & MASK) == (ConvertAddress(key) & MASK)) || 
-	((ConvertAddress(broadcast_add) & MASK) == (ConvertAddress(key) & MASK)) || 
-		((ConvertAddress(server_add) & MASK) == (ConvertAddress(key) & MASK)))
-	{
-		return;
-	}
+    SubRemove(path,dhcp->height ,dhcp->root);
 
-
-	FreeImp(dhcp->root, (ConvertAddress(key) & MASK), 
-										MAX_BITS - dhcp->subnet_num_of_bits);
-	
 }
-
-static void FreeImp(trie_node_t* node, size_t address, size_t shift)
+static int SubRemove(int path,size_t height ,trie_node_t *node)
 {
-	size_t direction = (address >> shift) & BIT_MASK;	
-	node->is_full = 0;
-	if(NULL == node->children[direction])
-	{
-		return;
-	}
-	FreeImp(node->children[direction], address, shift - 1);
-}
+    int side = 0;
+    int status = 0;
 
-size_t CountFree(dhcp_t *dhcp)
+    if(NULL == node)
+    {
+        return -1;
+    }
+
+    if (height == 0)
+    {
+        free(node);
+        node = NULL;
+
+        return 0;
+    }
+
+    side = IsOn(path, height-1);
+
+   if (-1 != (status = SubRemove(path, height-1, node->children[side])))
+   {
+        node->children[side] = NULL;
+
+        if (node->children[0] == NULL &&
+            node->children[1] == NULL)
+        {
+            free(node);
+            node = NULL;
+        }
+        else
+        {
+            status = -1;
+        }
+   }
+
+   return status;
+}
+/*******************************************************************************
+*Input: pointer to dhcp_t struct
+*Process: Calculate the number of free IPs available for allocation
+*Return: number of free IPs available for allocation
+*******************************************************************************/
+size_t CountFree(dhcp_t *dhcp)/*TODO conflicting type, maybe  an issue on my end*/
 {
-	size_t max_adds = 0;
-	
-	ASSERT_NOT_NULL(dhcp);
-	
-	max_adds = (BIT_MASK << (MAX_BITS - dhcp->subnet_num_of_bits + 1)) - 1;
-	return max_adds - CountSupport(dhcp->root, MAX_BITS - dhcp->subnet_num_of_bits);
-}
+    trie_node_t *node = dhcp->root;
+    size_t full_trie = 1 << (dhcp->height);
+    size_t Leaves = 0;
 
-static size_t CountSupport(trie_node_t* node, size_t level)
+    Leaves = LeafCount(node);
+    return(full_trie - Leaves);
+}
+size_t  LeafCount(trie_node_t *node)  
+{  
+    if (NULL == node)
+    {
+        return 0;
+    }
+
+    if(NULL == node->children[ZERO] && NULL == node->children[ONE]) 
+    {
+        return 1;          
+    } 
+        
+    return LeafCount(node->children[ZERO])+  
+            LeafCount(node->children[ONE]);  
+}  
+  
+/*******************************************************************************/
+
+static DHCP_status_t FillReservedIP(dhcp_t * dhcp)
 {
-	size_t count = 0;
-	if (node->is_full)
-	{
-		return BIT_MASK << level;
-	}
-	if (0 == level)
-	{
-		return 0;
-	}
-	if(NULL != node->children[ZERO])
-	{
-		count += CountSupport(node->children[ZERO], level -1);
-	}
-	if(NULL != node->children[ONE])
-	{
-		count += CountSupport(node->children[ONE], level -1);
-	}
+    ip_t broadcast = {255,255,255,255};
+    ip_t network = {255,255,255,254};
+    ip_t server = {0,0,0,0};
+    ip_t return_addr = {0};
+    DHCP_status_t status = SUCCESS;
 
-	return count;
+    if (SYSTEM_FAIL == (status = DHCPAllocate(dhcp, network, return_addr)))
+    {
+        DHCPDestroy(dhcp);
+        return status;
+    } 
+    
+    if (SYSTEM_FAIL == (status = DHCPAllocate(dhcp, broadcast, return_addr)))
+    {
+        DHCPDestroy(dhcp);
+        return status;
+    }
+    
+    if (SYSTEM_FAIL == (status = DHCPAllocate(dhcp, server, return_addr)))
+    {
+        DHCPDestroy(dhcp);
+        return status; 
+    }
+    
+    status = SUCCESS;
+    return status;
 }
 
+static trie_node_t *CreateNode()
+{
+    trie_node_t *node = malloc(sizeof(trie_node_t));
+    if(NULL == node)
+    {
+        return NULL;
+    }
+    node->is_full = 0;
+    node->children[ZERO] = NULL;
+    node->children[ONE] = NULL;
 
+    return node;
+}
+/*******************************************************************************/
+#define SIZE_CHAR (8)
+/* return bitarr last bit is the start of tries */
+static int ConvertToBitarr(dhcp_t *server, ip_t ip)/*TODO server unused*/
+{
+    int result  = 0;
+    
+    ReverseStr(ip,4); 
+    result = *(int *)ip;
+    
+    return result;
+}
 
+static void ConvertToIP(dhcp_t *server, int path , ip_t ip)/*TODO server unused*/
+{
+    unsigned char *to_ip = NULL;
+  
+    to_ip = ((unsigned char*)&path);
+    CopyIP(to_ip, (unsigned char*)ip);
+}
 
+static void ReverseStr(unsigned char* str, size_t size)
+{
+    unsigned char *start = (unsigned char *)str;
+    unsigned char *end = (unsigned char *)str + size - 1;
 
+    while(start < end)
+    {
+        SwapChar(start, end);
+        start++;
+        end--;
+    } 
+}
 
+static void SwapChar(unsigned char *ch1, unsigned char*ch2)
+{
+    unsigned char tmp = *ch1;
+    *ch1 = *ch2;
+    *ch2 = tmp;
+}
+
+static void CopyIP(unsigned char* source, unsigned char* dest)
+{
+  size_t i = 0;
+
+  for (i = 0; i < 4; i++)
+  {
+    dest[i] = source[i];
+  }
+}
+
+static int IsFullFamily(trie_node_t*node)
+{
+    if((node->children[ZERO]==NULL && node->children[ONE] !=NULL) ||
+        (node->children[ONE]==NULL && node->children[ZERO] !=NULL ))
+    {
+        return 0;
+    }
+    return ((node->children[ZERO]== NULL && node->children[ONE] ==NULL)||
+            (IsFULL(node->children[ZERO]) && IsFULL(node->children[ONE])));
+}
