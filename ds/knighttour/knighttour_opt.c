@@ -2,7 +2,7 @@
  *	Title:		Knight's Tour
  *	Authour:	Alistair Hudson
  *	Reviewer:	Daria
- *	Version:	02.04.2020.1
+ *	Version:	06.04.2020.2
  ******************************************************************************/
 #include <stdio.h>		/* printf */
 #include <stdlib.h>
@@ -26,106 +26,194 @@ typedef enum status
 	FAIL
 };
  
-static int KTSolve(size_t visitation_map, 
+static int KTSolve(unsigned long visitation_map, 
 					int location, 
 					int path[MAX_POSITIONS(BOARD_DIMENSIONS)][COORDINATES], 
 					size_t step);
 
 static void KTPrint(int path[MAX_POSITIONS(BOARD_DIMENSIONS)][COORDINATES]);
 
-static int KTHasBeenVisited(size_t visitaion_map, int location);
+static int KTHasBeenVisited(unsigned long visitaion_map, int location);
 
 static int KTNextMove(int location, size_t move);
+
+static void KTRecordPath(int location, 
+						int path[MAX_POSITIONS(BOARD_DIMENSIONS)][COORDINATES], 
+						size_t step);
+
+static int MoveCmp(void* move1, void* move2);
+
+static int KTFindNumberMoves(unsigned long visitation_map, int next_move);
 
 /******FUNCTIONS******/
 void KnightTour(int path[64][2], int start_row, int start_col)
 {
+	int start_location = 0;
+	unsigned long visitation_map = 0;
 	/*ensure path meets dimension requirements*/
-
+	assert(NULL != path);
+	assert(0 <= start_row);
+	assert(BOARD_DIMENSIONS >= start_row);
+	assert(0 <= start_col);
+	assert(BOARD_DIMENSIONS >= start_col);
 	/*convert corrdinates into location on board*/
-	
+	start_location = start_row + (start_col * BOARD_DIMENSIONS);
 	/*begin solving*/
-	/*if successfull*/	
+	if(SUCCESS == KTSolve(visitation_map, start_location, path, 
+											MAX_POSITIONS(BOARD_DIMENSIONS)))
+	{	
 		/*print result*/
+		KTPrint(path);
+	}
+	else
+	{
+		printf("No Solution found");
+	}
 }
 
-static int KTSolve(size_t visitation_map, 
+static int KTSolve(unsigned long visitation_map, 
 					int location, 
 					int path[MAX_POSITIONS(BOARD_DIMENSIONS)][COORDINATES], 
 					size_t step)
 {
+	size_t move = 0;
+	int warnsdorff_moves[MAX_MOVES][2] = {0};
+
+	assert(NULL != path);
+	assert(0 <= location);
+	assert(0 <= step);
+	/*if move is ILLEGAL
+		return fail*/
+	if (ILLEGAL_MOVE >= location)
+	{
+		return FAIL;
+	}
 	/*if visited (bit = 1)
 		return fail*/
-
+	if (KTHasBeenVisited(visitation_map, location))
+	{
+		return FAIL;
+	}
 	/*if steps = 0
 		return success*/
+	if (0 == step)
+	{
+		KTRecordPath(location, path, step);
+		return SUCCESS;
+	}
 
 	/*Set location in visitation_map to visited*/
-
-	/*Warnsdorff soln*/
-/*-----------------------------------------------------------------------------
-		for move 0 until 8
-			find how many possible moves are avaliable at this next location
-			sort moves from lowest next possible to highest
-----------------------------------------------------------------------------*/
-	/*for warnsdorff_move index 0 until 8
-			if 8 == warnsdorff[index]
-				return fail
-			if success == KTSolve(visitation_map, warnsdorff_move[index], path + 1, step - 1)
+	visitation_map |= BIT_MASK << location;
+	/*for move 0 until 8
+		warnsdorff_moves[move][0] = KTNextMove(location, move)
+		warnsdorff_moves[move][1] = find number of moves after
+	*/
+	for (moves = 0; moves < MAX_MOVES; ++moves)
+	{
+		warnsdorff_moves[move][0] = KTNextMove(location, move);
+		warnsdorff_moves[move][1] = KTFindNumberMoves(vistation_map, 
+													warnsdorff_moves[move][0]);
+		
+	}
+	/*sort wanrsdorff_moves*/ 
+	qsort(warnsdorff_moves, MAX_MOVES, sizeof(warnsdorff_moves), MoveCmp);
+	/*for moves 0 until 8
+			if success == KTSolve(visitation_map, NextMove, path + 1, step - 1)
 				record step
 				return success
 	*/
 
-	/*Reset location to not visited*/
-
+	for (move = 0; move < MAX_MOVES; ++move)
+	{
+		if (SUCCESS == KTSolve(visitation_map, wanrsdorff_moves[move][0],
+															path, step - 1))
+		{
+			KTRecordPath(location, path, step);
+			return SUCCESS;
+		}
+	}
 	/*return fail*/
+	return FAIL;
 }
 
 static void KTPrint(int path[MAX_POSITIONS(BOARD_DIMENSIONS)][COORDINATES])
 {
-	/*print all indecies*/
+	size_t index = 0;
+	assert(NULL != path);
+	for (index = 0; index < MAX_POSITIONS(BOARD_DIMENSIONS); ++index)
+	{
+		printf("%d, %d", path[index][0], path[index][1]);
+	}
 }
 
-static int KTHasBeenVisited(size_t visitation_map, int location)
+static int KTHasBeenVisited(unsigned long visitation_map, int location)
 {
-	/*return true if visited false if not*/
+	assert(0 <= location)
+	return visitation_map & (BIT_MASK << location);	
 }
 
 static int KTNextMove(int location, size_t move)
 {
+	int x = 0;
+	int y = 0;
 	/*internal LUT for moves 8*2*/
-
+	int move_LUT[2][MAX_MOVES] = {{1, 2,  2,  1, -1, -2, -2, -1}, 
+						 		  {2, 1, -1, -2, -2, -1,  1,  2}};
+	aseert(0 <= location);
+	assert(0 <= move);
 	/*convert location into x, y coordinates*/
-
-	/*if x outside bounds
-		return ILLEGAL_MOVE*/
-
-	/*if y outside bounds
-		return ILLEGAL_MOVE*/
+	x = location % BOARD_DIMENSIONS;
+	y = location / BOARD_DIMENSIONS;
+		/*if x outside bounds
+			return ILLEGAL_MOVE*/
+	if ((0 > (x + move_LUT[0][move])) || (7 < (x + move_LUT[0][move])))
+	{
+		return ILLEGAL_MOVE;
+	}
+		/*if y outside bounds
+			return ILLEGAL_MOVE*/
+	if ((0 > (y + move_LUT[1][move])) || (7 < (y + move_LUT[1][move])))
+	{
+		return ILLEGAL_MOVE;
+	}
 	
 	/*return location + LUT[x][move] + 8*LUT[y][move]*/
+	return location + move_LUT[0][move] + (BOARD_DIMENSIONS * move_LUT[1][move]);
 }
 
-static void WarnsdorffSoln(int location, int *warnsdorff_moves, size_t visitation_map)
-{	/*8 Signals that there are no more possible moves as the maximum possible
-		moves is 7*/
-	/*for move 0 until 8
-		if move ILLEGAL_MOVE
-			moves_after[move] = 8
-		if move visited
-			moves_after[move] = 8
-		for next_move 0 until 8
-			if NextMove is not ILLEGAL_MOVE
-				if NextMove not visited
-					++moves_after[move]
-	*/
-	/*for move 0 until 8
-		if move has smallest after
-			*warnsdirff_moves = move
-			++warnsdorff_moves
-			move_after = 8
-	*/		
+static void KTRecordPath(int location, 
+						int path[MAX_POSITIONS(BOARD_DIMENSIONS)][COORDINATES], 
+						size_t step)
+{
+	assert(NULL != path);
+	assert(0 <= location);
+	assert(0 <= step);
+	path[step][0] = location % BOARD_DIMENSIONS;
+	path[step][1] = location / BOARD_DIMENSIONS;
 }
 
+static int KTFindNumberMoves(unsigned long visitation_map, int next_move)
+{
+	int total_moves = 0;
 
+	if (ILLEGAL_MOVE >= next_move)
+	{
+		return 0;
+	}
+	
+	for (move = 0; move < MAX_MOVES; ++move)
+	{
+		if (ILLEGAL_MOVE < KTNextMove(nex_move, move) && 
+			!KTHasBeenVisited( visitation_map, next_moe))
+		{
+			++total_moves;
+		}
+	}
+	return total_moves
+}
+
+static int MoveCmp(void* move1, void* move2)
+{
+	return *((int*)move1)[1] - *((int*)move2)[1];
+}
 

@@ -174,7 +174,7 @@ DHCP_status_t DHCPAllocate(dhcp_t *dhcp, ip_t propose_addr, ip_t return_addr)
 	while (SUCCESS != 
 		(status = IsFreeAddress(dhcp->root, ConvertAddress(return_addr) & MASK, 
 		MAX_BITS - dhcp->subnet_num_of_bits)))
-	{/*TODO sto at system failure*/
+	{/*TODO stop at system failure*/
 		if(((ConvertAddress(broadcast_add) & MASK) == (ConvertAddress(return_addr) & MASK)) || 
 		((ConvertAddress(server_add) & MASK) == (ConvertAddress(return_addr) & MASK)))
 		{
