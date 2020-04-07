@@ -9,7 +9,8 @@
 
 #include <stddef.h>	/* size_t */
 
-
+void QSort(void* base, size_t nmemb, size_t size,  
+			int (*compar)(const void *, const void *));
 
 #endif /* __OL85_GENERIC_SORT_H__ */
 
