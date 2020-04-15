@@ -26,15 +26,15 @@ static int MSortImp(void* base, size_t left, size_t right, size_t size,
 					int (*compar)(const void *, const void *, void*), 
 					void* param);
 
-static int MSMege(void* base, size_t left, size_t middle, size_t right, 
+static int MSMerge(void* base, size_t left, size_t middle, size_t right, 
 				size_t size, int (*compar)(const void *, const void *, void*), 
 				void* param);
 
 /******FUNCTIONS******/
 void QSort(void* base, size_t nmemb, size_t size,  
-			int (*compar)(const void*, const void*, void*), void* param);
+			int (*compar)(const void*, const void*, void*), void* param)
 {
-	QSortImp(base, 0, nmemb-1, compar);
+	QSortImp(base, 0, nmemb-1, compar, param);
 }
 
 static void QSortImp(void* base, size_t low, size_t high,
@@ -45,7 +45,7 @@ static void QSortImp(void* base, size_t low, size_t high,
 	if (0 >= compar(base[low], base[high], param))
 	{
 		/*create a partition index*/
-		size_t part_index = QSPartion(base, low, high, comapr, param);
+		size_t part_index = QSPartion(base, low, high, compar, param);
 
 		/*recursion on lower partition*/
 		QSortImp(base, low, part_index-1, compar, param);
@@ -60,7 +60,7 @@ static size_t QSPartion(void* base, size_t low, size_t high,
 {
 	void* pivot = base[high];
 	int i = low - 1;
-	size_t j - low;
+	size_t j = low;
 	/*for index from low to high*/
 	for (j = low; j <= high; ++j)
 	{
@@ -93,10 +93,10 @@ static void QSSwap(void* array, size_t index1, size_t index2)
 int MSort(void* base, size_t nmemb, size_t size,  
 			int (*compar)(const void *, const void *, void*), void* param)
 {
-	return MSortImp(base, 0, nmemb - 1, size, compar);
+	return MSortImp(base, 0, nmemb - 1, size, compar, param);
 }
 
-static int MSortImp(void* base, size_t left, size_t right, size_t size  
+static int MSortImp(void* base, size_t left, size_t right, size_t size,  
 					int (*compar)(const void *, const void *, void*), 
 					void* param)
 {
@@ -126,9 +126,9 @@ static int MSortImp(void* base, size_t left, size_t right, size_t size
 	return 0;
 }
 
-static int MSMege(void* base, size_t left, size_t middle, size_t right, 
-					size_t size, int (*compar)(const void *, const void*, void*)
-					void* param)
+static int MSMerge(void* base, size_t left, size_t middle, size_t right, 
+				size_t size, int (*compar)(const void *, const void*, void*),
+				void* param)
 {
 	/*set
 		*n1
