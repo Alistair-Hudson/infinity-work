@@ -13,98 +13,98 @@
 #define ASSERT_NOT_NULL(ptr)	(assert(NULL != ptr))
 
 /******TYPEDEFS, GLOBAL VARIABLES AND INTERNAL FUNCTIONS******/
-static void QSortImp(void* base, size_t low, size_t high,
-					int (*compar)(const void*, const void*, void*), void* param);
+struct sort_param
+{
+	size_t size_elem;
+	compar* compare;
+	void* param;
+}sort_param_t;
 
-static size_t QSPartion(void* base, size_t low, size_t high,
-						int (*compar)(const void *, const void *, void*), 
-						void* param);
+static void QSortImp(void* base, void* end, const sort_param_t* params);
 
-static void QSSwap(void* array, size_t index1, size_t index2);
+static size_t QSPartion(void* base, void* end, const sort_param_t* params);
 
-static int MSortImp(void* base, size_t left, size_t right, size_t size,
-					int (*compar)(const void *, const void *, void*), 
-					void* param);
+static void QSSwap(void* item1, void* item2);
 
-static int MSMege(void* base, size_t left, size_t middle, size_t right, 
-				size_t size, int (*compar)(const void *, const void *, void*), 
-				void* param);
+static int MSortImp(void* base, void* end, const sort_param_t* params);
+
+static int MSMege(void* base, void* middle, void* end, const sort_param_t* params);
 
 /******FUNCTIONS******/
 void QSort(void* base, size_t nmemb, size_t size,  
 			int (*compar)(const void*, const void*, void*), void* param);
 {
-	QSortImp(base, 0, nmemb-1, compar);
+	sort_params_t* params = {size, compar, param};
+	QSortImp(base, base+(nmemb*size), params);
 }
 
-static void QSortImp(void* base, size_t low, size_t high,
-						int (*compar)(const void *, const void *, void*),
-						void* param)
-{
+static void QSortImp(void* base, void* end, const sort_param_t* params)
+{	
+	if (base == end)
+	{
+		return;
+	}
 	/*if low is before high*/
-	if (0 >= compar(base[low], base[high], param))
+	if (0 >= compar(base, end, params->param))
 	{
 		/*create a partition index*/
-		size_t part_index = QSPartion(base, low, high, comapr, param);
+		void* part_index = QSPartion(base, end, params);
 
 		/*recursion on lower partition*/
-		QSortImp(base, low, part_index-1, compar, param);
+		QSortImp(base, part_index, params);
 		/*recursion on upper partition*/
-		QSortImp(base, part_index+1, high, compar, param);
+		QSortImp(part_index, end, params);
 	}
 }
 
-static size_t QSPartion(void* base, size_t low, size_t high,
-						int (*compar)(const void *, const void *, void*),
-						void* param)
+static size_t QSPartion(void* base, void* end, const sort_param_t* params)
 {
-	void* pivot = base[high];
-	int i = low - 1;
-	size_t j - low;
+	void* pivot = end;
+	void* swap = base - 1;
+
 	/*for index from low to high*/
-	for (j = low; j <= high; ++j)
+	for (base != end)
 	{
 		/*if index is before pivot*/
-		if (0 >= compar(base[j], pivot, param))
+		if (0 >= compar(base, pivot, params->param))
 		{
 			/*increase low*/
-			++i;
+			++swap;
 			/*swap*/
-			QSSwap(base, i, j);
+			QSSwap(swap, base);
 		}
 	}
 	/*swap low and high*/
-	QSSwap(base, i+1, high);
+	QSSwap(swap+1, high);
 	/*return low +1*/
-	return i + 1;
+	return swap + 1;
 }
 
-static void QSSwap(void* array, size_t index1, size_t index2)
+static void QSSwap(void* item1, void* item2)
 {
 	/*put index1 into a temporary variable*/
 	void* temp = NULL;
-	*temp = *array[index1];
+	*temp = *item1;
 	/*put index2 into index1*/
-	*array[index1] = *array[index2];
+	*item1 = *item2;
 	/*put the temporary varible into index2*/
-	*array[index2] = *temp;
+	*item1 = *temp;
 }
 
 int MSort(void* base, size_t nmemb, size_t size,  
 			int (*compar)(const void *, const void *, void*), void* param)
 {
-	return MSortImp(base, 0, nmemb - 1, size, compar);
+	sort_param_t* params = {size, compar, param};
+	return MSortImp(base, base+(nmemb*size), params);
 }
 
-static int MSortImp(void* base, size_t left, size_t right, size_t size  
-					int (*compar)(const void *, const void *, void*), 
-					void* param)
+static int MSortImp(void* base, void* end, const sort_param_t* params)
 {
 	/*if left is before right*/
-	if (0 >= compar(base[left], base[right], param))
+	if (0 >= compar(base, end, params->param))
 	{
 		/*find middle*/
-		size_t middle = (left + right)/2;
+		void* middle = (base + end)/2;
 
 		/*recursion on left*/
 		if (0 != MSortImp(base, left, middle, size, compar, param))
