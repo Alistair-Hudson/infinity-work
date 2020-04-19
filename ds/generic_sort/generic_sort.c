@@ -20,70 +20,70 @@ struct sort_param
 	void* param;
 }sort_param_t;
 
-static void QSortImp(void* base, void* end, const sort_param_t* params);
+static void QSortImp(char* begin, char* end, const sort_param_t* params);
 
-static size_t QSPartion(void* base, void* end, const sort_param_t* params);
+static size_t QSPartion(char* begin, char* end, const sort_param_t* params);
 
-static void QSSwap(void* item1, void* item2);
+static void QSSwap(char* item1, char* item2);
 
-static int MSortImp(void* base, void* end, const sort_param_t* params);
+static int MSortImp(char* begin, char* end, const sort_param_t* params);
 
-static int MSMege(void* base, void* middle, void* end, const sort_param_t* params);
+static int MSMege(char* begin, char* middle, char* end, const sort_param_t* params);
 
 /******FUNCTIONS******/
-void QSort(void* base, size_t nmemb, size_t size,  
-			int (*compar)(const void*, const void*, void*), void* param);
+void QSort(void* begin, size_t nmemb, size_t size,  
+			int (*compar)(const char*, const char*, char*), void* param);
 {
 	sort_params_t* params = {size, compar, param};
-	QSortImp(base, base+(nmemb*size), params);
+	QSortImp(begin, begin+(nmemb*size), params);
 }
 
-static void QSortImp(void* base, void* end, const sort_param_t* params)
+static void QSortImp(char* begin, char* end, const sort_param_t* params)
 {	
-	if (base == end)
+	if (begin == end-1)
 	{
 		return;
 	}
 	/*if low is before high*/
-	if (0 >= compar(base, end, params->param))
+	if (0 >= params->compare(begin, end, params->param))
 	{
 		/*create a partition index*/
-		void* part_index = QSPartion(base, end, params);
+		char* part_index = QSPartion(begin, end, params);
 
 		/*recursion on lower partition*/
-		QSortImp(base, part_index, params);
+		QSortImp(begin, part_index, params);
 		/*recursion on upper partition*/
 		QSortImp(part_index, end, params);
 	}
 }
 
-static size_t QSPartion(void* base, void* end, const sort_param_t* params)
+static size_t QSPartion(char* begin, char* end, const sort_param_t* params)
 {
-	void* pivot = end;
-	void* swap = base - 1;
+	char* pivot = end - params->size_elem;
+	char* swap = begin;
 
 	/*for index from low to high*/
-	for (base != end)
+	for (begin; begin != end; begin += params->size_elem)
 	{
 		/*if index is before pivot*/
-		if (0 >= compar(base, pivot, params->param))
+		if (0 >= params->compare(begin, pivot, params->param))
 		{
 			/*increase low*/
-			++swap;
+			swap += params->size_elem;
 			/*swap*/
-			QSSwap(swap, base);
+			QSSwap(swap, begin);
 		}
 	}
 	/*swap low and high*/
-	QSSwap(swap+1, high);
+	QSSwap(swap, end);
 	/*return low +1*/
-	return swap + 1;
+	return swap;
 }
 
-static void QSSwap(void* item1, void* item2)
+static void QSSwap(char* item1, char* item2)
 {
 	/*put index1 into a temporary variable*/
-	void* temp = NULL;
+	char* temp = NULL;
 	*temp = *item1;
 	/*put index2 into index1*/
 	*item1 = *item2;
@@ -91,34 +91,38 @@ static void QSSwap(void* item1, void* item2)
 	*item1 = *temp;
 }
 
-int MSort(void* base, size_t nmemb, size_t size,  
-			int (*compar)(const void *, const void *, void*), void* param)
+int MSort(void* begin, size_t nmemb, size_t size,  
+			int (*compar)(const void *, const void *, char*), void* param)
 {
 	sort_param_t* params = {size, compar, param};
-	return MSortImp(base, base+(nmemb*size), params);
+	return MSortImp(begin, begin+(nmemb*size), params);
 }
 
-static int MSortImp(void* base, void* end, const sort_param_t* params)
+static int MSortImp(char* begin, char* end, const sort_param_t* params)
 {
+	if (bass == end-params->size_elem)
+	{
+		return 0;
+	}
 	/*if left is before right*/
-	if (0 >= compar(base, end, params->param))
+	if (0 >= params->compare(begin, end, params->param))
 	{
 		/*find middle*/
-		void* middle = (base + end)/2;
+		char* middle = (begin + end)/2;
 
 		/*recursion on left*/
-		if (0 != MSortImp(base, left, middle, size, compar, param))
+		if (0 != MSortImp(begin, middle, params))
 		{
 			return 1;
 		}
 		/*recursion on right*/
-		if (0 != MSortImp(base, middle+1, right, size, compar, param))
+		if (0 != MSortImp(middle+1, end, params))
 		{
 			return 1;
 		}
 
 		/*merge the two halves*/
-		if (0 != MSMerge(base, left, middle, right, size, compar, param))
+		if (0 != MSMerge(begin, middle, end, params))
 		{
 			return 1;
 		}
@@ -126,26 +130,24 @@ static int MSortImp(void* base, void* end, const sort_param_t* params)
 	return 0;
 }
 
-static int MSMege(void* base, size_t left, size_t middle, size_t right, 
-					size_t size, int (*compar)(const void *, const void*, void*)
-					void* param)
+static int MSMege(char* begin, char* middle, char* end, sort_param_t* params)
 {
 	/*set
 		*n1
 		*n2
 		*/
 	size_t i = 0, j= 0, k = left;
-	size_t n1 = middle - left + 1;
-	size_t n2 = right - middle;
+	size_t n1 = middle - begin;
+	size_t n2 = end - middle;
 
-	/*Allocate for array LEFT and RIGHTH*/
+	/*Allocate for array LEFT and RIG1HTH*/
 	/*if either fails return 1*/
-	void* LEFT = malloc(n1 * size);
+	char* LEFT = malloc(n1 * params->size);
 	if (NULL == LEFT)
 	{
 		return 1;
 	}
-	void* RIGHT = malloc(n2 * size);
+	char* RIGHT = malloc(n2 * params->size);
 	if (NULL == RIGHT)
 	{
 		free(LEFT);
@@ -153,16 +155,16 @@ static int MSMege(void* base, size_t left, size_t middle, size_t right,
 	}
 	
 	/*for i from 0 until n1*/
-		/*LEFT[i] = base[left + i]*/
+		/*LEFT[i] = begin[left + i]*/
 	for (i = 0; i < n1; ++i)
 	{
-		LEFT[i] = base[left + i];
+		*LEFT[i] = *begin[i];
 	}
 	/*for j from 0 until n1*/
-		/*RIGHT[i] = base[middle + i]*/
+		/*RIGHT[i] = begin[middle + i]*/
 	for (j = 0; j < n2; ++j)
 	{
-		RIGHT[j] = base[middle+1+j];
+		*RIGHT[j] = *middle[j];
 	}
 	
 	/*reset i and j*/
@@ -172,38 +174,42 @@ static int MSMege(void* base, size_t left, size_t middle, size_t right,
 	while (i < n1 && j < n2)
 	{	
 		/*if LEFT is before RIGHT*/
-		if (0 >= compar(LEFT[i], RIGHT[j], param))
+		if (0 >= params->compare(LEFT, RIGHT, param))
 		{
-			/*base[k] = LEFT*/
-			base[k] = LEFT[i];
+			/*begin[k] = LEFT*/
+			*begin = *LEFT;
 			/*increase i*/
+			LEFT += params->size_elem;
 			++i;
 		}
 		/*else*/
 		else
 		{
-			/*base[k] = RIGHT*/
-			base[k] = RIGHT[j];
+			/*begin[k] = RIGHT*/
+			*begin = *RIGHT;
 			/*increase j*/
+			RIGHT += params->size_elem;
 			++j;
 		}
 		/*increase k*/
-		++k
+		begin += params->size_elem;
 	}
 
 	/*fill reamining LEFT*/
 	while (i < n1)
 	{
-		base[k] = LEFT[i];
+		*begin = *LEFT;
+		LEFT += params->size_elem;
+		begin += params->size_elem;
 		++i;
-		++k;
 	}
 	/*fill reamaining RIGHT*/
 	while (j < n2)
 	{
-		base[k] = RIGHT[j];
+		*begin = *RIGHT;
+		RIGHT += params->size_elem;
+		begin += params->size_elem;
 		++j;
-		++k;
 	}
 	/*free LEFT and RIGHT*/
 	free(LEFT);
