@@ -13,14 +13,14 @@
 #define ASSERT_NOT_NULL(ptr)	(assert(NULL != ptr))
 
 /******TYPEDEFS, GLOBAL VARIABLES AND INTERNAL FUNCTIONS******/
-static void QSortImp(void* base, size_t low, size_t high,
+static void QSortImp(void* base, size_t low, size_t high, size_t size,
 					int (*compar)(const void*, const void*, void*), void* param);
 
-static size_t QSPartion(void* base, size_t low, size_t high,
+static size_t QSPartion(void* base, size_t low, size_t high, size_t size,
 						int (*compar)(const void *, const void *, void*), 
 						void* param);
 
-static void QSSwap(void* array, size_t index1, size_t index2);
+static void QSSwap(void* array, size_t index1, size_t index2, size_t size);
 
 static int MSortImp(void* base, size_t left, size_t right, size_t size,
 					int (*compar)(const void *, const void *, void*), 
@@ -34,60 +34,60 @@ static int MSMerge(void* base, size_t left, size_t middle, size_t right,
 void QSort(void* base, size_t nmemb, size_t size,  
 			int (*compar)(const void*, const void*, void*), void* param)
 {
-	QSortImp(base, 0, nmemb-1, compar, param);
+	QSortImp(base, 0, nmemb-1, size, compar, param);
 }
 
-static void QSortImp(void* base, size_t low, size_t high,
+static void QSortImp(void* base, size_t low, size_t high, size_t size,
 						int (*compar)(const void *, const void *, void*),
 						void* param)
 {
 	/*if low is before high*/
-	if (0 >= compar(base[low], base[high], param))
+	if (0 >= compar(base+(low*size), base+(high*size), param))
 	{
 		/*create a partition index*/
-		size_t part_index = QSPartion(base, low, high, compar, param);
+		size_t part_index = QSPartion(base, low, high, size, compar, param);
 
 		/*recursion on lower partition*/
-		QSortImp(base, low, part_index-1, compar, param);
+		QSortImp(base, low, part_index-1, size, compar, param);
 		/*recursion on upper partition*/
-		QSortImp(base, part_index+1, high, compar, param);
+		QSortImp(base, part_index+1, high, size, compar, param);
 	}
 }
 
-static size_t QSPartion(void* base, size_t low, size_t high,
+static size_t QSPartion(void* base, size_t low, size_t high, size_t size,
 						int (*compar)(const void *, const void *, void*),
 						void* param)
 {
-	void* pivot = base[high];
+	void* pivot = base+(high*size);
 	int i = low - 1;
 	size_t j = low;
 	/*for index from low to high*/
 	for (j = low; j <= high; ++j)
 	{
 		/*if index is before pivot*/
-		if (0 >= compar(base[j], pivot, param))
+		if (0 >= compar(base+(j*size), pivot, param))
 		{
 			/*increase low*/
 			++i;
 			/*swap*/
-			QSSwap(base, i, j);
+			QSSwap(base, i, j, size);
 		}
 	}
 	/*swap low and high*/
-	QSSwap(base, i+1, high);
+	QSSwap(base, i+1, high, size);
 	/*return low +1*/
 	return i + 1;
 }
 
-static void QSSwap(void* array, size_t index1, size_t index2)
+static void QSSwap(void* array, size_t index1, size_t index2, size_t size)
 {
 	/*put index1 into a temporary variable*/
 	void* temp = NULL;
-	*temp = *array[index1];
+	*temp = *array+(index1*size);
 	/*put index2 into index1*/
-	*array[index1] = *array[index2];
+	*array+(index1*size) = *array+(index2*size);
 	/*put the temporary varible into index2*/
-	*array[index2] = *temp;
+	*array+(index2*size) = *temp;
 }
 
 int MSort(void* base, size_t nmemb, size_t size,  
@@ -101,7 +101,7 @@ static int MSortImp(void* base, size_t left, size_t right, size_t size,
 					void* param)
 {
 	/*if left is before right*/
-	if (0 >= compar(base[left], base[right], param))
+	if (0 >= compar(base+(left*size), base+(right*size), param))
 	{
 		/*find middle*/
 		size_t middle = (left + right)/2;
@@ -156,13 +156,13 @@ static int MSMerge(void* base, size_t left, size_t middle, size_t right,
 		/*LEFT[i] = base[left + i]*/
 	for (i = 0; i < n1; ++i)
 	{
-		LEFT[i] = base[left + i];
+		LEFT+(i*size) = base + ((left + i)*size);
 	}
 	/*for j from 0 until n1*/
 		/*RIGHT[i] = base[middle + i]*/
 	for (j = 0; j < n2; ++j)
 	{
-		RIGHT[j] = base[middle+1+j];
+		RIGHT+(j*size) = base+((middle+1+j)*size);
 	}
 	
 	/*reset i and j*/
@@ -172,10 +172,10 @@ static int MSMerge(void* base, size_t left, size_t middle, size_t right,
 	while (i < n1 && j < n2)
 	{	
 		/*if LEFT is before RIGHT*/
-		if (0 >= compar(LEFT[i], RIGHT[j], param))
+		if (0 >= compar(LEFT+(i*size), RIGHT+(j*size), param))
 		{
 			/*base[k] = LEFT*/
-			base[k] = LEFT[i];
+			base+(k*size) = LEFT+(i*size);
 			/*increase i*/
 			++i;
 		}
@@ -183,7 +183,7 @@ static int MSMerge(void* base, size_t left, size_t middle, size_t right,
 		else
 		{
 			/*base[k] = RIGHT*/
-			base[k] = RIGHT[j];
+			base+(k*size) = RIGHT+(j*size);
 			/*increase j*/
 			++j;
 		}
@@ -194,14 +194,14 @@ static int MSMerge(void* base, size_t left, size_t middle, size_t right,
 	/*fill reamining LEFT*/
 	while (i < n1)
 	{
-		base[k] = LEFT[i];
+		base+(k*size) = LEFT+(i*size);
 		++i;
 		++k;
 	}
 	/*fill reamaining RIGHT*/
 	while (j < n2)
 	{
-		base[k] = RIGHT[j];
+		base+(k*size) = RIGHT+(j*size);
 		++j;
 		++k;
 	}

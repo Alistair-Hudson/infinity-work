@@ -1,158 +1,155 @@
 /******************************************************************************
- *	Title:		AVL Tree
- *	Authour:	Alistair Hudson
- *	Reviewer:	Yurri
- *	Version:	23.03.2020.1
- ******************************************************************************/
-#include <stdlib.h>
-#include <assert.h>		/* assert */
+*   Filename: htable.c
+*
+*   Description: Implementation a Hash Table as a array of double linked list
+*
+*   Date: 24.03.2020
+*
+*   Author: Korotkova Daria
+*******************************************************************************/
 
-#include "hash_table.h"
+#include <stdlib.h> /* malloc */
+#include <stdio.h> /* FILE */
+#include <assert.h> /* assert */
+#include "hash_table.h"/*TODO separate from the above*/
+#include "dlist.h"
 
-/******MACROS******/
-#define ASSERT_NOT_NULL(ptr)	(assert(NULL != ptr))
-#define WORD_SIZE				(sizeof(size_t))
+htable_t *HTableCreate(hash_func_t hash_func, size_t table_size, hash_compare_t hash_compare)
+{/*TODO line length*/
+  size_t i = 0;
+  htable_t *h_table = malloc(sizeof(htable_t));
 
-/******TYPEDEFS, GLOBAL VARIABLES AND INTERNAL FUNCTIONS******/
-/*typedef struct htable 
+  assert(NULL != hash_func);/*TODO assert before allocation*/
+  assert(NULL != hash_compare);
+
+  if (NULL == h_table)
+  {
+    return(NULL);
+  }
+  h_table->hash_func  = hash_func;
+  h_table->hash_compare = hash_compare;
+  h_table->table_size = table_size;
+
+  h_table->table = (dlist_t**)calloc(sizeof(dlist_t*), table_size);
+  if(NULL == h_table->table)
+  {
+    free(h_table);
+    h_table = NULL;
+    return(NULL);
+  }
+
+  for(i = 0; i < table_size; ++i)
+  {
+    h_table->table[i] = DListCreate();
+    if(NULL == h_table->table[i])
+    {
+      return(NULL);
+      HTableDestroy(h_table);
+    }
+  }
+  return(h_table);
+}
+
+
+int HTableIsEmpty(const htable_t *htable)
 {
-	dlist_t **dlist;
-	hash_func_t hash_func;
-	hash_compare_t comapre;
-} htable_t;
-*/
+  size_t i = 0;
+  int result = 0;
 
-/******FUNCTIONS******/
-
-htable_t *HTableCreate(hash_func_t hash_func, size_t table_size, 
-														hash_compare_t compare)
-{
-	htable_t* new_htable = NULL;
-	size_t i = 0;
-
-	new_htable = malloc(sizeof(struct htable) + (table_size * WORD_SIZE));
-	if (NULL == new_htable)
-	{
-		return NULL;
-	}
-	
-	new_htable->hash_func = hash_func;
-	new_htable->compare = compare;
-	new_htable->table_size = table_size;
-	new_htable->table = (dlist_t**)new_htable + 
-											(sizeof(struct htable) / WORD_SIZE);
-	for (i = 0; i < table_size; ++i)
-	{
-		new_htable->table[i] = DListCreate();
-		if (NULL == new_htable->table[i])
-		{
-			for (i = i; i > 0; --i)
-			{
-				free(new_htable->table[i]);
-				new_htable->table[i] = NULL;
-			}
-			free(new_htable->table[0]);
-			new_htable->table[0] = NULL;
-			free(new_htable);
-			new_htable = NULL;
-			return NULL;
-		}
-	}
-
-	return new_htable;
+  assert(NULL != htable);
+  for (i = 0; i<htable->table_size; ++i)
+  {
+    if (NULL != htable->table[i])
+    {
+      result = DListIsEmpty(htable->table[i]);
+	/*TODO if my first list is empty but my second isn't?*/
+    }
+  }
+  return (result);
 }
 
 void HTableDestroy(htable_t *htable)
 {
-	size_t i = 0;
-	
-	for (i = 0; i < htable->table_size; ++i)
-	{
-		DListDestroy(htable->table[i]);
-	}
-	free(htable);
-	htable = NULL;
+  size_t i = 0;
+
+  assert (NULL != htable);
+  for (i = 0; i<htable->table_size; ++i)
+  {
+    if (NULL != htable->table[i])
+    {
+      DListDestroy(htable->table[i]);
+    }
+  }
+  free (htable->table);
+  htable->table = NULL;
+
+  free (htable);
+  htable = NULL;
 }
 
 size_t HTableSize(const htable_t *htable)
 {
-	size_t size = 0;
-	size_t i = 0;
-	
-	for (i = 0; i < htable->table_size; ++i)
-	{
-		size += DListSize(htable->table[i]);
-	}	
-	return size;
+  size_t i = 0;
+  size_t counter = 0;
+  size_t size = 0;
+
+  assert (NULL != htable);
+  for (i = 0; i<htable->table_size; ++i)
+  {
+    if (NULL != htable->table[i])
+    {
+      size = DListSize(htable->table[i]);
+      counter += size;
+/*TODO can be changed to one line*/
+    }
+  }
+  return(counter);
 }
 
-int HTableIsEmpty(const htable_t *htable)
+int HTableInsert(htable_t *htable, void *entry)
 {
-	size_t i = 0;
- 
-	for (i = 0; i < htable->table_size; ++i)
-	{
-		if (!DListIsEmpty(htable->table[i]))
-		{
-			return 0;
-		}
-	}
-	return 1;
-}
+  size_t to_insert = htable->hash_func(entry);
+  iter_t result = DListPushBack(htable->table[to_insert], entry);
 
-void HTableInsert(htable_t *htable, void *entry)
-{
-	DListPushBack(htable->table[htable->hash_func(entry)], entry);
-}
-
-void HTableRemove(htable_t *htable, void *key)
-{
-	iter_t to_remove = DListFind(DListBegin(htable->table[htable->hash_func(key)]), 
-								DListEnd(htable->table[htable->hash_func(key)]),
-								htable->compare, 
-								key);
-
-	DListRemove(to_remove);
+  assert (NULL != htable);/*TODO I have already used htable, need to assert before*/
+  if(NULL != result)
+  {
+    return(1);
+  }
+  else
+  {
+    return(0);
+  }
 }
 
 void *HTableFind(const htable_t *htable, void *to_find)
 {
-	iter_t found = DListFind(DListBegin(htable->table[htable->hash_func(to_find)]), 
-							DListEnd(htable->table[htable->hash_func(to_find)]),
-							htable->compare, 
-							to_find);
+  size_t index = htable->hash_func(to_find);
+  iter_t from = DListBegin(htable->table[index]);
+  iter_t to = DListEnd(htable->table[index]);
+  iter_t find = NULL;
 
-	return DListGetData(found);
-
+  assert (NULL != htable);/*TODO I have already used htable, need to assert before*/
+  find = DListFind(from, to, htable->hash_compare, to_find);
+  return(DListGetData(find));
 }
 
-int HTableForEach(htable_t *htable, action_t action, void *param)
+
+int HTableForEach(htable_t *htable, hash_action_t action, void *param)
 {
-	size_t i = 0;
+  size_t i = 0;
+  int status = 0;
+  dlist_t *current_list = {0};
 
-	for (i = 0; i < htable->table_size; ++i)
-	{
-		if (DListForEach(DListBegin(htable->table[i]), 
-						DListEnd(htable->table[i]),
-						action, 
-						param))
-		{
-			return 1;
-		}
-	}
-	return 0;
+  assert (NULL != htable);
+  assert (NULL != action);
+  for(i = 0; i < htable->table_size; ++i)
+  {
+    if (!DListIsEmpty(htable->table[i]))
+    {
+      current_list = htable->table[i];
+      status = DListForEach(DListBegin(current_list), DListEnd(current_list), action, param);
+    }
+  }
+  return(0 == status);
 }
-
-double HTableLoadFactor(const htable_t *htable)
-{
-	return 0;
-}
-
-double HTableSD(const htable_t *htable)
-{
-	return 0;
-}
-
-
-
-
