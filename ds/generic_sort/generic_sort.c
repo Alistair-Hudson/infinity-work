@@ -13,16 +13,18 @@
 #define ASSERT_NOT_NULL(ptr)	(assert(NULL != ptr))
 
 /******TYPEDEFS, GLOBAL VARIABLES AND INTERNAL FUNCTIONS******/
-struct sort_param
+typedef int(*cmp)(const void *, const void *, void * param);
+
+typedef struct sort_param
 {
 	size_t size_elem;
-	compar* compare;
+	cmp compare;
 	void* param;
 }sort_param_t;
 
 static void QSortImp(char* begin, char* end, const sort_param_t* params);
 
-static size_t QSPartion(char* begin, char* end, const sort_param_t* params);
+static char* QSPartion(char* begin, char* end, const sort_param_t* params);
 
 static void QSSwap(char* item1, char* item2);
 
@@ -40,7 +42,7 @@ void QSort(void* begin, size_t nmemb, size_t size,
 
 static void QSortImp(char* begin, char* end, const sort_param_t* params)
 {	
-	if (begin == end-1)
+	if (begin == end-params->size_elem)
 	{
 		return;
 	}
@@ -57,7 +59,7 @@ static void QSortImp(char* begin, char* end, const sort_param_t* params)
 	}
 }
 
-static size_t QSPartion(char* begin, char* end, const sort_param_t* params)
+static char* QSPartion(char* begin, char* end, const sort_param_t* params)
 {
 	char* pivot = end - params->size_elem;
 	char* swap = begin;
@@ -100,7 +102,7 @@ int MSort(void* begin, size_t nmemb, size_t size,
 
 static int MSortImp(char* begin, char* end, const sort_param_t* params)
 {
-	if (bass == end-params->size_elem)
+	if (begin == end-params->size_elem)
 	{
 		return 0;
 	}
@@ -136,7 +138,7 @@ static int MSMege(char* begin, char* middle, char* end, sort_param_t* params)
 		*n1
 		*n2
 		*/
-	size_t i = 0, j= 0, k = left;
+	size_t i = 0, j= 0;
 	size_t n1 = middle - begin;
 	size_t n2 = end - middle;
 
