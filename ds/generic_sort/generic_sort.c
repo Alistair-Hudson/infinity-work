@@ -6,6 +6,7 @@
  ******************************************************************************/
 #include <stdlib.h>
 #include <assert.h>		/* assert */
+#include <string.h>		/* memcpy */
 
 #include "generic_sort.h"
 
@@ -20,6 +21,8 @@ typedef struct sort_param
 	size_t size_elem;
 	cmp compare;
 	void* param;
+	char* swap_buffer;
+
 }sort_param_t;
 
 static void QSortImp(char* begin, char* end, const sort_param_t* params);
@@ -28,16 +31,22 @@ static char* QSPartion(char* begin, char* end, const sort_param_t* params);
 
 static void QSSwap(char* item1, char* item2);
 
-static int MSortImp(char* begin, char* end, const sort_param_t* params);
+static void MSortImp(char* begin, char* end, const sort_param_t* params);
 
-static int MSMege(char* begin, char* middle, char* end, const sort_param_t* params);
+static void MSMege(char* begin, char* middle, char* end, const sort_param_t* params);
 
 /******FUNCTIONS******/
-void QSort(void* begin, size_t nmemb, size_t size,  
+int QSort(void* begin, size_t nmemb, size_t size,  
 			int (*compar)(const char*, const char*, char*), void* param)
 {
-	sort_params_t* params = {size, compar, param};
+	sort_params_t* params = {size, compar, param, NULL};
+	params->swap_buffer = malloc(nmemb*size);
+	if (NULL == params->swap_buffer)
+	{
+		return 1;
+	}
 	QSortImp(begin, begin+(nmemb*size), params);
+	return 0;
 }
 
 static void QSortImp(char* begin, char* end, const sort_param_t* params)
@@ -77,34 +86,39 @@ static char* QSPartion(char* begin, char* end, const sort_param_t* params)
 		}
 	}
 	/*swap low and high*/
-	QSSwap(swap, end);
+	QSSwap(swap, end, params);
 	/*return low +1*/
 	return swap;
 }
 
-static void QSSwap(char* item1, char* item2)
+static void QSSwap(char* item1, char* item2, sort_parma_t* params)
 {
 	/*put index1 into a temporary variable*/
-	char* temp = NULL;
-	*temp = *item1;
+	memcpy(params->swap_buffer, item1, params->size_elem);
 	/*put index2 into index1*/
-	*item1 = *item2;
+	memcpy(item1, item2, params->size_elem);
 	/*put the temporary varible into index2*/
-	*item1 = *temp;
+	memcpy(item2, swap_buffer, params->size_elem);
 }
 
 int MSort(void* begin, size_t nmemb, size_t size,  
 			int (*compar)(const void *, const void *, char*), void* param)
 {
-	sort_param_t* params = {size, compar, param};
-	return MSortImp(begin, begin+(nmemb*size), params);
+	sort_param_t* params = {size, compar, param, NULL};
+	params->swap_buffer = malloc(nmemb*size);
+	if (NULL == params->swap_buffer)
+	{
+		return 1;
+	}
+	MSortImp(begin, begin+(nmemb*size), params);
+	return 0;
 }
 
-static int MSortImp(char* begin, char* end, const sort_param_t* params)
+static void MSortImp(char* begin, char* end, const sort_param_t* params)
 {
 	if (begin == end-params->size_elem)
 	{
-		return 0;
+		return;
 	}
 	/*if left is before right*/
 	if (0 >= params->compare(begin, end, params->param))
@@ -113,73 +127,36 @@ static int MSortImp(char* begin, char* end, const sort_param_t* params)
 		char* middle = (begin + end)/2;
 
 		/*recursion on left*/
-		if (0 != MSortImp(begin, middle, params))
-		{
-			return 1;
-		}
+		MSortImp(begin, middle, params))
+		
 		/*recursion on right*/
-		if (0 != MSortImp(middle+1, end, params))
-		{
-			return 1;
-		}
-
+		MSortImp(middle+1, end, params))
+		
 		/*merge the two halves*/
-		if (0 != MSMerge(begin, middle, end, params))
-		{
-			return 1;
-		}
+		MSMerge(begin, middle, end, params))
 	}
-	return 0;
 }
 
-static int MSMege(char* begin, char* middle, char* end, sort_param_t* params)
+static void MSMege(char* begin, char* middle, char* end, sort_param_t* params)
 {
 	/*set
 		*n1
 		*n2
 		*/
-	char* left = begin;
-	char* right = middle;
-
-	/*Allocate for array LEFT and RIG1HTH*/
-	/*if either fails return 1*/
-	char* LEFT = malloc(n1 * params->size);
-	if (NULL == LEFT)
-	{
-		return 1;
-	}
-	char* RIGHT = malloc(n2 * params->size);
-	if (NULL == RIGHT)
-	{
-		free(LEFT);
-		return 1;
-	}
+	char* left = params->swap_buffer;
+	char* right = params->swap_buffer + (middle - begin);
 	
 	/*for i from 0 until n1*/
 		/*LEFT[i] = begin[left + i]*/
-	while (left < middle)
-	{
-		*LEFT = *left;
-		LEFT += params->size_elem;
-		left += params->size_elem;
-	}
+	memcpy(parmas->swap_buffer, begin, (begin - middle));
 	/*for j from 0 until n1*/
 		/*RIGHT[i] = begin[middle + i]*/
-	while (right < end)
-	{
-		*RIGHT = *right;
-		RIGHT += params->size_elem;
-		right += params->size_elem;
-	}
-	
-	/*reset i and j*/
-	i = 0;
-	j = 0;
+	memcpy(pamas->swap_buffer+(middle-begin), middle, end - middle);	
 	/*while i is before n1 && j is before n2*/
 	while (left < middle && right < end)
 	{	
 		/*if LEFT is before RIGHT*/
-		char** smaller = (0 > params->compare(LEFT, RIGHT, param)) ? LEFT : RIGHT
+		char** smaller = (0 > params->compare(left, right, params->param)) ? left : right;
 			
 		memcpy(begin, *smaller, params->size_elem);
 		*smaller += params->size_elem;
@@ -202,11 +179,6 @@ static int MSMege(char* begin, char* middle, char* end, sort_param_t* params)
 		begin += params->size_elem;
 		++j;
 	}
-	/*free LEFT and RIGHT*/
-	free(LEFT);
-	free(RIGHT);
-
-	return 0;
 }
 
 
