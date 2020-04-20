@@ -2,10 +2,11 @@
  *	Title:		HashTable
  *	Authour:	Alistair Hudson
  *	Reviewer:	Kobbi
- *	Version:	23.03.2020.1
+ *	Version:	20.04.2020.2
  ******************************************************************************/
 #include <stdlib.h>
 #include <assert.h>		/* assert */
+#include <math.h>		/* sqrt */
 
 #include "hash_table.h"
 
@@ -29,6 +30,9 @@ htable_t *HTableCreate(hash_func_t hash_func, size_t table_size,
 {
 	htable_t* new_htable = NULL;
 	size_t i = 0;
+
+	ASSERT_NOT_NULL(hash_func);
+	ASSERT_NOT_NULL(compare);
 
 	new_htable = malloc(sizeof(struct htable) + (table_size * WORD_SIZE));
 	if (NULL == new_htable)
@@ -66,6 +70,8 @@ void HTableDestroy(htable_t *htable)
 {
 	size_t i = 0;
 	
+	ASSERT_NOT_NUL(htable);
+	
 	for (i = 0; i < htable->table_size; ++i)
 	{
 		DListDestroy(htable->table[i]);
@@ -79,6 +85,9 @@ size_t HTableSize(const htable_t *htable)
 	size_t size = 0;
 	size_t i = 0;
 	
+	ASSERT_NOT_NUL(htable);
+	
+	
 	for (i = 0; i < htable->table_size; ++i)
 	{
 		size += DListSize(htable->table[i]);
@@ -89,6 +98,9 @@ size_t HTableSize(const htable_t *htable)
 int HTableIsEmpty(const htable_t *htable)
 {
 	size_t i = 0;
+	
+	ASSERT_NOT_NUL(htable);
+	
  
 	for (i = 0; i < htable->table_size; ++i)
 	{
@@ -102,25 +114,36 @@ int HTableIsEmpty(const htable_t *htable)
 
 void HTableInsert(htable_t *htable, void *entry)
 {
+	
+	ASSERT_NOT_NUL(htable);
+	
 	DListPushBack(htable->table[htable->hash_func(entry)], entry);
 }
 
 void HTableRemove(htable_t *htable, void *key)
 {
-	iter_t to_remove = DListFind(DListBegin(htable->table[htable->hash_func(key)]), 
-								DListEnd(htable->table[htable->hash_func(key)]),
-								htable->compare, 
-								key);
+	iter_t to_remove = NULL;
+	
+	ASSERT_NOT_NUL(htable);
+	
+	to_remove = DListFind(DListBegin(htable->table[htable->hash_func(key)]), 
+							DListEnd(htable->table[htable->hash_func(key)]),
+							htable->compare, 
+							key);
 
 	DListRemove(to_remove);
 }
 
 void *HTableFind(const htable_t *htable, void *to_find)
 {
-	iter_t found = DListFind(DListBegin(htable->table[htable->hash_func(to_find)]), 
-							DListEnd(htable->table[htable->hash_func(to_find)]),
-							htable->compare, 
-							to_find);
+	iter_t found = NULL;
+	
+	ASSERT_NOT_NUL(htable);
+	
+	found = DListFind(DListBegin(htable->table[htable->hash_func(to_find)]), 
+						DListEnd(htable->table[htable->hash_func(to_find)]),
+						htable->compare, 
+						to_find);
 
 	return DListGetData(found);
 
@@ -129,7 +152,9 @@ void *HTableFind(const htable_t *htable, void *to_find)
 int HTableForEach(htable_t *htable, action_t action, void *param)
 {
 	size_t i = 0;
-
+	
+	ASSERT_NOT_NUL(htable);
+	
 	for (i = 0; i < htable->table_size; ++i)
 	{
 		if (DListForEach(DListBegin(htable->table[i]), 
@@ -145,12 +170,28 @@ int HTableForEach(htable_t *htable, action_t action, void *param)
 
 double HTableLoadFactor(const htable_t *htable)
 {
-	return 0;
+	
+	ASSERT_NOT_NUL(htable);
+	
+	return HTableSize(htable)/htable->table_size;
 }
 
 double HTableSD(const htable_t *htable)
 {
-	return 0;
+	size_t i = 0;
+	double output = 0;
+	
+	ASSERT_NOT_NUL(htable);
+	
+	for (i = 0; i < htable->table_size; ++i)
+	{
+		output += (DListSize(htable->table[i]) - HTableLoadFactor(htable);
+	}
+	
+	output *= output;
+	output /= htable->table_size
+	
+	return sqrt(output);
 }
 
 
