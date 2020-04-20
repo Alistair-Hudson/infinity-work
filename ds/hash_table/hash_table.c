@@ -1,7 +1,7 @@
 /******************************************************************************
- *	Title:		AVL Tree
+ *	Title:		HashTable
  *	Authour:	Alistair Hudson
- *	Reviewer:	Yurri
+ *	Reviewer:	Kobbi
  *	Version:	23.03.2020.1
  ******************************************************************************/
 #include <stdlib.h>

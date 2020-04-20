@@ -34,7 +34,7 @@ static int MSMege(char* begin, char* middle, char* end, const sort_param_t* para
 
 /******FUNCTIONS******/
 void QSort(void* begin, size_t nmemb, size_t size,  
-			int (*compar)(const char*, const char*, char*), void* param);
+			int (*compar)(const char*, const char*, char*), void* param)
 {
 	sort_params_t* params = {size, compar, param};
 	QSortImp(begin, begin+(nmemb*size), params);
@@ -138,9 +138,8 @@ static int MSMege(char* begin, char* middle, char* end, sort_param_t* params)
 		*n1
 		*n2
 		*/
-	size_t i = 0, j= 0;
-	size_t n1 = middle - begin;
-	size_t n2 = end - middle;
+	char* left = begin;
+	char* right = middle;
 
 	/*Allocate for array LEFT and RIG1HTH*/
 	/*if either fails return 1*/
@@ -158,42 +157,32 @@ static int MSMege(char* begin, char* middle, char* end, sort_param_t* params)
 	
 	/*for i from 0 until n1*/
 		/*LEFT[i] = begin[left + i]*/
-	for (i = 0; i < n1; ++i)
+	while (left < middle)
 	{
-		*LEFT[i] = *begin[i];
+		*LEFT = *left;
+		LEFT += params->size_elem;
+		left += params->size_elem;
 	}
 	/*for j from 0 until n1*/
 		/*RIGHT[i] = begin[middle + i]*/
-	for (j = 0; j < n2; ++j)
+	while (right < end)
 	{
-		*RIGHT[j] = *middle[j];
+		*RIGHT = *right;
+		RIGHT += params->size_elem;
+		right += params->size_elem;
 	}
 	
 	/*reset i and j*/
 	i = 0;
 	j = 0;
 	/*while i is before n1 && j is before n2*/
-	while (i < n1 && j < n2)
+	while (left < middle && right < end)
 	{	
 		/*if LEFT is before RIGHT*/
-		if (0 >= params->compare(LEFT, RIGHT, param))
-		{
-			/*begin[k] = LEFT*/
-			*begin = *LEFT;
-			/*increase i*/
-			LEFT += params->size_elem;
-			++i;
-		}
-		/*else*/
-		else
-		{
-			/*begin[k] = RIGHT*/
-			*begin = *RIGHT;
-			/*increase j*/
-			RIGHT += params->size_elem;
-			++j;
-		}
-		/*increase k*/
+		char** smaller = (0 > params->compare(LEFT, RIGHT, param)) ? LEFT : RIGHT
+			
+		memcpy(begin, *smaller, params->size_elem);
+		*smaller += params->size_elem;
 		begin += params->size_elem;
 	}
 
