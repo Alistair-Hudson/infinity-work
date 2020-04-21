@@ -4,7 +4,7 @@
  *	Reviewer:	Laura
  *	Version:	21.04.2020.1
  ******************************************************************************/
-#include <stdlib.h>
+#include <stdlib.h>		/* malloc, free */
 #include <assert.h>		/* assert */
 #include <string.h>		/* memcpy */
 
@@ -59,6 +59,7 @@ int HeapSort(void* begin, size_t nmemb, size_t size_elem,
 
 	/**rearrange array into a heap**/
 	/*from last sub-root to begining of array*/
+/*TODO look at another means of iterating through?*/
 	for (i = (nmemb/2 -1); i >= 0; --i)
 	{
 		/*heapify*/
@@ -86,6 +87,7 @@ int HeapSort(void* begin, size_t nmemb, size_t size_elem,
 
 static void HSHeapify(char* root, int index, const sort_param_t* params)
 {
+/*TODO look at changing to pointer and not use index?*/
 	/*set index as largest*/
 	int largest = index;
 	/*set left and right children*/
