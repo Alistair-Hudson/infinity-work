@@ -13,13 +13,56 @@
 
 /******MACROS******/
 #define ASSERT_NOT_NULL(ptr)	(assert(NULL != ptr))
+#define UPPER_LIMIT				(3)
+#define LOWER_LIMIT				(0)
 
 /******TYPEDEFS, GLOBAL VARIABLES AND INTERNAL FUNCTIONS******/
 
 /******FUNCTIONS******/
-
-int main()
+int Normal(void)
 {
 	printf("I executed this....\n");
 	return 0;
+}
+
+int DivideByZero()
+{
+	int i = 10;
+	printf("Execute failure in\n");
+	for (i = 10; i >= 0; --i)
+	{
+		printf("%d\n", 10/i);
+	}
+	return 0;
+}
+
+int AccessMemoryViolation(void)
+{
+	char* str = "asdf";
+	printf("Execute memory violation\n");
+	str[0] = 45;
+	return 0;
+}
+
+int main()
+{
+	char test[100];
+	int status = 0;
+	
+	printf("What should I play with?\n(enter a number to trigger test)\n");
+	scanf("%s", test);
+
+	switch(*(int*)test)
+	{
+		case '0':
+			status = DivideByZero();
+			break;
+		case '1':
+			status = AccessMemoryViolation();
+			break;
+		default:
+			status = Normal();
+	}
+
+	return status;
 }
