@@ -1,8 +1,8 @@
 /******************************************************************************
  *	Title:		Heap Sort
  *	Authour:	Alistair Hudson
- *	Reviewer:	
- *	Version:	20.04.2020.0
+ *	Reviewer:	Laura
+ *	Version:	21.04.2020.1
  ******************************************************************************/
 #include <stdlib.h>
 #include <assert.h>		/* assert */
