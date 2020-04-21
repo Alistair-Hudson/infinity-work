@@ -1,8 +1,8 @@
 /******************************************************************************
  *	Title:		Heap Sort
  *	Authour:	Alistair Hudson
- *	Reviewer:	
- *	Version:	20.04.2020.0
+ *	Reviewer:	Laura
+ *	Version:	21.04.2020.1
  ******************************************************************************/
 #include <stdlib.h>
 #include <assert.h>		/* assert */
@@ -74,8 +74,9 @@ int HeapSort(void* begin, size_t nmemb, size_t size_elem,
 				(char*)begin+(i*size_elem), 
 				params->swap_buffer, 
 				size_elem);
-		/*re-heapify*/	
-		HSHeapify((char*)begin, i, params);
+		/*re-heapify*/
+		params->nmemb = i;	
+		HSHeapify((char*)begin, 0, params);
 	}
 
 	free(params->swap_buffer);
@@ -93,7 +94,7 @@ static void HSHeapify(char* root, int index, const sort_param_t* params)
 
 	/*if left child is before root and is not pointing past the end*/
 	if (left < params->nmemb && 
-		0 <= params->compare(root+(largest*params->size_elem), 
+		0 >= params->compare(root+(largest*params->size_elem), 
 								root+(left*params->size_elem), 
 								params->param))
 	{
@@ -102,7 +103,7 @@ static void HSHeapify(char* root, int index, const sort_param_t* params)
 	}	
 	/*if right is the largest and is not pointing past the end*/
 	if (right < params->nmemb && 
-		0 <= params->compare(root+(largest*params->size_elem), 
+		0 >= params->compare(root+(largest*params->size_elem), 
 								root+(right*params->size_elem), 
 								params->param))
 	{
