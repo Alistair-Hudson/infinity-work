@@ -7,7 +7,7 @@
 #include <stdlib.h>		/* malloc, free */
 #include <assert.h>		/* assert */
 #include <string.h>		/* memcpy */
-#include <stio.h>		/* printf */
+#include <stdio.h>		/* printf */
 
 #include "simple_watchdog.h"
 
@@ -20,6 +20,6 @@
 
 int main()
 {
-	printf("Hello\n");
+	printf("I executed this....\n");
 	return 0;
 }
