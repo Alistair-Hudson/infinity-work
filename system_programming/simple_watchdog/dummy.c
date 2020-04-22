@@ -49,11 +49,15 @@ int main(int argc, char* argv[])
 	char test[100] /*= *argv[1]*/;
 	int status = 0;
 	
-	printf("argv 1 is %s\n", argv[1]);
-/*	printf("What should I play with?\n(enter a number to trigger test)\n");
+	if (NULL == argv[1])
+	{
+	printf("Sorry I missed what test you wanted\n(enter a number to trigger test)\n");
 	scanf("%s", test);
-*/
-	strcpy(test, argv[1]);
+	}
+	else
+	{
+		strcpy(test, argv[1]);
+	}
 	switch(*test)
 	{
 		case '0':

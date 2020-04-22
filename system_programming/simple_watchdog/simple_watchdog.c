@@ -2,7 +2,7 @@
  *	Title:		Simple Watchdog
  *	Authour:	Alistair Hudson
  *	Reviewer:	
- *	Version:	21.04.2020.0
+ *	Version:	22.04.2020.0
  ******************************************************************************/
 #include <stdlib.h>		/* malloc, free */
 #include <assert.h>		/* assert */
@@ -26,7 +26,8 @@ void SimpleFork(void)
 {
 	int status = 0;
 	char test[3] = {0};
-	char* args[] = {"./dummy", &test, NULL};
+	char dir[100] = {0};
+	char* args[] = {&dir, &test, NULL};
 	pid_t id = fork();
 	/*perform a fork*/
 	/*if fork is child*/
@@ -35,6 +36,8 @@ void SimpleFork(void)
 		
 		/*print child response*/
 		printf("Hello from child\n");
+		printf("what is the directory you wish to open?\n");
+		scanf("%s", args[0]);
 		printf("What should I play with?\n(enter a number to trigger test)\n");
 		scanf("%s", args[1]);
 
@@ -47,13 +50,13 @@ void SimpleFork(void)
 		if (WIFEXITED(status))
 		{
 			/*elese print parent response*/
-			printf("Hello from parent\n");
+			printf("Child ran successfully\n");
 		}
 		else
 		{
 			if(WIFSIGNALED(status))
 			{
-				printf("My child was terminated with signal %d\n", WTERMSIG(status));
+				printf("child was terminated with signal %d\n", WTERMSIG(status));
 			}
 		}
 	}
@@ -82,12 +85,14 @@ void SimpleSystem(void)
 	{
 		if(WIFEXITED(status))
 		{
-			printf("Child successfully ran\n");
+			printf("child exited on status %d\n", WEXITSTATUS(status));
 		}
 		else
 		{
-			printf("child terminated\n");
-			perror("Due to error: ");
+			if (WIFSIGNALED(status))
+			{
+				printf("child terminated with signal %d\n", WTERMSIG(status));
+			}
 		}
 	}
 }
