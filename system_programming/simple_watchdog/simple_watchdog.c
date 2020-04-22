@@ -11,6 +11,7 @@
 #include <sys/types.h>	/* fork */
 #include <unistd.h>		/* fork */
 #include <sys/wait.h>	/* wait */
+#include <errno.h>		/* perror */
 
 #include "simple_watchdog.h"
 
@@ -24,7 +25,8 @@
 void SimpleFork(void)
 {
 	int status = 0;
-	char* args[] = {"./dummy", 0, NULL};
+	char test[3] = {0};
+	char* args[] = {"./dummy", &test, NULL};
 	pid_t id = fork();
 	/*perform a fork*/
 	/*if fork is child*/
@@ -35,7 +37,9 @@ void SimpleFork(void)
 		printf("Hello from child\n");
 		printf("What should I play with?\n(enter a number to trigger test)\n");
 		scanf("%s", args[1]);
-		exit(execv(args[0], args));
+
+		execv(args[0], args);
+		perror("child teminated due to error");
 	}
 	else if (0 < id)
 	{
@@ -47,18 +51,22 @@ void SimpleFork(void)
 		}
 		else
 		{
-			printf("My child was terminated\n");
+			if(WIFSIGNALED(status))
+			{
+				printf("My child was terminated with signal %d\n", WTERMSIG(status));
+			}
 		}
 	}
 	else
 	{
 		printf("Process aborted\n");
+		perror("Due to error: ");
 	}
 }
 
 void SimpleSystem(void)
 {
-	char target[100];
+	char target[100] = {0};
 	int status = 0;
 
 	printf("Input file path and which test number\n");
@@ -68,14 +76,19 @@ void SimpleSystem(void)
 	if (-1 == status)
 	{
 		printf("child failed to execute\n");
-	}
-	else if (0 == status)
-	{
-		printf("Child successfully ran\n");
+		perror("Due to error: ");
 	}
 	else
 	{
-		printf("child terminated\n");
+		if(WIFEXITED(status))
+		{
+			printf("Child successfully ran\n");
+		}
+		else
+		{
+			printf("child terminated\n");
+			perror("Due to error: ");
+		}
 	}
 }
 

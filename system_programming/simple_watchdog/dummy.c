@@ -49,6 +49,7 @@ int main(int argc, char* argv[])
 	char test[100] /*= *argv[1]*/;
 	int status = 0;
 	
+	printf("argv 1 is %s\n", argv[1]);
 /*	printf("What should I play with?\n(enter a number to trigger test)\n");
 	scanf("%s", test);
 */
