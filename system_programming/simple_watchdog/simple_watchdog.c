@@ -24,15 +24,18 @@
 void SimpleFork(void)
 {
 	int status = 0;
-	char* args[] = {"./dummy", NULL};
+	char* args[] = {"./dummy", 0, NULL};
 	pid_t id = fork();
 	/*perform a fork*/
 	/*if fork is child*/
 	if (0 == id)
 	{
+		
 		/*print child response*/
 		printf("Hello from child\n");
-		exit(execv(args[0], args));
+/*		printf("What should I play with?\n(enter a number to trigger test)\n");
+		scanf("%s", args[1]);
+*/		exit(execv(args[0], args));
 	}
 	else if (0 < id)
 	{
@@ -44,7 +47,7 @@ void SimpleFork(void)
 		}
 		else
 		{
-			printf("I lost my child\n");
+			printf("My child was terminated\n");
 		}
 	}
 	else

@@ -44,15 +44,15 @@ int AccessMemoryViolation(void)
 	return 0;
 }
 
-int main()
+int main(int argc, char* argv[])
 {
-	char test[100];
+	char test = *argv[1];
 	int status = 0;
 	
-	printf("What should I play with?\n(enter a number to trigger test)\n");
+/*	printf("What should I play with?\n(enter a number to trigger test)\n");
 	scanf("%s", test);
-
-	switch(*(int*)test)
+*/
+	switch(test)
 	{
 		case '0':
 			status = DivideByZero();
