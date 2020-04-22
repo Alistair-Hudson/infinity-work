@@ -33,9 +33,9 @@ void SimpleFork(void)
 		
 		/*print child response*/
 		printf("Hello from child\n");
-/*		printf("What should I play with?\n(enter a number to trigger test)\n");
+		printf("What should I play with?\n(enter a number to trigger test)\n");
 		scanf("%s", args[1]);
-*/		exit(execv(args[0], args));
+		exit(execv(args[0], args));
 	}
 	else if (0 < id)
 	{
@@ -56,11 +56,52 @@ void SimpleFork(void)
 	}
 }
 
+void SimpleSystem(void)
+{
+	char target[100];
+	int status = 0;
+
+	printf("Input file path and which test number\n");
+	scanf("%s", target);
+	
+	status = system(target);	
+	if (-1 == status)
+	{
+		printf("child failed to execute\n");
+	}
+	else if (0 == status)
+	{
+		printf("Child successfully ran\n");
+	}
+	else
+	{
+		printf("child terminated\n");
+	}
+}
+
 int main()
 {
 	while(1)
 	{
-		SimpleFork();
+		char function[100];
+		printf("fork or system?\n");
+		scanf("%s", function);
+		if (0 == strcmp(function, "fork"))
+		{
+			SimpleFork();
+		}
+		else if (0 == strcmp(function, "system"))
+		{
+			SimpleSystem();
+		}
+		else if (0 == strcmp(function, "exit"))
+		{
+			break;
+		}
+		else
+		{
+			printf("incorrect input\n\n");
+		}
 	}
 	return 0;
 }
