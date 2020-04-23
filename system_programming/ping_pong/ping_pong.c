@@ -56,7 +56,7 @@ int main ()
 
 	if (0 == pid)
 	{
-		child.sa_handler = Ping;
+		child.sa_handler = Pong;
 		sigemptyset(&child.sa_mask);
 		child.sa_flags = 0;
 		
@@ -64,7 +64,7 @@ int main ()
 		while(1)
 		{
 			sleep(1);
-			if (1 == flag)
+			if (0 == flag)
 			{
 				write(1, "|o     |\n\n", 10);
 				kill(getppid(), SIGUSR2);
@@ -74,12 +74,11 @@ int main ()
 	else
 	{
 		size_t rally = 0;
-		parent.sa_handler = Pong;
+		parent.sa_handler = Ping;
 		sigemptyset(&parent.sa_mask);
 		parent.sa_flags = 0;
 
 		sigaction(SIGUSR2, &child, NULL);
-		sleep(5);		
 		while(1)
 		{
 			sleep(1);
@@ -88,7 +87,7 @@ int main ()
 				kill(pid, SIGQUIT);
 				break;
 			}
-			if (0 == flag)
+			if (1 == flag)
 			{
 				write(1, "|     o|\n\n", 10);
 				kill(pid, SIGUSR1);
