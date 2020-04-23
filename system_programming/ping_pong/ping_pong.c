@@ -45,6 +45,15 @@ int main ()
 	pid_t pid = 0;
 	action_handler_t parent;
 	action_handler_t child;
+	int signum = 0;
+	pid_t id = 0;
+	char str[10] = {0};
+
+	parent.sa_handler = Ping;
+	child.sa_handler = Pong;
+
+	sigaction(SIGUSR1, NULL, &parent);
+	sigaction(SIGUSR2, &child, NULL);
 
 	pid = fork();
 	
@@ -56,43 +65,25 @@ int main ()
 
 	if (0 == pid)
 	{
-		child.sa_handler = Pong;
-		sigemptyset(&child.sa_mask);
-		child.sa_flags = 0;
-		
-		sigaction(SIGUSR1, NULL, &parent);
-		while(1)
-		{
-			sleep(1);
-			if (0 == flag)
-			{
-				write(1, "|o     |\n\n", 10);
-				kill(getppid(), SIGUSR2);
-			}
-		}
+		signum = SIGUSR2;
+		id = getppid();
+		str = "|o    |";
 	}
 	else
 	{
-		size_t rally = 0;
-		parent.sa_handler = Ping;
-		sigemptyset(&parent.sa_mask);
-		parent.sa_flags = 0;
+		signum = SIGUSR1;
+		id = pid;
+		str = "|    o|";
+	}
 
-		sigaction(SIGUSR2, &child, NULL);
-		while(1)
+	while(1)
+	{
+		if(signal)
 		{
+			printf("%s", str);
 			sleep(1);
-			if (10 == rally)
-			{
-				kill(pid, SIGQUIT);
-				break;
-			}
-			if (1 == flag)
-			{
-				write(1, "|     o|\n\n", 10);
-				kill(pid, SIGUSR1);
-				++rally;
-			}
+			kill(id, signum);
+			signal = 0;
 		}
 	}
 
