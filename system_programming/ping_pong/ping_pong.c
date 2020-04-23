@@ -4,9 +4,12 @@
  *	Reviewer:	
  *	Version:	22.04.2020.0
  ******************************************************************************/
-#include <stdlib.h>		/* malloc, free */
+#define _USE_POSIX199309
+#define _XOPEN_SOURCE
+
+#include <stdlib.h>		/*  */
 #include <assert.h>		/* assert */
-#include <string.h>		/* memcpy */
+#include <string.h>		/*  */
 #include <stdio.h>		/* printf */
 #include <sys/types.h>	/* fork */
 #include <unistd.h>		/* fork */
@@ -18,27 +21,30 @@
 #define ASSERT_NOT_NULL(ptr)	(assert(NULL != ptr))
 
 /******TYPEDEFS, GLOBAL VARIABLES AND INTERNAL FUNCTIONS******/
-static void Ping(int);
+typedef struct sigaction action_handler_t;
 
-static void Pong(int);
+int flag = 0;
+
+void Ping(int);
+
+void Pong(int);
 
 /******FUNCTIONS******/
-static void Ping(int signum)
+void Ping(int signum)
 {
-/*	signal(SIGUSR1, Ping);
-*/	printf("|o     |\n\n");
+	flag = 1;	
 }
 
-static void Pong(int signum)
+void Pong(int signum)
 {
-/*	signal(SIGUSR2, Pong);
-*/	printf("|     o|\n\n");
-
+	flag = 0;
 }
 
 int main ()
 {
 	pid_t pid = 0;
+	action_handler_t parent;
+	action_handler_t child;
 
 	pid = fork();
 	
@@ -50,22 +56,44 @@ int main ()
 
 	if (0 == pid)
 	{
-		signal(SIGUSR1, Ping);
+		child.sa_handler = Ping;
+		sigemptyset(&child.sa_mask);
+		child.sa_flags = 0;
+		
+		sigaction(SIGUSR1, NULL, &parent);
 		while(1)
 		{
-
-			sleep(5);
-			kill(getppid, SIGUSR2);
+			sleep(1);
+			if (1 == flag)
+			{
+				write(1, "|o     |\n\n", 10);
+				kill(getppid(), SIGUSR2);
+			}
 		}
 	}
 	else
 	{
-		kill(pid, SIGUSR1);
-		signal(SIGUSR2, Pong);
+		size_t rally = 0;
+		parent.sa_handler = Pong;
+		sigemptyset(&parent.sa_mask);
+		parent.sa_flags = 0;
+
+		sigaction(SIGUSR2, &child, NULL);
+		sleep(5);		
 		while(1)
 		{
-			sleep(5);
-			kill(pid, SIGUSR1);
+			sleep(1);
+			if (10 == rally)
+			{
+				kill(pid, SIGQUIT);
+				break;
+			}
+			if (0 == flag)
+			{
+				write(1, "|     o|\n\n", 10);
+				kill(pid, SIGUSR1);
+				++rally;
+			}
 		}
 	}
 
