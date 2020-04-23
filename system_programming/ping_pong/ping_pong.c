@@ -23,69 +23,114 @@
 /******TYPEDEFS, GLOBAL VARIABLES AND INTERNAL FUNCTIONS******/
 typedef struct sigaction action_handler_t;
 
-int flag = 0;
+static int hit_back = 0;
 
-void Ping(int);
+void hit(int);
 
-void Pong(int);
+int PingPong1(void);
+
+int PingPong2(void);
 
 /******FUNCTIONS******/
-void Ping(int signum)
+int main()
 {
-	flag = 1;	
+	int status = 0;
+
+	status = PingPong1();
+
+	return status;
 }
 
-void Pong(int signum)
-{
-	flag = 0;
-}
-
-int main ()
+int PingPong2(void)
 {
 	pid_t pid = 0;
-	action_handler_t parent;
-	action_handler_t child;
+
+	pid = fork();
+	
+	if (0 > pid)
+	{
+		perror("Fork error");
+		return 1;
+	}
+	
+	if (0 == pid)
+	{
+		char* args[] = {"./", NULL};
+
+		execv(args[0], args);
+	}
+	else
+	{
+		
+	}
+
+	return 0;
+}
+void Hit(int signum)
+{
+	hit_back = 1;
+}
+
+int PingPong1(void)
+{
+	pid_t pid = 0;
+	action_handler_t parent = {0};
+	action_handler_t child = {0};
 	int signum = 0;
 	pid_t id = 0;
 	char str[10] = {0};
+	size_t rally = 0;
 
-	parent.sa_handler = Ping;
-	child.sa_handler = Pong;
+	parent.sa_handler = Hit;
+	child.sa_handler = Hit;
 
-	sigaction(SIGUSR1, NULL, &parent);
+	sigaction(SIGUSR1, &parent, NULL);
 	sigaction(SIGUSR2, &child, NULL);
 
 	pid = fork();
 	
 	if (0 > pid)
 	{
-		perror("fork");
-		exit(1);
+		perror("Fork error");
+		return 1;
 	}
 
 	if (0 == pid)
 	{
-		signum = SIGUSR2;
+		signum = SIGUSR1;
+		hit_back = 1;
 		id = getppid();
-		str = "|o    |";
+		strcpy(str, "|o    |");
 	}
 	else
 	{
-		signum = SIGUSR1;
+		signum = SIGUSR2;
 		id = pid;
-		str = "|    o|";
+		strcpy(str, "|    o|");
 	}
 
 	while(1)
 	{
-		if(signal)
+		if(1 == hit_back)
 		{
-			printf("%s", str);
+			printf("%s\n", str);
 			sleep(1);
 			kill(id, signum);
-			signal = 0;
+			hit_back = 0;
+			if (0 < pid)
+			{
+				++rally;
+			}
+			if (10 <= rally)
+			{
+				kill(id, SIGQUIT);
+				return 0;				
+			}
 		}
 	}
 
-	return 0;
+	return 1;
 }
+
+
+
