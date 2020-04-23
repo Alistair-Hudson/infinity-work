@@ -25,14 +25,14 @@ static void Pong(int);
 /******FUNCTIONS******/
 static void Ping(int signum)
 {
-	signal(SIGUSR1, Ping);
-	printf("|o     |\n\n");
+/*	signal(SIGUSR1, Ping);
+*/	printf("|o     |\n\n");
 }
 
 static void Pong(int signum)
 {
-	signal(SIGUSR2, Pong);
-	printf("|     o|\n\n");
+/*	signal(SIGUSR2, Pong);
+*/	printf("|     o|\n\n");
 
 }
 
@@ -54,19 +54,19 @@ int main ()
 		while(1)
 		{
 
-/*			sleep(5);
+			sleep(5);
 			kill(getppid, SIGUSR2);
-*/		}
+		}
 	}
 	else
 	{
 		kill(pid, SIGUSR1);
-/*		signal(SIGUSR2, Pong);
+		signal(SIGUSR2, Pong);
 		while(1)
 		{
 			sleep(5);
 			kill(pid, SIGUSR1);
-		}*/
+		}
 	}
 
 	return 0;
