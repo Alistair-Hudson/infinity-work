@@ -23,7 +23,7 @@
 /******TYPEDEFS, GLOBAL VARIABLES AND INTERNAL FUNCTIONS******/
 typedef struct sigaction action_handler_t;
 
-static int hit_back = 0;
+static volatile int hit_back = 0;
 
 void Hit(int);
 
@@ -75,10 +75,10 @@ int PingPong2(void)
 
 	while(1)
 	{
+		sleep(10);
 		if(1 == hit_back)
 		{
 			printf("%s\n", str);
-			sleep(1);
 			kill(id, signum);
 			hit_back = 0;
 			if (0 < pid)

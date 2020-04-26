@@ -23,26 +23,31 @@
 /******TYPEDEFS, GLOBAL VARIABLES AND INTERNAL FUNCTIONS******/
 typedef struct sigaction action_handler_t;
 
-static int hit_back = 0;
+static volatile int hit_back = 0;
 
 static void Hit(int);
 
 /******FUNCTIONS******/
 static void Hit(int signum)
 {
+	(void)signum;
 	hit_back = 1;
 }
 
 int main (int argc, char *argv[])
 {
-	pid_t pid = 0;
+
 	action_handler_t pong = {0};
 	int signum = 0;
-	pid_t id = argv[1];
-	char str[10] = {0};
+	pid_t oponent_id = 0;
+	char str[10];
 	size_t rally = 0;
 
-	child.sa_handler = Hit;
+/*	assert(argc == 1);
+*/	assert(isdigit(argv[1][0]));
+
+	oponent_id = atoi(argv[1]);
+	pong.sa_handler = Hit;
 
 	sigaction(SIGUSR2, &pong, NULL);
 
@@ -52,18 +57,19 @@ int main (int argc, char *argv[])
 
 	while(1)
 	{
+		sleep(10);
 		if(1 == hit_back)
 		{
+			
 			printf("%s\n", str);
-			sleep(1);
-			kill(id, signum);
+			kill(oponent_id, signum);
 			hit_back = 0;
 
 			++rally;
 
 			if (10 <= rally)
 			{
-				kill(id, SIGQUIT);
+				kill(oponent_id, SIGQUIT);
 				return 0;				
 			}
 		}

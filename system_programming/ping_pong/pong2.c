@@ -23,7 +23,7 @@
 /******TYPEDEFS, GLOBAL VARIABLES AND INTERNAL FUNCTIONS******/
 typedef struct sigaction action_handler_t;
 
-static int hit_back = 0;
+static volatile int hit_back = 0;
 
 static void Hit(int);
 
@@ -38,7 +38,7 @@ int main ()
 	pid_t pid = 0;
 	action_handler_t child = {0};
 	int signum = 0;
-	pid_t id = 0;
+	pid_t oponent_id = 0;
 	char str[10] = {0};
 	size_t rally = 0;
 
@@ -48,16 +48,16 @@ int main ()
 
 	signum = SIGUSR1;
 	hit_back = 1;
-	id = getppid();
+	oponent_id = getppid();
 	strcpy(str, "|o    |");
 
 	while(1)
 	{
+		sleep(10);
 		if(1 == hit_back)
 		{
 			printf("%s\n", str);
-			sleep(1);
-			kill(id, signum);
+			kill(oponent_id, signum);
 			hit_back = 0;
 			if (0 < pid)
 			{
@@ -65,7 +65,7 @@ int main ()
 			}
 			if (10 <= rally)
 			{
-				kill(id, SIGQUIT);
+				kill(oponent_id, SIGQUIT);
 				return 0;				
 			}
 		}
