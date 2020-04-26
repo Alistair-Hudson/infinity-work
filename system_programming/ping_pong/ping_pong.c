@@ -2,7 +2,7 @@
  *	Title:		Signal Ping-Pong
  *	Authour:	Alistair Hudson
  *	Reviewer:	
- *	Version:	22.04.2020.0
+ *	Version:	23.04.2020.0
  ******************************************************************************/
 #define _USE_POSIX199309
 #define _XOPEN_SOURCE

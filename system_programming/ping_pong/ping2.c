@@ -25,7 +25,7 @@ typedef struct sigaction action_handler_t;
 
 static int hit_back = 0;
 
-void hit(int);
+void Hit(int);
 
 int PingPong2(void);
 
@@ -42,6 +42,15 @@ int main()
 int PingPong2(void)
 {
 	pid_t pid = 0;
+	action_handler_t parent = {0};
+	int signum = 0;
+	pid_t id = 0;
+	char str[10] = {0};
+	size_t rally = 0;
+
+	parent.sa_handler = Hit;
+
+	sigaction(SIGUSR1, &parent, NULL);
 
 	pid = fork();
 	
@@ -50,19 +59,41 @@ int PingPong2(void)
 		perror("Fork error");
 		return 1;
 	}
-	
+
 	if (0 == pid)
 	{
-		char* args[] = {"./", NULL};
-
+		char* args[] = {"./pong2", NULL};
 		execv(args[0], args);
+
 	}
 	else
 	{
-		
+		signum = SIGUSR2;
+		id = pid;
+		strcpy(str, "|    o|");
 	}
 
-	return 0;
+	while(1)
+	{
+		if(1 == hit_back)
+		{
+			printf("%s\n", str);
+			sleep(1);
+			kill(id, signum);
+			hit_back = 0;
+			if (0 < pid)
+			{
+				++rally;
+			}
+			if (10 <= rally)
+			{
+				kill(id, SIGQUIT);
+				return 0;				
+			}
+		}
+	}
+
+	return 1;
 }
 
 void Hit(int signum)
