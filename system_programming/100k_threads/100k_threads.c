@@ -32,7 +32,6 @@ void* SetIndex(void* arg)
 
 void* SumOfDivisors(void* arg)
 {
-	int sum_of_divisors = 0;
 	size_t i = 0;
 	size_t num = (*(size_t*)arg +1) * 100;
 	
