@@ -1,19 +1,16 @@
 /******************************************************************************
  *	Title:		Signal Pong
  *	Authour:	Alistair Hudson
- *	Reviewer:	
- *	Version:	22.04.2020.0
+ *	Reviewer:	Shmuel
+ *	Version:	27.04.2020.2
  ******************************************************************************/
 #define _USE_POSIX199309
 #define _XOPEN_SOURCE
 
 #include <stdlib.h>		/*  */
 #include <assert.h>		/* assert */
-#include <string.h>		/*  */
+#include <string.h>		/* strcpy */
 #include <stdio.h>		/* printf */
-#include <sys/types.h>	/* fork */
-#include <unistd.h>		/* fork */
-#include <sys/wait.h>	/* wait */
 #include <errno.h>		/* perror */
 #include <signal.h>		/* signal */
 
@@ -30,6 +27,7 @@ static void Hit(int);
 /******FUNCTIONS******/
 static void Hit(int signum)
 {
+	assert(NULL != signum);
 	hit_back = 1;
 }
 
@@ -44,7 +42,11 @@ int main ()
 
 	child.sa_handler = Hit;
 
-	sigaction(SIGUSR2, &child, NULL);
+	if(0 > sigaction(SIGUSR2, &child, NULL));
+	{
+		perror("Sigaction error");
+		return 1;
+	}
 
 	signum = SIGUSR1;
 	hit_back = 1;
@@ -57,15 +59,24 @@ int main ()
 		if(1 == hit_back)
 		{
 			printf("%s\n", str);
-			kill(oponent_id, signum);
 			hit_back = 0;
+			if(0 > kill(oponent_id, signum))
+			{
+				perror("Signal error");
+				return 1;
+			}
+
 			if (0 < pid)
 			{
 				++rally;
 			}
 			if (10 <= rally)
 			{
-				kill(oponent_id, SIGQUIT);
+				if(0 > kill(oponent_id, SIGQUIT))
+				{
+					perror("Kill error");
+					return 1;
+				}
 				return 0;				
 			}
 		}

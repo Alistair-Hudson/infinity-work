@@ -1,15 +1,15 @@
 /******************************************************************************
  *	Title:		Signal Ping-Pong
  *	Authour:	Alistair Hudson
- *	Reviewer:	
- *	Version:	23.04.2020.0
+ *	Reviewer:	Shmuel
+ *	Version:	27.04.2020.2
  ******************************************************************************/
 #define _USE_POSIX199309
 #define _XOPEN_SOURCE
 
 #include <stdlib.h>		/*  */
 #include <assert.h>		/* assert */
-#include <string.h>		/*  */
+#include <string.h>		/* strcpy */
 #include <stdio.h>		/* printf */
 #include <sys/types.h>	/* fork */
 #include <unistd.h>		/* fork */
@@ -41,6 +41,7 @@ int main()
 
 void Hit(int signum)
 {
+	assert(NULL != signum);
 	hit_back = 1;
 }
 
@@ -57,9 +58,6 @@ int PingPong1(void)
 	parent.sa_handler = Hit;
 	child.sa_handler = Hit;
 
-	sigaction(SIGUSR1, &parent, NULL);
-	sigaction(SIGUSR2, &child, NULL);
-
 	pid = fork();
 	
 	if (0 > pid)
@@ -74,12 +72,22 @@ int PingPong1(void)
 		hit_back = 1;
 		id = getppid();
 		strcpy(str, "|o    |");
+		if(0 > sigaction(SIGUSR1, &parent, NULL))
+		{
+			perror("Parent Sigaction error");
+			return 1;
+		}
 	}
 	else
 	{
 		signum = SIGUSR2;
 		id = pid;
 		strcpy(str, "|    o|");
+		if(0 > sigaction(SIGUSR2, &child, NULL))
+		{
+			perror("Child Sigaction error");
+			return 1;
+		}
 	}
 
 	while(1)
@@ -88,15 +96,24 @@ int PingPong1(void)
 		if(1 == hit_back)
 		{
 			printf("%s\n", str);
-			kill(id, signum);
 			hit_back = 0;
+			if(0 > kill(id, signum))
+			{
+				perror("Signal error");
+				return 1;
+			}
+
 			if (0 < pid)
 			{
 				++rally;
 			}
 			if (10 <= rally)
 			{
-				kill(id, SIGQUIT);
+				if(0 > kill(id, SIGQUIT))
+				{
+					perror("Kill error");
+					return 1;
+				}
 				return 0;				
 			}
 		}
