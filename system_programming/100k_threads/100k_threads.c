@@ -21,7 +21,6 @@
 
 /******TYPEDEFS, GLOBAL VARIABLES AND INTERNAL FUNCTIONS******/
 static size_t array[THREAD_LIMIT] = {0};
-static double sum_of_divisors = 0;
 
 /******FUNCTIONS******/
 void* SetIndex(void* arg)
@@ -32,6 +31,7 @@ void* SetIndex(void* arg)
 
 void* SumOfDivisors(void* arg)
 {
+	size_t sum_of_divisors = 0;
 	size_t i = 0;
 	size_t num = (*(size_t*)arg +1) * 100;
 	
@@ -42,13 +42,15 @@ void* SumOfDivisors(void* arg)
 			sum_of_divisors += i;
 		}
 	}
-	return NULL;
+	return (void*)sum_of_divisors;
 }
 
 int main()
 {
 	/*Initialise threads*/
 	pthread_t threads[THREAD_LIMIT];
+	size_t result = 0;
+	size_t total = 0;
 	size_t i = 0;
 	size_t j = 0;
 	time_t start = time(NULL);
@@ -82,13 +84,14 @@ int main()
 			{
 				break;
 			}
-			if (pthread_join(threads[i], NULL))
+			if (pthread_join(threads[i], (void**)result))
 			{
 				perror("Thread join failed");
 				printf("run = %ld", j);
 				return 1;
 			}
 		}
+		total += result;
 	}
 	/*Check time performance*/
 	printf("Time taken = %ld\n", time(NULL) - start);
@@ -105,6 +108,6 @@ int main()
 		}
 	}
 	printf("Success\n");
-	printf("for the number %f the sum of all divisors = %f\n", NUMBER, sum_of_divisors);
+	printf("for the number %f the sum of all divisors = %f\n", NUMBER, total);
 	return 0;
 }
