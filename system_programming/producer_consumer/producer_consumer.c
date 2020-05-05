@@ -1,4 +1,29 @@
-/***ONE PRODUCER, ONE CONSUMER***/
+/******************************************************************************
+ *	Title:		Producer Consumer
+ *	Authour:	Alistair Hudson
+ *	Reviewer:	
+ *	Version:	04.05.2020.0
+ ******************************************************************************/
+#include <stdlib.h>		/* atoi */
+#include <assert.h>		/* assert */
+#include <stdio.h>		/* printf, fgets*/
+#include <errno.h>		/* perror */
+#include <pthread.h>	/* pthread functions */
+#include <time.h>		/* time */
+#include <sys/types.h>	/* Sys V functions */
+#include <sys/sem.h>	/* Sys V functions */
+#include <string.h>		/* strstr */
+#include <ctype.h>		/* isdigit */
+
+/******MACROS******/
+#define ASSERT_NOT_NULL(ptr)	(assert(NULL != (ptr)))
+#define MAX_CHAR_LIM			(100)
+/******TYPEDEFS, GLOBAL VARIABLES AND INTERNAL FUNCTIONS******/
+
+/******FUNCTIONS******/
+
+
+/*==ONE PRODUCER, ONE CONSUMER==*/
 typedef struct sempahore
 {
 	int read_or_write;
@@ -25,7 +50,7 @@ int Consumer(semaphore_t *semaphore, char* receiver)
 }
 
 
-/***MULTIPLE PRODUCERS, MULTIPLE CONSUMERS***/
+/*==MULTIPLE PRODUCERS, MULTIPLE CONSUMERS==*/
 /*1*/
 typedef struct lock
 {
@@ -85,7 +110,7 @@ int Consumer(lock_t *lock, void* receiver)
 	return 0;
 }
 
-/***FIXED SIZE QUEUE***/
+/*==FIXED SIZE QUEUE==*/
 /*1*/
 typedef struct lock
 {
@@ -157,7 +182,7 @@ int Consumer(lock_t *lock, void* receiver)
 	return 0;
 }
 
-/***OVERFLOW, UNDERFLOW***/
+/*==OVERFLOW, UNDERFLOW==*/
 /*1*/
 typedef struct lock
 {
@@ -224,13 +249,13 @@ int Consumer(lock_t *lock, void* receiver)
 	return 0;
 }
 
-/***BARRIER***/
-typedef strcu lock
+/*==BARRIER==*/
+typedef struct lock
 {
 	int total_consumers
 	int consumers_needed_to_read
 	int in_use
-	int written
+	int have_read_array
 	buffer
 }lock_t;
 
@@ -241,7 +266,7 @@ int Producer(lock_t* lock, void* data)
 		/*set in use*/
 		/*write to buffer*/
 		/*set conumers needed to read to the total number of consumers*/
-		/*increase written*/
+		/*set read array to zero*/
 		/*free lock*/
 	return 0;
 }
@@ -249,12 +274,13 @@ int Producer(lock_t* lock, void* data)
 int Consumer(lock_t* lock, void* receiver)
 {
 	/*loop infinately*/
-		/*if written is not empty*/
+		/*if not read bit */
 			/*check if in use*/
-			/*read from buffer*/
-			/*decrease consumers need to read*/
-			/*if consumers need to read equals zero*/
-				/*decrease written*/
-			/*free lock*/
+				/*set lock*/
+				/*read from buffer*/
+				/*decrease consumers need to read*/
+				/*if consumers need to read equals zero*/
+					/*decrease written*/
+				/*free lock*/
 	return 0;
 }
