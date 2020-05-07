@@ -69,7 +69,7 @@ typedef struct EX41
 	int read;
 	int write;
 	pthread_mutex_t in_use_mutex;
-	int queue;
+	list_t* buffer;
 }EX41_t;
 
 typedef struct EX42
@@ -88,7 +88,7 @@ typedef struct EX5
 	pthread_mutex_t in_use_mutex;
 	pthread_cond_t barrier;
 	int have_read_array;
-	int buffer;
+	char buffer[BUFFER_LIMIT];
 }EX5_t;
 
 int SingleProdCon(void);
@@ -128,7 +128,7 @@ int main()
 {
 	int status = 0;
 
-	status = FSQProdCon1();
+	status = FSQProdCon2();
 
 	return status;
 }
@@ -341,7 +341,7 @@ void* Consumer22(void* arg)
 /*1*/
 int FSQProdCon1()
 {
-	pthread_t tid[20];
+	pthread_t tid[30];
 	EX31_t buffer = {0, 0, 0, {0}};
 	int i = 0;
 	
@@ -359,12 +359,12 @@ int FSQProdCon1()
 
 	sem_init(&buffer.free_space, 0, QUE_SIZE);
 
-	for (i = 0; i < 10; ++i)
+	for (i = 0; i < 15; ++i)
 	{
 		pthread_create(&tid[i], NULL, Producer31, &buffer);
-		pthread_create(&tid[i+10], NULL, Consumer31, &buffer);
+		pthread_create(&tid[i+15], NULL, Consumer31, &buffer);
 	}
-	for (i = 0; i < 20; ++i)
+	for (i = 0; i < 30; ++i)
 	{
 		pthread_join(tid[i], NULL);
 	}
@@ -417,7 +417,7 @@ void* Consumer31(void* arg)
 /*2*/
 int FSQProdCon2()
 {
-	pthread_t tid[20];
+	pthread_t tid[30];
 	EX32_t buffer = {0, 0, 0, 0, {0}};
 	int i = 0;
 
@@ -440,12 +440,12 @@ int FSQProdCon2()
 
 	sem_init(&buffer.free_space, 0, QUE_SIZE);
 
-	for (i = 0; i < 10; ++i)
+	for (i = 0; i < 15; ++i)
 	{
 		pthread_create(&tid[i], NULL, Producer32, &buffer);
-		pthread_create(&tid[i+10], NULL, Consumer32, &buffer);
+		pthread_create(&tid[i+15], NULL, Consumer32, &buffer);
 	}
-	for (i = 0; i < 20; ++i)
+	for (i = 0; i < 30; ++i)
 	{
 		pthread_join(tid[i], NULL);
 	}
@@ -462,8 +462,9 @@ void* Producer32(void* arg)
 
 	/*check if not in_use*/
 		/*set in_use*/
-	sem_wait(&buffer->free_space);
 	pthread_mutex_lock(&buffer->write_in_use);
+	sem_wait(&buffer->free_space);
+
 		/*write to queue*/
 	printf("Sending message...\n");
 	QEnqueue(buffer->queue, &message);
@@ -479,11 +480,12 @@ void* Consumer32(void* arg)
 {
 	EX32_t* buffer = arg;
 
-	/*loop if read is equal to written*/
-	sem_wait(&buffer->size);
 	/*check if not in_use*/
 		/*set in_use*/
 	pthread_mutex_lock(&buffer->read_in_use);
+	/*loop if read is equal to written*/
+	sem_wait(&buffer->size);
+
 		/*read from buffer*/
 	printf("Message: %s\n", QPeek(buffer->queue));
 	QDequeue(buffer->queue);
@@ -499,7 +501,7 @@ void* Consumer32(void* arg)
 /*1*/
 int OverUnderFlow1()
 {
-	pthread_t tid[20];
+	pthread_t tid[30];
 	EX41_t buffer = {0, 0, 0, 0, {0}};
 	int i = 0;
 
@@ -508,16 +510,24 @@ int OverUnderFlow1()
 		perror("Mutex init failed");
 		return 1;
 	}
+	buffer.buffer = SListCreate();
+	if (NULL == buffer.buffer)
+	{
+		printf("List creation failed\n");
+		return 1;
+	}	
 
-	for (i = 0; i < 10; ++i)
+	for (i = 0; i < 15; ++i)
 	{
 		pthread_create(&tid[i], NULL, Producer41, &buffer);
-		pthread_create(&tid[i+10], NULL, Consumer41, &buffer);
+		pthread_create(&tid[i+15], NULL, Consumer41, &buffer);
 	}
-	for (i = 0; i < 20; ++i)
+	for (i = 0; i < 30; ++i)
 	{
 		pthread_join(tid[i], NULL);
 	}
+	
+	SListDestroy(buffer.buffer);
 
 	return 0;
 }
@@ -570,7 +580,7 @@ void* Consumer41(void* arg)
 /*2*/
 int OverUnderFlow2()
 {
-	pthread_t tid[20];
+	pthread_t tid[30];
 	EX42_t buffer = {0, 0, 0, 0, {0}};
 	int i = 0;
 
@@ -585,12 +595,12 @@ int OverUnderFlow2()
 		return 1;
 	}
 
-	for (i = 0; i < 10; ++i)
+	for (i = 0; i < 15; ++i)
 	{
 		pthread_create(&tid[i], NULL, Producer42, &buffer);
-		pthread_create(&tid[i+10], NULL, Consumer42, &buffer);
+		pthread_create(&tid[i+15], NULL, Consumer42, &buffer);
 	}
-	for (i = 0; i < 20; ++i)
+	for (i = 0; i < 30; ++i)
 	{
 		pthread_join(tid[i], NULL);
 	}
@@ -607,7 +617,9 @@ void* Producer42(void* arg)
 	pthread_mutex_lock(&buffer->write_in_use);
 
 		/*write to queue*/
-	printf("Writer\n");
+	printf("Sending message...\n");
+	buffer->queue[buffer->write_index] = 13;
+
 		/*increase written*/
 	buffer->write_index += 1;
 		/*if written equals max queue space*/
@@ -634,7 +646,7 @@ void* Consumer42(void* arg)
 	{
 	}
 		/*read from buffer*/
-	printf("Reader\n");
+	printf("Message: %d\n", buffer->queue[buffer->read_index]);
 		/*increase read*/
 	buffer->read_index += 1;
 		/*if read equals max queue space*/
@@ -687,6 +699,7 @@ int Barrier()
 void* Producer5(void* arg)
 {
 	EX5_t* buffer = arg;
+	char message[] = "This is a message\n";
 
 	/*check if not in use*/
 		/*set in use*/
@@ -696,7 +709,8 @@ void* Producer5(void* arg)
 		pthread_cond_wait(&buffer->barrier, &buffer->in_use_mutex);
 	}
 		/*write to buffer*/
-	printf("Writer\n");
+	printf("Sending message...\n");
+	strncpy(buffer->buffer, message, BUFFER_LIMIT);
 
 		/*set conumers needed to read to the total number of consumers*/
 	buffer->consumers_needed_to_read = buffer->total_consumers;
@@ -721,7 +735,7 @@ void* Consumer5(void* arg)
 		pthread_cond_wait(&buffer->barrier, &buffer->in_use_mutex);
 	}
 				/*read from buffer*/
-	printf("Reader\n");
+	printf("Message: %s\n", buffer->buffer);
 				/*decrease consumers need to read*/
 	buffer->consumers_needed_to_read -= 1;
 				/*if consumers need to read equals zero*/
