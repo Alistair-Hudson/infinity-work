@@ -312,10 +312,10 @@ void* Producer22(void* arg)
 		/*write to buffer*/
 	printf("Sending message...\n");
 	SListInsertBefore(buffer->buffer, SListEnd(buffer->buffer), &message);	
-		/*increase semaphore*/
-	sem_post(&buffer->is_empty);
 		/*free lock*/
 	pthread_mutex_unlock(&buffer->in_use_mutex);
+		/*increase semaphore*/
+	sem_post(&buffer->is_empty);
 	return NULL;
 }
 
@@ -387,9 +387,9 @@ void* Producer31(void* arg)
 	printf("Sending message...\n");
 	QEnqueue(buffer->queue, &message);
 
-	sem_post(&buffer->size);
 		/*free lock*/
 	pthread_mutex_unlock(&buffer->in_use_mutex);
+	sem_post(&buffer->size);
 
 	return NULL;
 }
@@ -407,9 +407,10 @@ void* Consumer31(void* arg)
 	printf("Message: %s\n", QPeek(buffer->queue));
 	QDequeue(buffer->queue);
 
-	sem_post(&buffer->free_space);
+
 		/*free lock*/
 	pthread_mutex_unlock(&buffer->in_use_mutex);
+	sem_post(&buffer->free_space);
 
 	return NULL;
 }
@@ -462,16 +463,16 @@ void* Producer32(void* arg)
 
 	/*check if not in_use*/
 		/*set in_use*/
-	pthread_mutex_lock(&buffer->write_in_use);
 	sem_wait(&buffer->free_space);
+	pthread_mutex_lock(&buffer->write_in_use);
 
 		/*write to queue*/
 	printf("Sending message...\n");
 	QEnqueue(buffer->queue, &message);
 
-	sem_post(&buffer->size);
 		/*free lock*/
 	pthread_mutex_unlock(&buffer->write_in_use);
+	sem_post(&buffer->size);
 
 	return NULL;
 }
@@ -482,17 +483,16 @@ void* Consumer32(void* arg)
 
 	/*check if not in_use*/
 		/*set in_use*/
-	pthread_mutex_lock(&buffer->read_in_use);
-	/*loop if read is equal to written*/
 	sem_wait(&buffer->size);
+	pthread_mutex_lock(&buffer->read_in_use);
 
 		/*read from buffer*/
 	printf("Message: %s\n", QPeek(buffer->queue));
 	QDequeue(buffer->queue);
 
-	sem_post(&buffer->free_space);
 		/*free lock*/
 	pthread_mutex_unlock(&buffer->read_in_use);
+	sem_post(&buffer->free_space);
 
 	return NULL;
 }
@@ -615,19 +615,21 @@ void* Producer42(void* arg)
 	/*check if not write_in_use*/
 		/*set write_in_use*/
 	pthread_mutex_lock(&buffer->write_in_use);
-
+	if (buffer->read_index == buffer->write_index)
+	{
+		pthread_mutex_lock(&buffer->write_in_use);
+	}
 		/*write to queue*/
 	printf("Sending message...\n");
 	buffer->queue[buffer->write_index] = 13;
 
-		/*increase written*/
-	buffer->write_index += 1;
-		/*if written equals max queue space*/
-			/*set written back to 0*/
-	if(QUE_SIZE <= buffer->write_index)
+	if (buffer->read_index == buffer->write_index)
 	{
-		buffer->write_index = 0;
+		pthread_mutex_unlock(&buffer->write_in_use);
 	}
+		/*increase written*/
+	__sync_fetch_and_add(&buffer->write_index, 1);
+	__sync_val_compare_and_swap(&buffer->write_index, QUE_SIZE, 0);
 		/*free lock*/
 	pthread_mutex_unlock(&buffer->write_in_use);
 
@@ -648,13 +650,8 @@ void* Consumer42(void* arg)
 		/*read from buffer*/
 	printf("Message: %d\n", buffer->queue[buffer->read_index]);
 		/*increase read*/
-	buffer->read_index += 1;
-		/*if read equals max queue space*/
-			/*set read back to zero*/
-	if(QUE_SIZE <= buffer->read_index)
-	{
-		buffer->read_index = 0;
-	}
+	__sync_fetch_and_add(&buffer->read_index, 1);
+	__sync_val_compare_and_swap(&buffer->read_index, QUE_SIZE, 0);
 		/*free lock*/
 	pthread_mutex_unlock(&buffer->read_in_use);
 
@@ -665,7 +662,7 @@ void* Consumer42(void* arg)
 int Barrier()
 {
 	pthread_t tid[10];
-	EX5_t buffer = {0, 0, 0, 0, 0, 0};
+	EX5_t buffer = {0, 0, 0, 0, 0, {0}};
 	int i = 0;
 
 	buffer.total_consumers = 10;

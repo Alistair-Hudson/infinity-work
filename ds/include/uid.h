@@ -10,7 +10,7 @@
 #include <time.h> /* time_t */
 #include <unistd.h> /* pid_t */
 #include <sys/types.h> /* pid_t */
-
+#include <pthhread.h>	/* pthread functions */
 typedef struct
 {
     time_t timestamp;

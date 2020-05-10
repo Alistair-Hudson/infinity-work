@@ -13,10 +13,9 @@ static size_t UIDCounter();
 
 ilrd_uid_t UIDCreate()
 {
-	ilrd_uid_t new_uid = {0,0,0};
+	ilrd_uid_t new_uid = {0,00};
 	
 	new_uid.timestamp = time(NULL);
-	
 	if(0 >= new_uid.timestamp)
 	{
 		new_uid.timestamp = 0;
@@ -51,5 +50,5 @@ int UIDIsSame(const ilrd_uid_t uid1, const ilrd_uid_t uid2)
 static size_t UIDCounter()
 {
 	static size_t count = 0;
-	return ++count;
+	return __sync_add_and_fetch(&count, 1);
 }
