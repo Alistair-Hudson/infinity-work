@@ -19,12 +19,17 @@
 
 
 /* #####   HEADER FILE INCLUDES   ########################################### */
+#include <stdlib.h>
+#include <assert.h>		/* assert */
+#include <unistd.h>		/* sleep */
 
-#include "scheduler.h"  /* ilrd_uid_t */
+#include "scheduler.h"
+#include "pqueue.h"
+#include "task.h"
 
 /* #####   EXPORTED TYPE DEFINITIONS   ###################################### */
 
-typedef struct sched sched_t;
+typedef struct watchdog watchdog_t;
 
 /* #####   EXPORTED FUNCTION DECLARATIONS   ################################# */
 
@@ -32,21 +37,22 @@ typedef struct sched sched_t;
  * ===  FUNCTION  ==============================================================
  *         Name:  WatchdogStart
  *  Description:  Runs a watchdog to monitor a process
- *     Input(s):  
- *       Return:  
+ *     Input(s):  program's namme and any arguments required for the main 
+				  function
+ *       Return:  NULL if failed, pointer to watchdog if success
  * =============================================================================
  */
-int WatchdogStart();
+watchdog_t *WatchdogStart(char *program_name, char *arguments[]);
 
 /* 
  * ===  FUNCTION  ==============================================================
  *         Name:  WatchdogStop
  *  Description:  Stops a watchdog to monitor a process
- *     Input(s):  
+ *     Input(s):  watchdog to stop.
  *       Return:  
  * =============================================================================
  */
-void WatchdogStop();
+void WatchdogStop(watchdog_t *watchdog_instance);
 
 #endif   /* ----- #ifndef __SCHEDULER_H__  ----- */
 
