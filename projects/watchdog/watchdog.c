@@ -45,7 +45,7 @@ watchdog_t *WatchdogStart(char *program_name, char *arguments[])
 	{
 		/*create watchdog scheduler*/
 		watchdog_sched = SchedCreate();
-/*add signal sending task*/
+		/*add signal sending task*/
 		SchedAdd(watchdog_sched, SendSignal, watcher_id, SEND_TIME, 0);
 		/*add signal receiving task*/
 		SchedAdd(watcher_sched, IsAliveReceived, SIGUSR2, RECEIVE_TIME, 0);
@@ -109,7 +109,7 @@ static int SendSignal(void* other_process_id)
 	return 1;
 }
 
-static int IsAlive(void* arg)
+static int IsAliveReceived(void* arg)
 {
 	if (!other_process_is_alive)
 	{
