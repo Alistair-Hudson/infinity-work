@@ -15,21 +15,31 @@
 /******FUNCTIONS******/
 int main (int argc, char* argv[])
 {
-/*set watchdog*/
-watchdog_t dog = {0};
+	/*set watchdog*/
+	watchdog_t* dog;
 
-assert(0 < argc);
+	assert(0 < argc);
 
-dog = argv[1];
-dog.sig_hand = {0};
+	while(NULL == (dog.sched = SchedCreate()))
+	{
+	}
 
-/*set signal handler*/	
-dog.sig_hand.sa_handler = IsAliveReceived;
-	if(0 > sigaction(SIGUSR1, &dog.sig_hand, NULL))
+	dog = argv[1];
+	dog->sig_hand = {0};
+
+	/*set signal handler*/	
+	dog->sig_hand.sa_handler = IsAliveReceived;
+	if(0 > sigaction(SIGUSR1, dog->sig_hand, NULL))
 	{
 		perror(“Sigaction failed”);
 		return 1;
 	}
+
+	SchedAdd(dog.sched, SendSignal, dog.other_id, 1, 0);
+	SchedAdd(dog.sched, IsAliveReceived, dog.other_id, 5, 0);
+
+	sem_post(dog->dog_is_ready);
+
 	/*run watchdog scheduler*/
 	SchedRun(watchdog_sched);
 
@@ -44,6 +54,7 @@ static void IsAliveReceived(int signum)
 
 static int SendSignal(void* other_process_id)
 {
+	printf("dog sent\n");
 	/*send signal to other process*/
 	if (0 > kill(other_process_id, signum))
 	{
@@ -55,6 +66,7 @@ static int SendSignal(void* other_process_id)
 
 static int IsAliveReceived(void* arg)
 {
+	printf("dog chjeck\n");
 	if (!other_process_is_alive)
 	{
 		/*reboot process*/
