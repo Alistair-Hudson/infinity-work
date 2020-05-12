@@ -19,13 +19,20 @@ static int DogSendSignal(void* watcher_id);
 static int DogIsAliveCheck(void* arg);
 
 /******FUNCTIONS******/
-int main ()
+int main (int argc, char* argv[])
 {
+	watchdog_t* dog;
 	action_handler_t sig_handler = {0};
 	pid_t watcher_id = 0;
 	int count = 0;
 
+	assert(0 < argc);
+
+	dog = argv[1];
+
 	sig_handler.sa_handler = DogIsAliveReceived;
+	
+	sem_post(dog->ready_to_start);
 
 	if(0 > sigaction(SIGUSR1, &sig_handler, NULL))
 	{

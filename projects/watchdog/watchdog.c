@@ -23,6 +23,7 @@ typedef struct sigaction action_handler_t;
 struct watchdog
 {
 	pid_t watching_id;
+	sem_t* ready_to_start;
 };
 
 sem_t ready_to_start_sem;
@@ -55,6 +56,7 @@ watchdog_t *WatchdogStart(char *program_name, char *arguments[])
 	/*create dog watcher*/
 	
 	/*set semaphore*/
+	dog->ready_to_start = ready_to_start_sem;
 
 	/*set signal handler for dog watcher*/
 	sig_handler.sa_handler = IsAliveReceived;
@@ -72,7 +74,7 @@ watchdog_t *WatchdogStart(char *program_name, char *arguments[])
 	}	
 	if (0 == pid)
 	{
-		char* args[] = {"./dog", NULL};
+		char* args[] = {"./dog", (char*)dog, NULL};
 		/*create watchdog scheduler*/
 		/*add signal sending task*/
 		/*add signal receiving task*/
@@ -89,6 +91,7 @@ watchdog_t *WatchdogStart(char *program_name, char *arguments[])
 		/*add signal sending task*/
 		/*add signal receiving task*/
 		/*semaphore to wait for dog*/
+		sem_wait(&ready_to_start_sem);
 		/*create thread to run process scheduler*/
 		pthread_create(&watcher_thread, NULL, ProcessThreadScheduler, dog);
 		pthread_detach(pthread_self());
