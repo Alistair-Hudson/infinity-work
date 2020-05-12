@@ -11,52 +11,60 @@
 #define ASSERT_NOT_NULL(ptr)	(assert(NULL != ptr))
 
 /******TYPEDEFS, GLOBAL VARIABLES AND INTERNAL FUNCTIONS******/
+typedef struct sigaction action_handler_t;
+
+static watcher_is_alive = 0;
+
+static void IsAliveReceived(int signum);
+static int SendSignal(void* watcher_id);
+static int IsAliveCheck(void* arg);
 
 /******FUNCTIONS******/
-int main (int argc, char* argv[])
+int main ()
 {
-	/*set watchdog*/
-	watchdog_t* dog;
+	pid_t watcher = 0;
+	action_handler_t sig_handler = {0};
+	pid_t watcher_id = 0;
+	int count = 0;
 
-	assert(0 < argc);
+	sig_handler.sa_handler = IsAliveReceived;
 
-	while(NULL == (dog.sched = SchedCreate()))
+	if(0 > sigaction(SIGUSR1, &sig_handler, NULL));
 	{
-	}
-
-	dog = argv[1];
-	dog->sig_hand = {0};
-
-	/*set signal handler*/	
-	dog->sig_hand.sa_handler = IsAliveReceived;
-	if(0 > sigaction(SIGUSR1, dog->sig_hand, NULL))
-	{
-		perror(“Sigaction failed”);
+		perror("Sigaction error");
 		return 1;
 	}
 
-	SchedAdd(dog.sched, SendSignal, dog.other_id, 1, 0);
-	SchedAdd(dog.sched, IsAliveReceived, dog.other_id, 5, 0);
+	watcher_id = getppid();
 
-	sem_post(dog->dog_is_ready);
-
-	/*run watchdog scheduler*/
-	SchedRun(watchdog_sched);
-
-	return 0;
+	while(1)
+	{
+		sleep(1);
+		SendSignal(&watcher_id)
+		
+		++count;
+		if(5 == count)
+		{
+			IsAliveCheck(&watcher_is_alive);
+			count = 0;
+		}
+	}
+	return 1;
 }
 
 
 static void IsAliveReceived(int signum)
 {
-	oposite_process_is_alive = 1;
+	printf("Dog recieved\n");
+	watcher_is_alive = 1;
 }
 
-static int SendSignal(void* other_process_id)
+static int SendSignal(void* watcher_id)
 {
+	pid_t id = *(int*)watcher_id;
 	printf("dog sent\n");
 	/*send signal to other process*/
-	if (0 > kill(other_process_id, signum))
+	if (0 > kill(id, SIGUSR1))
 	{
 		perror(“Signal Error”);
 		return 0;
@@ -64,10 +72,11 @@ static int SendSignal(void* other_process_id)
 	return 1;
 }
 
-static int IsAliveReceived(void* arg)
+static int IsAliveCheck(void* arg)
 {
-	printf("dog chjeck\n");
-	if (!other_process_is_alive)
+	int watcher_is_alive = *(int*)arg;
+	printf("dog check\n");
+	if (!watcher_is_alive)
 	{
 		/*reboot process*/
 	}

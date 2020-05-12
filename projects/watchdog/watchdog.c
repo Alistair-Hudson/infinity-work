@@ -21,19 +21,16 @@ typedef struct sigaction action_handler_t;
 
 struct watchdog
 {
-sem_t* dog_is_ready;
-action_handler_t sig_hand;
-sched_t *sched;
-volatile int other_process_is_alive;
-char program_name[NAME_LIMIT];
-char *program_args[ARG_LIMIT];
+	pid_t watching_id;
 };
 
 sem_t ready_to_start_sem;
 
+static int dog_is_alive = 0;
+
 static void* ProcessThreadScheduler(void* arg);
 static void IsAliveHandler(int signum);
-static int SendSignal(void* other_process_id);
+static int SendSignal(void* dog_id);
 static int IsAliveReceived(void* arg);
 
 /******FUNCTIONS******/
@@ -41,12 +38,13 @@ static int IsAliveReceived(void* arg);
 watchdog_t *WatchdogStart(char *program_name, char *arguments[])
 {
 	pid_t pid = 0;
+	action_handler_t sig_handler = {0};
 	watchdog_t* dog;
-	watchdog_t* watcher;
 	pthread_t watcher_thread;
-	
+
 	assert(NULL != program_name);
-	
+
+
 	/*create watchdog*/
 	dog = malloc(sizeof(watchdog_t));
 	if (NULL == dog)
@@ -54,27 +52,15 @@ watchdog_t *WatchdogStart(char *program_name, char *arguments[])
 		return NULL;
 	}
 	/*create dog watcher*/
-	watcher = malloc(sizeof(watchdog_t));
-	if(NULL == watcher)
-	{
-		free(dog);
-		return NULL;
-
-	}
-
-	dog->other_process_is_alive = 0;
-	watcher->other_process_is_alive = 0;
-	/*set semaphore*/
-	dog->dog_is_ready = ready_to_start_sem;
-	watcher->dog_is_ready = ready_to_start_sem;
-	/*set signal handler for dog watcher*/
-	watcher->sig_hand.sa_handler = IsAliveReceived;
 	
+	/*set semaphore*/
 
-	if(0 > sigaction(SIGUSR1, watcher->sig_hand, NULL))
+	/*set signal handler for dog watcher*/
+	sig_handler.sa_handler = IsAliveReceived;
+	if (0 > sigaction(SIGUSR1, &sig_handler, NULL))
 	{
-		perror("Sigaction failed");
-		return NULL;
+		perror("Sigaction error");
+		return 1;
 	}
 
 	/*fork the process to begin watchdog*/
@@ -85,15 +71,12 @@ watchdog_t *WatchdogStart(char *program_name, char *arguments[])
 	}	
 	if (0 == pid)
 	{
+		char* args[] = {"./dog", NULL};
 		/*create watchdog scheduler*/
-		/*dog->sched = SchedCreate();
 		/*add signal sending task*/
-		/*SchedAdd(watcher->sched, SendSignal, watcher_id, SEND_TIME, 0);
 		/*add signal receiving task*/
-		/*SchedAdd(watcher->sched, IsAliveReceived, SIGUSR2, RECEIVE_TIME, 0);
 		/*semaphore to notify watchdog is read to run*/
-		/*sem_post(watcher->dog_is_ready);
-		*/if (0 > execv(args[0], args))
+		if (0 > execv(ags[0], args))
 		{
 			perror("Exec failed");
 			return NULL;
@@ -101,52 +84,67 @@ watchdog_t *WatchdogStart(char *program_name, char *arguments[])
 	}
 	else
 	{
+		dog->watching_id = pid;
 		/*add signal sending task*/
-		SchedAdd(watcher->sched, SendSignal, watchdog_id, SEND_TIME, 0);
 		/*add signal receiving task*/
-		SchedAdd(watcher->sched, IsAliveReceived, SIGUSR1, RECEIVE_TIME, 0);
-		/* semaphore to wait for dog*/
-		sem_wait(watcher->dog_is_ready);
+		/*semaphore to wait for dog*/
 		/*create thread to run process scheduler*/
-		pthread_create(&watcher_thread, NULL, ProcessThreadScheduler, watcher);
+		pthread_create(&watcher_thread, NULL, ProcessThreadScheduler, NULL);
 		pthread_detach();
-		return /*watchdog*/
+		return dog;
 	}
 }
 
-void WatchdogStop(watchdog_t *watchdog_instance)
+void WatchdogStop(watchdog_t *dog)
 {
 	/*send stop to watchdog scheduler*/
-	SchedStop(dog->sched);
+	/*SchedStop(dog->sched);
 	/*send stop to process scheduler*/
-	SchedStop(watch->sched);
+	/*SchedStop(watch->sched);
 
 	/*destroy watchdog scheduler*/
-	SchedDestroy(dog->sched);
+	/*SchedDestroy(dog->sched);
 	/*destroy process scheduler*/
-	SchedDestroy(watch->sched);
+	/*SchedDestroy(watch->sched);
 
 	/*send process exit to watchdog*/
+	if (0 > kill(dog->watching_id, SIGQUIT))
+	{
+		perror("Kill error");
+	}
 
 }
 
-/*???????below  duplicate across to dog.c or can I use this just here??????*/
+
 static void* ProcessThreadScheduler(void* arg)
 {
-	watchdog_t* watcher = arg;
-	SchedRun(watcher->sched);
+	int count = 0;
+	while(1)
+	{
+		sleep(1);
+		SendSignal();
+
+		++count;
+		if(5 == count)
+		{
+			IsAliveCheck(&dog_is_alive);
+			count = 0;
+		}
+	}
 }
 
-static void IsAliveHandler(int signum)
+static void IsAliveReceived(int signum)
 {
-	oposite_process_is_alive = 1;
+	printf("watcher recieved\n");
+	dog_is_alive = 1;
 }
 
-static int SendSignal(void* other_process_id)
+static int SendSignal(void* dog_id)
 {
-	printf("watcher sends\n");
+	pid_t id = *(int*)dog_id;
+	printf("watcher sent\n");
 	/*send signal to other process*/
-	if (0 > kill(other_process_id, signum))
+	if (0 > kill(id, SIGUSR1))
 	{
 		perror(“Signal Error”);
 		return 0;
@@ -154,15 +152,18 @@ static int SendSignal(void* other_process_id)
 	return 1;
 }
 
-static int IsAliveReceived(void* arg)
+static int IsAliveCheck(void* arg)
 {
-	printf("watcher checks\n");
-	if (!other_process_is_alive)
+	int dog_is_alive = *(int*)arg;
+	printf("watcher check\n");
+	if (!dog_is_alive)
 	{
 		/*reboot process*/
 	}
 	/*process is alive set to 0*/
 	return 1;
+}
+
 }
 
 
