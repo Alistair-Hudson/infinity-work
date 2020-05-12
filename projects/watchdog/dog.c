@@ -15,6 +15,7 @@
 static int watcher_is_alive = 0;
 
 static void DogIsAliveReceived(int signum);
+static void DogStop(int signum);
 static int DogSendSignal(void* watcher_id);
 static int DogIsAliveCheck(void* arg);
 
@@ -22,44 +23,55 @@ static int DogIsAliveCheck(void* arg);
 int main (int argc, char* argv[])
 {
 	watchdog_t* dog;
-	action_handler_t sig_handler = {0};
+	action_handler_t alive_handler = {0};
+	action_handler_t stop_handler = {0};
 	pid_t watcher_id = 0;
-	int count = 0;
+	int status = 0;
 
-	assert(0 < argc);
+	/*assert(0 < argc);
 
 	dog = argv[1];
+	*/
+	watcher_id = getppid();
 
-	sig_handler.sa_handler = DogIsAliveReceived;
-	
-	sem_post(dog->ready_to_start);
-
-	if(0 > sigaction(SIGUSR1, &sig_handler, NULL))
+	dog->schedule = SchedCreate();
+	if (NULL == dog->schedule)
 	{
-		perror("Sigaction error");
+		printf("Failed to create Scheduler for dog\n");
 		return 1;
 	}
 
-	watcher_id = getppid();
+	SchedAdd(dog->schedule, DogSendSignal, &watcher_id, 1, 0);
+	SchedAdd(dog->schedule, DogIsAliveCheck, &watcher_is_alive, 5, 0);
 
-	while(1)
+	alive_handler.sa_handler = DogIsAliveReceived;
+	stop_handler.sa_handler = DogStop;
+	/*sem_post(dog->ready_to_start);
+*/
+	if(0 > sigaction(SIGUSR1, &alive_handler, NULL))
 	{
-		sleep(1);
-		DogSendSignal(&watcher_id);
-		
-		++count;
-		if(5 == count)
-		{
-			DogIsAliveCheck(&watcher_is_alive);
-			count = 0;
-		}
+		perror("Alive error");
+		return 1;
 	}
-	return 1;
+	if (0 > sigaction(SIGUSR2, stop_handler, NULL))
+	{
+		perror("Stop error");
+		return 1;
+	}
+	
+	status = SchedRun(dog->schedule);
+
+	return status;
 }
 
+static void DogStop(int signum)
+{
+
+}
 
 static void DogIsAliveReceived(int signum)
 {
+	(void)signum;
 	printf("Dog recieved\n");
 	watcher_is_alive = 1;
 }

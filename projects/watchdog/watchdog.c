@@ -24,6 +24,7 @@ struct watchdog
 {
 	pid_t watching_id;
 	sem_t* ready_to_start;
+	sched_t* schedule;
 };
 
 sem_t ready_to_start_sem;
@@ -53,10 +54,16 @@ watchdog_t *WatchdogStart(char *program_name, char *arguments[])
 	{
 		return NULL;
 	}
+	dog->schedule = SchedCreate();
+	if (NULL == dog->schedule)
+	{
+		return NULL;
+	}
+
 	/*create dog watcher*/
 	
 	/*set semaphore*/
-	dog->ready_to_start = ready_to_start_sem;
+	dog->ready_to_start = &ready_to_start_sem;
 
 	/*set signal handler for dog watcher*/
 	sig_handler.sa_handler = IsAliveReceived;
@@ -74,7 +81,7 @@ watchdog_t *WatchdogStart(char *program_name, char *arguments[])
 	}	
 	if (0 == pid)
 	{
-		char* args[] = {"./dog", (char*)dog, NULL};
+		char* args[] = {"./dog", NULL};
 		/*create watchdog scheduler*/
 		/*add signal sending task*/
 		/*add signal receiving task*/
@@ -89,9 +96,11 @@ watchdog_t *WatchdogStart(char *program_name, char *arguments[])
 	{
 		dog->watching_id = pid;
 		/*add signal sending task*/
+		SchedAdd(dog->schedule, SendSignal, dog->watching_id, 1, 0);
 		/*add signal receiving task*/
+		SchedAdd(dog->schedule, IsAliveCheck, &dog_is_alive, 5, 0);
 		/*semaphore to wait for dog*/
-		sem_wait(&ready_to_start_sem);
+		/*sem_wait(&ready_to_start_sem);
 		/*create thread to run process scheduler*/
 		pthread_create(&watcher_thread, NULL, ProcessThreadScheduler, dog);
 		pthread_detach(pthread_self());
@@ -105,12 +114,12 @@ void WatchdogStop(watchdog_t *dog)
 	/*send stop to watchdog scheduler*/
 	/*SchedStop(dog->sched);
 	/*send stop to process scheduler*/
-	/*SchedStop(watch->sched);
+	SchedStop(dog->sched);
 
 	/*destroy watchdog scheduler*/
 	/*SchedDestroy(dog->sched);
 	/*destroy process scheduler*/
-	/*SchedDestroy(watch->sched);
+	SchedDestroy(dog->sched);
 
 	/*send process exit to watchdog*/
 	if (0 > kill(dog->watching_id, SIGQUIT))
