@@ -4,6 +4,7 @@
  *	Reviewer:	
  *	Version:	10/05/2020.0
  ******************************************************************************/
+#include <stdio.h>		/*TODO*/
 
 #include "watchdog.h"
 #include <semaphore.h>  /* semaphore functions */
@@ -29,9 +30,9 @@ sem_t ready_to_start_sem;
 static int dog_is_alive = 0;
 
 static void* ProcessThreadScheduler(void* arg);
-static void IsAliveHandler(int signum);
+static void IsAliveReceived(int signum);
 static int SendSignal(void* dog_id);
-static int IsAliveReceived(void* arg);
+static int IsAliveCheck(void* arg);
 
 /******FUNCTIONS******/
 
@@ -60,7 +61,7 @@ watchdog_t *WatchdogStart(char *program_name, char *arguments[])
 	if (0 > sigaction(SIGUSR1, &sig_handler, NULL))
 	{
 		perror("Sigaction error");
-		return 1;
+		return NULL;
 	}
 
 	/*fork the process to begin watchdog*/
@@ -76,7 +77,7 @@ watchdog_t *WatchdogStart(char *program_name, char *arguments[])
 		/*add signal sending task*/
 		/*add signal receiving task*/
 		/*semaphore to notify watchdog is read to run*/
-		if (0 > execv(ags[0], args))
+		if (0 > execv(args[0], args))
 		{
 			perror("Exec failed");
 			return NULL;
@@ -89,10 +90,11 @@ watchdog_t *WatchdogStart(char *program_name, char *arguments[])
 		/*add signal receiving task*/
 		/*semaphore to wait for dog*/
 		/*create thread to run process scheduler*/
-		pthread_create(&watcher_thread, NULL, ProcessThreadScheduler, NULL);
-		pthread_detach();
+		pthread_create(&watcher_thread, NULL, ProcessThreadScheduler, dog);
+		pthread_detach(pthread_self());
 		return dog;
 	}
+	return NULL;
 }
 
 void WatchdogStop(watchdog_t *dog)
@@ -118,11 +120,12 @@ void WatchdogStop(watchdog_t *dog)
 
 static void* ProcessThreadScheduler(void* arg)
 {
+	watchdog_t* dog = arg;
 	int count = 0;
 	while(1)
 	{
 		sleep(1);
-		SendSignal();
+		SendSignal(&dog->watching_id);
 
 		++count;
 		if(5 == count)
@@ -131,6 +134,7 @@ static void* ProcessThreadScheduler(void* arg)
 			count = 0;
 		}
 	}
+	return NULL;
 }
 
 static void IsAliveReceived(int signum)
@@ -146,7 +150,7 @@ static int SendSignal(void* dog_id)
 	/*send signal to other process*/
 	if (0 > kill(id, SIGUSR1))
 	{
-		perror(“Signal Error”);
+		perror("Signal Error");
 		return 0;
 	}
 	return 1;
@@ -162,8 +166,6 @@ static int IsAliveCheck(void* arg)
 	}
 	/*process is alive set to 0*/
 	return 1;
-}
-
 }
 
 

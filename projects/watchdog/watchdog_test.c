@@ -6,12 +6,14 @@
 int main()
 {
     char dummy[] = "dummy";
-    watchdog_t watchdog = WatchdogStart(&dummy, NULL);
+    int count = 0;
+    watchdog_t* watchdog = WatchdogStart(dummy, NULL);
 
-    while ( 60 > count)
+    while ( 6 > count)
     {
         sleep(10);
         printf("main program running for %d seconds\n\n", (count*10));
+        ++count;
     }
     WatchdogStop(watchdog);
     

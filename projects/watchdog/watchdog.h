@@ -22,6 +22,7 @@
 #include <stdlib.h>
 #include <assert.h>		/* assert */
 #include <unistd.h>		/* sleep */
+#include <signal.h>		/* signal */
 
 #include "scheduler.h"
 #include "pqueue.h"
