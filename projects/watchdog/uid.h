@@ -6,12 +6,11 @@
                                  * version 23.02.2020.1
  ******************************************************************************/
 
-#include <stddef.h>     /* size_t */
-#include <time.h>       /* time_t */
-#include <unistd.h>     /* pid_t */
-#include <sys/types.h>  /* pid_t */
+#include <stddef.h> /* size_t */
+#include <time.h> /* time_t */
+#include <unistd.h> /* pid_t */
+#include <sys/types.h> /* pid_t */
 #include <pthread.h>	/* pthread functions */
-
 
 typedef struct
 {

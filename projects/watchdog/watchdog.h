@@ -19,6 +19,10 @@
 
 
 /* #####   HEADER FILE INCLUDES   ########################################### */
+#include <stdio.h>		/*TODO*/
+#include <semaphore.h>  /* semaphore functions */
+#include <signal.h>		/* signal functions */
+#include <pthread.h>	/* pthread functions */
 #include <stdlib.h>
 #include <assert.h>		/* assert */
 #include <unistd.h>		/* sleep */
@@ -31,6 +35,7 @@
 /* #####   EXPORTED TYPE DEFINITIONS   ###################################### */
 
 typedef struct watchdog watchdog_t;
+
 
 /* #####   EXPORTED FUNCTION DECLARATIONS   ################################# */
 
