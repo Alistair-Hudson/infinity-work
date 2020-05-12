@@ -6,6 +6,8 @@
  ******************************************************************************/
 
 #include "watchdog.h"
+#include <semaphore.h>  /* semaphore functions */
+#include <signal.h>		/* signal functions */
 
 /******MACROS******/
 #define ASSERT_NOT_NULL(ptr)	(assert(NULL != ptr))
@@ -29,15 +31,19 @@ char *program_args[ARG_LIMIT];
 
 sem_t ready_to_start_sem;
 
+static void* ProcessThreadScheduler(void* arg);
+static void IsAliveHandler(int signum);
+static int SendSignal(void* other_process_id);
+static int IsAliveReceived(void* arg);
+
 /******FUNCTIONS******/
 
 watchdog_t *WatchdogStart(char *program_name, char *arguments[])
 {
 	pid_t pid = 0;
-	action_handler_t watcher = {0};
 	watchdog_t* dog;
 	watchdog_t* watcher;
-	pthread_t watcher_tread;
+	pthread_t watcher_thread;
 	
 	assert(NULL != program_name);
 	
@@ -67,7 +73,7 @@ watchdog_t *WatchdogStart(char *program_name, char *arguments[])
 
 	if(0 > sigaction(SIGUSR1, watcher->sig_hand, NULL))
 	{
-		perror(“Sigaction failed”);
+		perror("Sigaction failed");
 		return NULL;
 	}
 
@@ -80,14 +86,14 @@ watchdog_t *WatchdogStart(char *program_name, char *arguments[])
 	if (0 == pid)
 	{
 		/*create watchdog scheduler*/
-		dog->sched = SchedCreate();
+		/*dog->sched = SchedCreate();
 		/*add signal sending task*/
-		SchedAdd(watchdog_sched, SendSignal, watcher_id, SEND_TIME, 0);
+		/*SchedAdd(watcher->sched, SendSignal, watcher_id, SEND_TIME, 0);
 		/*add signal receiving task*/
-		SchedAdd(watcher_sched, IsAliveReceived, SIGUSR2, RECEIVE_TIME, 0);
+		/*SchedAdd(watcher->sched, IsAliveReceived, SIGUSR2, RECEIVE_TIME, 0);
 		/*semaphore to notify watchdog is read to run*/
-		sem_post(&dog_is_ready);
-		if (0 > execv(args[0], args))
+		/*sem_post(watcher->dog_is_ready);
+		*/if (0 > execv(args[0], args))
 		{
 			perror("Exec failed");
 			return NULL;
@@ -96,13 +102,13 @@ watchdog_t *WatchdogStart(char *program_name, char *arguments[])
 	else
 	{
 		/*add signal sending task*/
-		SchedAdd(dog_watcher_sched, SendSignal, watchdog_id, SEND_TIME, 0);
+		SchedAdd(watcher->sched, SendSignal, watchdog_id, SEND_TIME, 0);
 		/*add signal receiving task*/
-		SchedAdd(dog_watcher_sched, IsAliveReceived, SIGUSR1, RECEIVE_TIME, 0);
+		SchedAdd(watcher->sched, IsAliveReceived, SIGUSR1, RECEIVE_TIME, 0);
 		/* semaphore to wait for dog*/
 		sem_wait(watcher->dog_is_ready);
 		/*create thread to run process scheduler*/
-		pthread_create(&watcher_thread, NULL, ProcessThreadScheduler, &dog_watch_sched);
+		pthread_create(&watcher_thread, NULL, ProcessThreadScheduler, watcher);
 		pthread_detach();
 		return /*watchdog*/
 	}
@@ -111,14 +117,14 @@ watchdog_t *WatchdogStart(char *program_name, char *arguments[])
 void WatchdogStop(watchdog_t *watchdog_instance)
 {
 	/*send stop to watchdog scheduler*/
-	SchedStop(watchdog_sched);
+	SchedStop(dog->sched);
 	/*send stop to process scheduler*/
-	SchedStop(watch_sched);
+	SchedStop(watch->sched);
 
 	/*destroy watchdog scheduler*/
-	SchedDestroy(watchdog_sched);
+	SchedDestroy(dog->sched);
 	/*destroy process scheduler*/
-	SchedDestroy(watch_sched);
+	SchedDestroy(watch->sched);
 
 	/*send process exit to watchdog*/
 
@@ -127,10 +133,11 @@ void WatchdogStop(watchdog_t *watchdog_instance)
 /*???????below  duplicate across to dog.c or can I use this just here??????*/
 static void* ProcessThreadScheduler(void* arg)
 {
-	SchedRun(dog_watch_sched);
+	watchdog_t* watcher = arg;
+	SchedRun(watcher->sched);
 }
 
-static void IsAliveReceived(int signum)
+static void IsAliveHandler(int signum)
 {
 	oposite_process_is_alive = 1;
 }
