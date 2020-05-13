@@ -34,6 +34,7 @@ static void DogIsAliveReceived(int signum);
 static void DogStop(int signum);
 static int DogSendSignal(void* watcher_id);
 static int DogIsAliveCheck(void* arg);
+int StopDog(void* arg);
 
 /******FUNCTIONS******/
 int main (int argc, char** argv)
