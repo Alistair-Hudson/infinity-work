@@ -60,5 +60,5 @@ watchdog_t *WatchdogStart(char *program_name, char *arguments[]);
  */
 void WatchdogStop(watchdog_t *watchdog_instance);
 
-#endif   /* ----- #ifndef __SCHEDULER_H__  ----- */
+#endif   /* ----- #ifndef __WATCHDOG_H__  ----- */
 
