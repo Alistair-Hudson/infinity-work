@@ -50,7 +50,7 @@ watchdog_t *WatchdogStart(char *program_name, char** arguments)
 
 	assert(NULL != program_name);
 
-
+printf("starting dog\n\n");
 	/*create watchdog*/
 	dog = malloc(sizeof(watchdog_t));
 	if (NULL == dog)
@@ -85,6 +85,7 @@ watchdog_t *WatchdogStart(char *program_name, char** arguments)
 	}	
 	if (0 == pid)
 	{
+		printf("dog forked\n\n");
 		/*char* args[] = {"./dog", dog->arguments, NULL};
 		/*create watchdog scheduler*/
 		/*add signal sending task*/
@@ -136,6 +137,7 @@ void WatchdogStop(watchdog_t *dog)
 static void* ProcessThreadScheduler(void* arg)
 {
 	watchdog_t* dog = arg;
+	printf("thread running\n\n");
 	SchedRun(dog->schedule);
 	return NULL;
 }

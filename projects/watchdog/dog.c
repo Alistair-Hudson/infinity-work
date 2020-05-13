@@ -47,6 +47,7 @@ int main (int argc, char** argv)
 
 	assert(0 < argc);
 	
+	printf("dog running\n\n");
 	strncpy(data.program_name, argv[1], NAME_LIMIT);
 	data.arguments = argv;
 
