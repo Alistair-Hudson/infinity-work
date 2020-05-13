@@ -7,6 +7,8 @@
 #define _USE_POSIX1993309
 #define _XOPEN_SOURCE
 
+#include <string.h> 	/* strncpy */
+
 #include "watchdog.h"
 
 /******MACROS******/
@@ -21,6 +23,7 @@ typedef struct sigaction action_handler_t;
 
 struct watchdog
 {
+	char program_name[NAME_LIMIT];
 	pid_t watching_id;
 	sem_t* ready_to_start;
 	sched_t* schedule;
@@ -58,7 +61,7 @@ watchdog_t *WatchdogStart(char *program_name, char *arguments[])
 	{
 		return NULL;
 	}
-
+	strncpy(dog->program_name, program_name, NAME_LIMIT);
 	/*create dog watcher*/
 	
 	/*set semaphore*/
@@ -80,7 +83,7 @@ watchdog_t *WatchdogStart(char *program_name, char *arguments[])
 	}	
 	if (0 == pid)
 	{
-		char* args[] = {"./dog", NULL};
+		char* args[] = {"./dog", &dog->program_name, NULL};
 		/*create watchdog scheduler*/
 		/*add signal sending task*/
 		/*add signal receiving task*/
@@ -95,9 +98,9 @@ watchdog_t *WatchdogStart(char *program_name, char *arguments[])
 	{
 		dog->watching_id = pid;
 		/*add signal sending task*/
-		SchedAdd(dog->schedule, SendSignal, &dog->watching_id, 1, time(NULL));
+		SchedAdd(dog->schedule, SendSignal, &dog->watching_id, SEND_TIME, time(NULL));
 		/*add signal receiving task*/
-		SchedAdd(dog->schedule, IsAliveCheck, &dog_is_alive, 5, time(NULL));
+		SchedAdd(dog->schedule, IsAliveCheck, &dog_is_alive, RECEIVE_TIME, time(NULL));
 		/*semaphore to wait for dog*/
 		/*sem_wait(&ready_to_start_sem);
 		/*create thread to run process scheduler*/
@@ -156,13 +159,33 @@ int SendSignal(void* dog_id)
 
 int IsAliveCheck(void* arg)
 {
-	int dog_is_alive = *(int*)arg;
+	pid_t pid = 0;
+	watchdog_t* dog = arg;
+
 	printf("watcher check\n");
 	if (!dog_is_alive)
 	{
 		/*reboot process*/
+		if(0 > (pid = fork()))
+		{
+			perror("Fork error");
+		}
+		if(0 == pid)
+		{
+			char* args[] = {"./dog", &dog->program_name, NULL};
+			if (0 > execv(args[0], args))
+			{
+				perror("Exec failed");
+				return NULL;
+			}		
+		}
+		else
+		{
+			dog->watching_id = pid;
+		}
+		
 	}
-	/*process is alive set to 0*/
+	dog_is_alive = 0;
 	return 1;
 }
 

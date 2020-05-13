@@ -13,6 +13,10 @@
 
 /******MACROS******/
 #define ASSERT_NOT_NULL(ptr)	(assert(NULL != ptr))
+#define SEND_TIME				(1)
+#define RECEIVE_TIME			(5)
+#define NAME_LIMIT				(15)
+#define ARG_LIMIT				(5)
 
 /******TYPEDEFS, GLOBAL VARIABLES AND INTERNAL FUNCTIONS******/
 typedef struct sigaction action_handler_t;
@@ -32,11 +36,12 @@ int main (int argc, char* argv[])
 	action_handler_t stop_handler = {0};
 	pid_t watcher_id = 0;
 	int status = 0;
+	char program_name[NAME_LIMIT];
 
-	/*assert(0 < argc);
+	assert(0 < argc);
 	
-	dog = argv[1];
-	*/
+	strncpy(&program_name, argv[1], NAME_LIMIT);
+	
 	watcher_id = getppid();
 
 	dog_schedule = SchedCreate();
@@ -46,8 +51,8 @@ int main (int argc, char* argv[])
 		return 1;
 	}
 
-	SchedAdd(dog_schedule, DogSendSignal, &watcher_id, 1, time(NULL));
-	SchedAdd(dog_schedule, DogIsAliveCheck, &watcher_is_alive, 5, time(NULL));
+	SchedAdd(dog_schedule, DogSendSignal, &watcher_id, SEND_TIME, time(NULL));
+	SchedAdd(dog_schedule, DogIsAliveCheck, &program_name, RECEIVE_TIME, time(NULL));
 
 	alive_handler.sa_handler = DogIsAliveReceived;
 	stop_handler.sa_handler = DogStop;
@@ -95,13 +100,21 @@ int DogSendSignal(void* watcher_id)
 
 int DogIsAliveCheck(void* arg)
 {
-	int watcher_is_alive = *(int*)arg;
+	char*args[] = {(char*)arg, NULL};
+
 	printf("dog check\n");
 	if (!watcher_is_alive)
 	{
 		/*reboot process*/
+		if( 0 > execv(args[0], args))
+		{
+			perror("Exec failed");
+			return 0;
+		}
+		exit(0);
 	}
 	/*process is alive set to 0*/
+	watcher_is_alive = 0;
 	return 1;
 }
 

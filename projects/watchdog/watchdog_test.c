@@ -5,7 +5,7 @@
 
 int main()
 {
-    char dummy[] = "dummy";
+    char dummy[] = "./test";
     int count = 0;
     watchdog_t* watchdog = WatchdogStart(dummy, NULL);
 
