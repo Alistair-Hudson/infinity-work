@@ -21,6 +21,9 @@ test: watchdog_test.c $(OBJ)
 dog: dog.c $(OBJ)
 	$(CC) -o $@ $^ $(CFLAGS)
 
+libwatchdog.so: watchdog.o
+				gcc -shared -o $@  $^ 
+
 .PHONY: clean
 
 clean:
