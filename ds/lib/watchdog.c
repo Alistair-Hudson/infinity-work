@@ -117,18 +117,20 @@ printf("starting dog\n\n");
 
 void WatchdogStop(watchdog_t *dog)
 {
+	/*send stop to watchdog scheduler*/
+	if (0 > kill(dog->watching_id, SIGUSR2))
+	{
+		perror("send stop error");
+	}
 	/*send process exit to watchdog*/
 	if (0 > kill(dog->watching_id, SIGQUIT))
 	{
 		perror("Kill error");
 	}
-	/*send stop to watchdog scheduler*/
-	/*SchedStop(dog->sched);
+	
 	/*send stop to process scheduler*/
 	SchedStop(dog->schedule);
 
-	/*destroy watchdog scheduler*/
-	/*SchedDestroy(dog->sched);
 	/*destroy process scheduler*/
 	SchedDestroy(dog->schedule);
 }

@@ -28,6 +28,7 @@ typedef struct prog_data
 }data_t;
 
 static int watcher_is_alive = 0;
+static int stop_dog = 0;
 
 static void DogIsAliveReceived(int signum);
 static void DogStop(int signum);
@@ -62,6 +63,7 @@ int main (int argc, char** argv)
 
 	SchedAdd(dog_schedule, DogSendSignal, &watcher_id, SEND_TIME, time(NULL));
 	SchedAdd(dog_schedule, DogIsAliveCheck, &data, RECEIVE_TIME, time(NULL));
+	SchedAdd(dog_schedule, StopDog, &dog_schedule, SEND_TIME, time(NULL));
 
 	alive_handler.sa_handler = DogIsAliveReceived;
 	stop_handler.sa_handler = DogStop;
@@ -80,12 +82,14 @@ int main (int argc, char** argv)
 	
 	status = SchedRun(dog_schedule);
 
+	SchedDestroy(dog_schedule);
+
 	return status;
 }
 
 static void DogStop(int signum)
 {
-
+	stop_dog = 1;
 }
 
 static void DogIsAliveReceived(int signum)
@@ -127,6 +131,18 @@ int DogIsAliveCheck(void* arg)
 	return 1;
 }
 
+int StopDog(void* arg)
+{
+	sched_t* dog = arg;
+	printf("stopping dog\n");
+	if(stop_dog)
+	{
+		SchedStop(dog);
+		return 0;
+	}
+	return 1;
+
+}
 
 
 
