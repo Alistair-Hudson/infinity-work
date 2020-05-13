@@ -24,6 +24,7 @@ typedef struct sigaction action_handler_t;
 struct watchdog
 {
 	char program_name[NAME_LIMIT];
+	char** arguments;
 	pid_t watching_id;
 	sem_t* ready_to_start;
 	sched_t* schedule;
@@ -40,7 +41,7 @@ static int IsAliveCheck(void* arg);
 
 /******FUNCTIONS******/
 
-watchdog_t *WatchdogStart(char *program_name, char *arguments[])
+watchdog_t *WatchdogStart(char *program_name, char** arguments)
 {
 	pid_t pid = 0;
 	action_handler_t sig_handler = {0};
@@ -62,6 +63,7 @@ watchdog_t *WatchdogStart(char *program_name, char *arguments[])
 		return NULL;
 	}
 	strncpy(dog->program_name, program_name, NAME_LIMIT);
+	dog->arguments = arguments;
 	/*create dog watcher*/
 	
 	/*set semaphore*/
@@ -83,12 +85,12 @@ watchdog_t *WatchdogStart(char *program_name, char *arguments[])
 	}	
 	if (0 == pid)
 	{
-		char* args[] = {"./dog", &dog->program_name, NULL};
+		/*char* args[] = {"./dog", dog->arguments, NULL};
 		/*create watchdog scheduler*/
 		/*add signal sending task*/
 		/*add signal receiving task*/
 		/*semaphore to notify watchdog is read to run*/
-		if (0 > execv(args[0], args))
+		if (0 > execv("./dog", dog->arguments))
 		{
 			perror("Exec failed");
 			return NULL;
@@ -172,11 +174,11 @@ int IsAliveCheck(void* arg)
 		}
 		if(0 == pid)
 		{
-			char* args[] = {"./dog", &dog->program_name, NULL};
-			if (0 > execv(args[0], args))
+			
+			if (0 > execv("./dog", dog->arguments))
 			{
 				perror("Exec failed");
-				return NULL;
+				return 0;
 			}		
 		}
 		else
