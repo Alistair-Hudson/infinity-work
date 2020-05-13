@@ -8,6 +8,9 @@
 #define _XOPEN_SOURCE
 
 #include <string.h> 	/* strncpy */
+#include <fcntl.h>
+#include <sys/stat.h>
+#include <semaphore.h>
 
 #include "watchdog.h"
 
@@ -24,33 +27,34 @@ typedef struct sigaction action_handler_t;
 struct watchdog
 {
 	char program_name[NAME_LIMIT];
-	char** arguments;
+	char* arguments[ARG_LIMIT];
 	pid_t watching_id;
-	sem_t* ready_to_start;
 	sched_t* schedule;
 };
 
-sem_t ready_to_start_sem;
+static sem_t* ready_to_start_sem;
 
-static int dog_is_alive = 0;
+static int dog_is_alive = 1;
 
 static void* ProcessThreadScheduler(void* arg);
 static void IsAliveReceived(int signum);
+static void ReleaseSem(int signum);
 static int SendSignal(void* dog_id);
 static int IsAliveCheck(void* arg);
 
 /******FUNCTIONS******/
 
-watchdog_t *WatchdogStart(char *program_name, char** arguments)
+watchdog_t *WatchdogStart(char *program_name, char* arguments[])
 {
 	pid_t pid = 0;
 	action_handler_t sig_handler = {0};
+	action_handler_t sem_handler = {0};
 	watchdog_t* dog;
 	pthread_t watcher_thread;
+	int i = 0;
 
 	assert(NULL != program_name);
 
-printf("starting dog\n\n");
 	/*create watchdog*/
 	dog = malloc(sizeof(watchdog_t));
 	if (NULL == dog)
@@ -63,20 +67,14 @@ printf("starting dog\n\n");
 		return NULL;
 	}
 	strncpy(dog->program_name, program_name, NAME_LIMIT);
-	dog->arguments = arguments;
-	/*create dog watcher*/
-	
-	/*set semaphore*/
-	dog->ready_to_start = &ready_to_start_sem;
-
-	/*set signal handler for dog watcher*/
-	sig_handler.sa_handler = IsAliveReceived;
-	if (0 > sigaction(SIGUSR1, &sig_handler, NULL))
+	dog->arguments[0] = "./dog";
+	for (i = 1; i < ARG_LIMIT; ++i)
 	{
-		perror("Sigaction error");
-		return NULL;
+		dog->arguments[i] = arguments[i-1];
 	}
 
+	/*create dog watcher*/
+	ready_to_start_sem = sem_open("shared semaphore", O_CREAT, 0666, 0);
 	/*fork the process to begin watchdog*/
 	if (0 > (pid = fork()))
 	{
@@ -85,12 +83,6 @@ printf("starting dog\n\n");
 	}	
 	if (0 == pid)
 	{
-		printf("dog forked\n\n");
-		/*char* args[] = {"./dog", dog->arguments, NULL};
-		/*create watchdog scheduler*/
-		/*add signal sending task*/
-		/*add signal receiving task*/
-		/*semaphore to notify watchdog is read to run*/
 		if (0 > execv("./dog", dog->arguments))
 		{
 			perror("Exec failed");
@@ -99,15 +91,21 @@ printf("starting dog\n\n");
 	}
 	else
 	{
+		/*set signal handler for dog watcher*/
+		sig_handler.sa_handler = IsAliveReceived;
+		if (0 > sigaction(SIGUSR1, &sig_handler, NULL))
+		{
+			perror("Sigaction error");
+			return NULL;
+		}
 		dog->watching_id = pid;
 		/*add signal sending task*/
 		SchedAdd(dog->schedule, SendSignal, &dog->watching_id, SEND_TIME, time(NULL));
 		/*add signal receiving task*/
 		SchedAdd(dog->schedule, IsAliveCheck, &dog_is_alive, RECEIVE_TIME, time(NULL));
 		/*semaphore to wait for dog*/
-		/*sem_wait(&ready_to_start_sem);
+		sem_wait(ready_to_start_sem);
 		/*create thread to run process scheduler*/
-		sleep(5);
 		pthread_create(&watcher_thread, NULL, ProcessThreadScheduler, dog);
 		pthread_detach(pthread_self());
 		return dog;
@@ -122,6 +120,7 @@ void WatchdogStop(watchdog_t *dog)
 	{
 		perror("send stop error");
 	}
+	sem_wait(ready_to_start_sem);
 	/*send process exit to watchdog*/
 	if (0 > kill(dog->watching_id, SIGQUIT))
 	{
@@ -133,21 +132,36 @@ void WatchdogStop(watchdog_t *dog)
 
 	/*destroy process scheduler*/
 	SchedDestroy(dog->schedule);
+
+	if (0 > sem_close(ready_to_start_sem))
+	{
+		perror("failed to close sem");
+	}
+	if (0 > sem_destroy(ready_to_start_sem))
+	{
+		perror("failed to close sem");
+	}
 }
 
 
 static void* ProcessThreadScheduler(void* arg)
 {
 	watchdog_t* dog = arg;
-	printf("thread running\n\n");
 	SchedRun(dog->schedule);
 	return NULL;
 }
 
 static void IsAliveReceived(int signum)
 {
+	(void)signum;
 	printf("watcher recieved\n");
 	dog_is_alive = 1;
+}
+
+static void ReleaseSem(int signum)
+{
+	(void)signum;
+
 }
 
 int SendSignal(void* dog_id)
@@ -171,6 +185,7 @@ int IsAliveCheck(void* arg)
 	printf("watcher check\n");
 	if (!dog_is_alive)
 	{
+			printf("rebooting\n\n\n");
 		/*reboot process*/
 		if(0 > (pid = fork()))
 		{

@@ -7,7 +7,11 @@
 #define _USE_POSIX1993309
 #define _XOPEN_SOURCE
 
-#include <stdio.h> /*TODO*/
+#include <stdio.h> 	/*TODO*/
+#include <string.h>	/* strncpy */
+#include <fcntl.h>
+#include <sys/stat.h>
+#include <semaphore.h>
 
 #include "watchdog.h"
 
@@ -24,11 +28,12 @@ typedef struct sigaction action_handler_t;
 typedef struct prog_data
 {
 	char program_name[NAME_LIMIT];
-	char** arguments;
+	char* arguments[ARG_LIMIT];
 }data_t;
 
-static int watcher_is_alive = 0;
+static int watcher_is_alive = 1;
 static int stop_dog = 0;
+static sem_t* ready_to_start_sem;
 
 static void DogIsAliveReceived(int signum);
 static void DogStop(int signum);
@@ -45,13 +50,16 @@ int main (int argc, char** argv)
 	pid_t watcher_id = 0;
 	data_t data = {0};
 	int status = 0;
-	char program_name[NAME_LIMIT];
+	int i = 0;
 
-	assert(0 < argc);
+	assert(1 < argc);
 	
-	printf("dog running\n\n");
 	strncpy(data.program_name, argv[1], NAME_LIMIT);
-	data.arguments = argv;
+
+	for (i = 0; i < ARG_LIMIT; ++i)
+	{
+		data.arguments[i] = argv[i+1];
+	}
 
 	watcher_id = getppid();
 
@@ -61,6 +69,7 @@ int main (int argc, char** argv)
 		printf("Failed to create Scheduler for dog\n");
 		return 1;
 	}
+	ready_to_start_sem = sem_open("shared semaphore", O_CREAT, 0666, 0);	
 
 	SchedAdd(dog_schedule, DogSendSignal, &watcher_id, SEND_TIME, time(NULL));
 	SchedAdd(dog_schedule, DogIsAliveCheck, &data, RECEIVE_TIME, time(NULL));
@@ -68,8 +77,7 @@ int main (int argc, char** argv)
 
 	alive_handler.sa_handler = DogIsAliveReceived;
 	stop_handler.sa_handler = DogStop;
-	/*sem_post(dog->ready_to_start);
-*/
+	
 	if(0 > sigaction(SIGUSR1, &alive_handler, NULL))
 	{
 		perror("Alive error");
@@ -80,11 +88,14 @@ int main (int argc, char** argv)
 		perror("Stop error");
 		return 1;
 	}
-	
+
+	sem_post(ready_to_start_sem);
+
 	status = SchedRun(dog_schedule);
 
 	SchedDestroy(dog_schedule);
 
+	sem_post(ready_to_start_sem);
 	return status;
 }
 
@@ -135,9 +146,9 @@ int DogIsAliveCheck(void* arg)
 int StopDog(void* arg)
 {
 	sched_t* dog = arg;
-	printf("stopping dog\n");
 	if(stop_dog)
 	{
+		printf("stopping dog\n");
 		SchedStop(dog);
 		return 0;
 	}
