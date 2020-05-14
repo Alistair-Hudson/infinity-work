@@ -13,13 +13,13 @@ OBJ = $(patsubst %,$(ODIR)/%,$(_OBJ))
 
 
 $(ODIR)/%.o: $(LDIR)/%.c $(DEPS)
-	$(CC) -c -o $@ $< $(CFLAGS)
+	$(CC) -c -fPIC -o $@ $< $(CFLAGS)
 
-test: watchdog_test.c $(OBJ)
-	$(CC) -o $@ $^ $(CFLAGS)
+test: watchdog_test.c
+	$(CC) -L/home/ali/alistair-hudson/projects/watchdog -Wall -o $@ $^ -lwatchdog -pthread
 
-dog: dog.c $(OBJ)
-	$(CC) -o $@ $^ $(CFLAGS)
+dog: dog.c 
+	$(CC) -L/home/ali/alistair-hudson/projects/watchdog -Wall -o $@ $^ -lwatchdog -pthread
 
 libwatchdog.so: $(OBJ)
 				$(CC) -shared -o $@  $^ $(CFLAGS)
