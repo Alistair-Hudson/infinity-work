@@ -12,7 +12,7 @@
 
 /******MACROS******/
 #define ASSERT_NOT_NULL(ptr)	(assert(NULL != ptr))
-#define THREAD_LIMIT            (1)
+#define THREAD_LIMIT            (2)
 #define ARRAY_SIZE              (10)
 
 /******TYPEDEFS, GLOBAL VARIABLES AND INTERNAL FUNCTIONS******/
@@ -22,10 +22,15 @@ typedef struct sort_hand
     size_t array_size;
     int min;
     int max;
+    size_t array_breakdown;
     int* LUT;
 }sort_hand_t;
 
-int CountingSort(int *array, size_t array_size, int min, int max);
+static size_t thread = 0;
+void* ArrayCount(void* arg);
+
+int CountArray(sort_hand_t* handler, size_t tid);
+int SortCount(sort_hand_t* handler);
 
 static void CreateLUT(int *lookup_array, size_t range);
 static size_t ABSRange(int max, int min);
@@ -43,6 +48,7 @@ int main()
     handler.array_size = ARRAY_SIZE;
     handler.min = 0;
     handler.max = 9;
+    handler.array_breakdown = ARRAY_SIZE/THREAD_LIMIT;
     handler.LUT = (int*)malloc(sizeof(int) *ABSRange(handler.max, handler.min));
 	if (NULL == handler.LUT)
 	{
@@ -52,7 +58,7 @@ int main()
 
     for  (i = 0; i < THREAD_LIMIT; ++i)
     {
-        pthread_create(&threads, NULL, ArrayCount, &handler);
+        pthread_create(&threads[i], NULL, ArrayCount, &handler);
     }
 
     for (i = 0; i < THREAD_LIMIT; ++i)
@@ -60,9 +66,9 @@ int main()
         pthread_join(threads[i], NULL);
     }
     
-    SortCount(hadler->array, handler->array_size, handler->min, handler->max, handler->LUT);
+    SortCount(&handler);
 
-    for (i = 0; i < ARRAY_SIZE, ++i)
+    for (i = 0; i < ARRAY_SIZE; ++i)
     {
         printf("%d\n", array[i]);
     }
@@ -73,34 +79,35 @@ int main()
 
 void* ArrayCount(void* arg)
 {
-    sort_hand_t* handler = arg;
-    CountArray(hadler->array, handler->array_size, handler->min, handler->max, handler->LUT);
+    size_t tid = __sync_fetch_and_add(&thread, 1);
+    
+    CountArray(arg, tid);
     return NULL;
 }
 
-int CountArray(int *array, size_t array_size, int min, int max, int* LUT)
+int CountArray(sort_hand_t* handler, size_t tid)
 {
-	size_t index = 0;
-
-	for (index = 0; index < array_size; ++index)
+	size_t index = handler->array_breakdown * tid;
+    size_t lowest_index = index;
+	for (index = lowest_index; index < handler->array_size && index < (lowest_index + handler->array_breakdown); ++index)
 	{
-		LUT[array[index] - min] += 1;
+		handler->LUT[handler->array[index] - handler->min] += 1;
 	}
 	
 
 	return 0;
 }
-int SortCount(int *array, size_t array_size, int min, int max, int* LUT)
+int SortCount(sort_hand_t* handler)
 {
     int insert = 0;
 	size_t index = 0;
-	for (insert = min; insert <= max; ++insert)
+	for (insert = handler->min; insert <= handler->max; ++insert)
 	{
-		while (0 < LUT[insert - min])
+		while (0 < handler->LUT[insert - handler->min])
 		{
-			array[index] = insert;
+			handler->array[index] = insert;
 			++index;
-			LUT[insert - min] -= 1;
+			handler->LUT[insert - handler->min] -= 1;
 		}
 	}
 	return 0;
