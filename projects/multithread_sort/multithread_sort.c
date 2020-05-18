@@ -12,8 +12,11 @@
 
 /******MACROS******/
 #define ASSERT_NOT_NULL(ptr)	(assert(NULL != ptr))
+#define DICTIONARY_SIZE         ()
+#define DICT_LOCAL              ("/usr/share/dict/american-english")
 #define THREAD_LIMIT            (2)
-#define ARRAY_SIZE              (10)
+#define ARRAY_SIZE              (DICTIONARY_SIZE)
+#define MAX_CHAR                (100)
 
 /******TYPEDEFS, GLOBAL VARIABLES AND INTERNAL FUNCTIONS******/
 typedef struct sort_hand
@@ -31,6 +34,7 @@ void* ArrayCount(void* arg);
 
 int CountArray(sort_hand_t* handler, size_t tid);
 int SortCount(sort_hand_t* handler);
+int DictionaryScan(sort_hand_t* handler, size_t tid)
 
 static void CreateLUT(int *lookup_array, size_t range);
 static size_t ABSRange(int max, int min);
@@ -44,21 +48,29 @@ int main()
     size_t i = 0;
     int array[ARRAY_SIZE] = {5, 7, 9, 1, 3, 8, 2, 6, 4, 0};
 
-    handler.array = array;
+    
     handler.array_size = ARRAY_SIZE;
     handler.min = 0;
-    handler.max = 9;
+    handler.max = MAX_CHAR;
     handler.array_breakdown = ARRAY_SIZE/THREAD_LIMIT;
+    handler.array = (int*)malloc(sizeof(int)*ARRAY_SIZE);
+    if (NULL == handler.array)
+	{
+		return 1;
+	}
     handler.LUT = (int*)malloc(sizeof(int) *ABSRange(handler.max, handler.min));
 	if (NULL == handler.LUT)
 	{
+        free(handler.array);
 		return 1;
 	}
     CreateLUT(handler.LUT, ABSRange(handler.max, handler.min));
 
     for  (i = 0; i < THREAD_LIMIT; ++i)
     {
-        pthread_create(&threads[i], NULL, ArrayCount, &handler);
+        while(pthread_create(&threads[i], NULL, ArrayCount, &handler))
+        {
+        }
     }
 
     for (i = 0; i < THREAD_LIMIT; ++i)
@@ -72,7 +84,8 @@ int main()
     {
         printf("%d\n", array[i]);
     }
-
+    
+    free(handler.array);   
     free(handler.LUT);
     return 0;
 }
@@ -80,7 +93,7 @@ int main()
 void* ArrayCount(void* arg)
 {
     size_t tid = __sync_fetch_and_add(&thread, 1);
-    
+    DictionaryScan(arg, tid)
     CountArray(arg, tid);
     return NULL;
 }
@@ -94,7 +107,6 @@ int CountArray(sort_hand_t* handler, size_t tid)
 		handler->LUT[handler->array[index] - handler->min] += 1;
 	}
 	
-
 	return 0;
 }
 int SortCount(sort_hand_t* handler)
@@ -134,4 +146,30 @@ static size_t ABSRange(int max, int min)
 	}
 
 	return max - min;
+}
+
+int DictionaryScan(sort_hand_t* handler, size_t tid)
+{
+    char buffer[MAX_CHAR] = {0};
+    
+    size_t index = handler->array_breakdown * tid;
+    size_t lowest_index = index;
+    FILE* fp = fopen(DICT_LOCAL, "r");
+    if (NULL == fp)
+    {
+        perror("failed to open dictionary");
+        return 1;
+    }
+	for (index = lowest_index; index < handler->array_size && index < (lowest_index + handler->array_breakdown); ++index)
+	{
+        fscanf(fp, "%s", buffer)
+		handler->array[index]= strlen(buffer);
+	}
+
+    if (fclose(fp))
+    {
+        perror("failed to close dicxtionary");
+        return 1;
+    }
+    return 0;
 }
