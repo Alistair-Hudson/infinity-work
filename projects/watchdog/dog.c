@@ -2,7 +2,7 @@
  *	Title:		Dog
  *	Authour:	Alistair Hudson
  *	Reviewer:	
- *	Version:	11/05/2020.0
+ *	Version:	14/05/2020.0
  ******************************************************************************/
 #define _USE_POSIX1993309
 #define _XOPEN_SOURCE
@@ -39,7 +39,7 @@ static void DogIsAliveReceived(int signum);
 static void DogStop(int signum);
 static int DogSendSignal(void* watcher_id);
 static int DogIsAliveCheck(void* arg);
-int StopDog(void* arg);
+static int StopDog(void* arg);
 
 /******FUNCTIONS******/
 int main (int argc, char** argv)
@@ -110,7 +110,7 @@ static void DogIsAliveReceived(int signum)
 	watcher_is_alive = 1;
 }
 
-int DogSendSignal(void* watcher_id)
+static int DogSendSignal(void* watcher_id)
 {
 	pid_t id = *(int*)watcher_id;
 	printf("dog sent\n");
@@ -123,7 +123,7 @@ int DogSendSignal(void* watcher_id)
 	return 1;
 }
 
-int DogIsAliveCheck(void* arg)
+static int DogIsAliveCheck(void* arg)
 {
 	data_t* dog = arg;
 
@@ -143,7 +143,7 @@ int DogIsAliveCheck(void* arg)
 	return 1;
 }
 
-int StopDog(void* arg)
+static int StopDog(void* arg)
 {
 	sched_t* dog = arg;
 	if(stop_dog)

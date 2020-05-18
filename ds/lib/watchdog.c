@@ -2,7 +2,7 @@
  *	Title:		Watchdog
  *	Authour:	Alistair Hudson
  *	Reviewer:	
- *	Version:	10/05/2020.0
+ *	Version:	14/05/2020.0
  ******************************************************************************/
 #define _USE_POSIX1993309
 #define _XOPEN_SOURCE
@@ -38,7 +38,6 @@ static int dog_is_alive = 1;
 
 static void* ProcessThreadScheduler(void* arg);
 static void IsAliveReceived(int signum);
-static void ReleaseSem(int signum);
 static int SendSignal(void* dog_id);
 static int IsAliveCheck(void* arg);
 
@@ -158,13 +157,7 @@ static void IsAliveReceived(int signum)
 	dog_is_alive = 1;
 }
 
-static void ReleaseSem(int signum)
-{
-	(void)signum;
-
-}
-
-int SendSignal(void* dog_id)
+static int SendSignal(void* dog_id)
 {
 	pid_t id = *(int*)dog_id;
 	printf("watcher sent\n");
@@ -177,7 +170,7 @@ int SendSignal(void* dog_id)
 	return 1;
 }
 
-int IsAliveCheck(void* arg)
+static int IsAliveCheck(void* arg)
 {
 	pid_t pid = 0;
 	watchdog_t* dog = arg;
