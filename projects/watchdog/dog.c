@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 /***********************************************************************BS"D****
 *	Title:		WatchDog Dog
 *	Authour:	Shmuel Sinder
@@ -6,6 +7,15 @@
 *******************************************************************************/
 
 #define _USE_POSIX199309
+=======
+/******************************************************************************
+ *	Title:		Dog
+ *	Authour:	Alistair Hudson
+ *	Reviewer:	
+ *	Version:	14/05/2020.0
+ ******************************************************************************/
+#define _USE_POSIX1993309
+>>>>>>> ec4a06547a5f6ee06a82791ded2fd15a94c8314f
 #define _XOPEN_SOURCE
 
 #include <stdio.h>
@@ -23,6 +33,7 @@
 
 typedef struct check_arg
 {
+<<<<<<< HEAD
 	sched_t **sched;
 	int *to_stop;
 	int *is_alive;
@@ -49,6 +60,24 @@ static int SiganlsInit(void);
 static void SginalHandler(int signal);
 
 int main(int argc, char **argv)
+=======
+	char program_name[NAME_LIMIT];
+	char* arguments[ARG_LIMIT];
+}data_t;
+
+static int watcher_is_alive = 1;
+static int stop_dog = 0;
+static sem_t* ready_to_start_sem;
+
+static void DogIsAliveReceived(int signum);
+static void DogStop(int signum);
+static int DogSendSignal(void* watcher_id);
+static int DogIsAliveCheck(void* arg);
+static int StopDog(void* arg);
+
+/******FUNCTIONS******/
+int main (int argc, char** argv)
+>>>>>>> ec4a06547a5f6ee06a82791ded2fd15a94c8314f
 {
 	check_arg_t check_arg = {0};
 
@@ -117,8 +146,17 @@ static int SiganlsInit(void)
 
 	signal_action.sa_handler = SginalHandler;
 
+<<<<<<< HEAD
 	if (0 > sigaction(SIGUSR1, &signal_action, NULL) || 						
 		0 > sigaction(SIGUSR2, &signal_action, NULL))
+=======
+static int DogSendSignal(void* watcher_id)
+{
+	pid_t id = *(int*)watcher_id;
+	printf("dog sent\n");
+	/*send signal to other process*/
+	if (0 > kill(id, SIGUSR1))
+>>>>>>> ec4a06547a5f6ee06a82791ded2fd15a94c8314f
 	{
 		perror("sigaction fail: ");
 		return 1;
@@ -128,15 +166,26 @@ static int SiganlsInit(void)
 	return 0;
 }
 
+<<<<<<< HEAD
 static void SginalHandler(int signal)
+=======
+static int DogIsAliveCheck(void* arg)
+>>>>>>> ec4a06547a5f6ee06a82791ded2fd15a94c8314f
 {
 	if (SIGUSR1 == signal)
 	{
 		g_is_user_alive = 1;
 	}
 
+<<<<<<< HEAD
 	/* SIGUSR2 is for stoping the process */
 	else if (SIGUSR2 == signal)
+=======
+static int StopDog(void* arg)
+{
+	sched_t* dog = arg;
+	if(stop_dog)
+>>>>>>> ec4a06547a5f6ee06a82791ded2fd15a94c8314f
 	{
 		g_to_stop = 1;
 	}
