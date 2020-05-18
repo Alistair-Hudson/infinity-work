@@ -171,5 +171,6 @@ int DictionaryScan(sort_hand_t* handler, size_t tid)
         perror("failed to close dicxtionary");
         return 1;
     }
+    
     return 0;
 }
