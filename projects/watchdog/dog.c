@@ -1,186 +1,144 @@
-/******************************************************************************
- *	Title:		Dog
- *	Authour:	Alistair Hudson
- *	Reviewer:	
- *	Version:	11/05/2020.0
- ******************************************************************************/
-#define _USE_POSIX1993309
+/***********************************************************************BS"D****
+*	Title:		WatchDog Dog
+*	Authour:	Shmuel Sinder
+*	Reviewer:	-
+*	Version:	10.05.2020.0
+*******************************************************************************/
+
+#define _USE_POSIX199309
 #define _XOPEN_SOURCE
 
-#include <stdio.h> 	/*TODO*/
-#include <string.h>	/* strncpy */
-#include <fcntl.h>
-#include <sys/stat.h>
-#include <semaphore.h>
+#include <stdio.h>
+#include <sys/types.h> 		/* kill */
+#include <signal.h> 		/* kill, sigaction */
+#include <time.h> 			/* time */
+#include <assert.h>			/* assert */
+#include <errno.h>			/* perror */
 
-#include "watchdog.h"
+#include <semaphore.h>		/* sem_t, sem_post, sem_wait */
+#include <fcntl.h>  		/* sem_open */
+#include <sys/stat.h> 
 
-/******MACROS******/
-#define ASSERT_NOT_NULL(ptr)	(assert(NULL != ptr))
-#define SEND_TIME				(1)
-#define RECEIVE_TIME			(5)
-#define NAME_LIMIT				(15)
-#define ARG_LIMIT				(5)
+#include "scheduler.h"
 
-/******TYPEDEFS, GLOBAL VARIABLES AND INTERNAL FUNCTIONS******/
-typedef struct sigaction action_handler_t;
-
-typedef struct prog_data
+typedef struct check_arg
 {
-	char program_name[NAME_LIMIT];
-	char* arguments[ARG_LIMIT];
-}data_t;
+	sched_t **sched;
+	int *to_stop;
+	int *is_alive;
+	int is_child;
+	pid_t *pid;
+    char *pathname;
+	char **argv;
+} check_arg_t;
 
-static int watcher_is_alive = 1;
-static int stop_dog = 0;
-static sem_t* ready_to_start_sem;
+int SchedularInit(check_arg_t *check_arg);
+int CheckSignal(void *arg);
+int SendSignal(void *pid);
+int StopScheduler(void *sched);
+int SemInit(sem_t **is_dog_on, sem_t *should_stop);
 
-static void DogIsAliveReceived(int signum);
-static void DogStop(int signum);
-static int DogSendSignal(void* watcher_id);
-static int DogIsAliveCheck(void* arg);
-int StopDog(void* arg);
+static int g_to_stop;
+static int g_is_user_alive = 1;
+static sem_t g_should_stop;
+static sem_t *g_is_dog_on;
+static sched_t *g_sched;
+static pid_t g_pid = 0;
 
-/******FUNCTIONS******/
-int main (int argc, char** argv)
+static int SiganlsInit(void);
+static void SginalHandler(int signal);
+
+int main(int argc, char **argv)
 {
-	sched_t* dog_schedule;
-	action_handler_t alive_handler = {0};
-	action_handler_t stop_handler = {0};
-	pid_t watcher_id = 0;
-	data_t data = {0};
-	int status = 0;
-	int i = 0;
+	check_arg_t check_arg = {0};
 
-	assert(1 < argc);
+	g_pid = getppid();
+
+	(void)argc;
+
+	check_arg.sched = &g_sched;
+	check_arg.to_stop = &g_to_stop;
+	check_arg.is_alive = &g_is_user_alive;
+	check_arg.is_child = 1;
+	check_arg.pid = &g_pid;
+	check_arg.argv = argv;
+
+	/* inti the semaphores */
 	
-	strncpy(data.program_name, argv[1], NAME_LIMIT);
 
-	for (i = 0; i < ARG_LIMIT; ++i)
+	if (0 != SemInit(&g_is_dog_on, &g_should_stop))
 	{
-		data.arguments[i] = argv[i+1];
-	}
-
-	watcher_id = getppid();
-
-	dog_schedule = SchedCreate();
-	if (NULL == dog_schedule)
-	{
-		printf("Failed to create Scheduler for dog\n");
 		return 1;
 	}
-	ready_to_start_sem = sem_open("shared semaphore", O_CREAT, 0666, 0);	
 
-	SchedAdd(dog_schedule, DogSendSignal, &watcher_id, SEND_TIME, time(NULL));
-	SchedAdd(dog_schedule, DogIsAliveCheck, &data, RECEIVE_TIME, time(NULL));
-	SchedAdd(dog_schedule, StopDog, &dog_schedule, SEND_TIME, time(NULL));
+	/*call the signal handeling for SIGUSR1 and SIGUSR2 any other signal*/
+	if (0 != SiganlsInit())
+	{
+		return 1;
+	}
 
-	alive_handler.sa_handler = DogIsAliveReceived;
-	stop_handler.sa_handler = DogStop;
+	g_sched = SchedCreate();
+	if (NULL == g_sched)
+	{
+		return 1;
+	}
 	
-	if(0 > sigaction(SIGUSR1, &alive_handler, NULL))
+	/*send a post the watchdog semaphore*/
+	if (0 > sem_post(g_is_dog_on))
 	{
-		perror("Alive error");
-		return 1;
-	}
-	if (0 > sigaction(SIGUSR2, &stop_handler, NULL))
-	{
-		perror("Stop error");
+		perror("kill fail: ");
 		return 1;
 	}
 
-	sem_post(ready_to_start_sem);
-
-	status = SchedRun(dog_schedule);
-
-	SchedDestroy(dog_schedule);
-
-	sem_post(ready_to_start_sem);
-	return status;
-}
-
-static void DogStop(int signum)
-{
-	stop_dog = 1;
-}
-
-static void DogIsAliveReceived(int signum)
-{
-	printf("Dog recieved\n");
-	watcher_is_alive = 1;
-}
-
-int DogSendSignal(void* watcher_id)
-{
-	pid_t id = *(int*)watcher_id;
-	printf("dog sent\n");
-	/*send signal to other process*/
-	if (0 > kill(id, SIGUSR1))
+	/* schedular init */
+	if (0 != SchedularInit(&check_arg))
 	{
-		perror("Signal error");
-		return 0;
+		return 1;
 	}
-	return 1;
-}
 
-int DogIsAliveCheck(void* arg)
-{
-	data_t* dog = arg;
+	SchedDestroy(g_sched);
 
-	printf("dog check\n");
-	if (!watcher_is_alive)
+	if (0 > sem_destroy(&g_should_stop))
 	{
-		/*reboot process*/
-		if( 0 > execv(dog->program_name, dog->arguments))
-		{
-			perror("Exec failed");
-			return 0;
-		}
-		exit(0);
+		perror("sem_destroy fail: ");
 	}
-	/*process is alive set to 0*/
-	watcher_is_alive = 0;
-	return 1;
-}
 
-int StopDog(void* arg)
-{
-	sched_t* dog = arg;
-	if(stop_dog)
+	if (0 > sem_close(g_is_dog_on))
 	{
-		printf("stopping dog\n");
-		SchedStop(dog);
-		return 0;
+		perror("sem_close fail: ");
 	}
-	return 1;
-
+	
+	return 0;
 }
 
+static int SiganlsInit(void)
+{
+	struct sigaction signal_action = {0};
 
+	signal_action.sa_handler = SginalHandler;
 
+	if (0 > sigaction(SIGUSR1, &signal_action, NULL) || 						
+		0 > sigaction(SIGUSR2, &signal_action, NULL))
+	{
+		perror("sigaction fail: ");
+		return 1;
+	}
+	/* same other signals should be also included and ignored if received */
 
+	return 0;
+}
 
+static void SginalHandler(int signal)
+{
+	if (SIGUSR1 == signal)
+	{
+		g_is_user_alive = 1;
+	}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+	/* SIGUSR2 is for stoping the process */
+	else if (SIGUSR2 == signal)
+	{
+		g_to_stop = 1;
+	}
+}
 

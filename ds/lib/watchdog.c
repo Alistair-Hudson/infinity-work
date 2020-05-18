@@ -1,226 +1,331 @@
-/******************************************************************************
- *	Title:		Watchdog
- *	Authour:	Alistair Hudson
- *	Reviewer:	
- *	Version:	10/05/2020.0
- ******************************************************************************/
-#define _USE_POSIX1993309
+/***********************************************************************BS"D****
+*	Title:		WatchDog
+*	Authour:	Shmuel Sinder
+*	Reviewer:	-
+*	Version:	10.05.2020.0
+*******************************************************************************/
+
+#define _USE_POSIX199309
 #define _XOPEN_SOURCE
 
-#include <string.h> 	/* strncpy */
-#include <fcntl.h>
-#include <sys/stat.h>
-#include <semaphore.h>
+#include <stdio.h>
+#include <sys/types.h> 		/* kill */
+#include <signal.h> 		/* kill, sigaction */
+#include <time.h> 			/* time */
+#include <assert.h>			/* assert */
+#include <errno.h>			/* perror */
 
+#include <semaphore.h>		/* sem_t, sem_post, sem_wait */
+#include <fcntl.h>  		/* sem_open */
+#include <sys/stat.h> 
+
+#include <pthread.h>		/* pthread_t, phtread_create */
+
+#include "scheduler.h"
 #include "watchdog.h"
 
-/******MACROS******/
-#define ASSERT_NOT_NULL(ptr)	(assert(NULL != ptr))
-#define SEND_TIME				(1)
-#define RECEIVE_TIME			(5)
-#define NAME_LIMIT				(15)
-#define ARG_LIMIT				(5)
+#define FREC	(1)
+#define SEM_NAME	("is_dog_on")
 
-/******TYPEDEFS, GLOBAL VARIABLES AND INTERNAL FUNCTIONS******/
-typedef struct sigaction action_handler_t;
-
-struct watchdog
+typedef struct check_arg
 {
-	char program_name[NAME_LIMIT];
-	char* arguments[ARG_LIMIT];
-	pid_t watching_id;
-	sched_t* schedule;
-};
+	sched_t **sched;
+	int *to_stop;
+	int *is_alive;
+	int is_child;
+	pid_t *pid;
+    char *pathname;
+	char **argv;
+} check_arg_t;
 
-static sem_t* ready_to_start_sem;
+int SchedularInit(check_arg_t *check_arg);
+int CheckSignal(void *arg);
+int SendSignal(void *arg);
+int SemInit(sem_t **is_dog_on, sem_t *should_stop);
 
-static int dog_is_alive = 1;
+static int g_to_stop;
+static pthread_t g_thread_id;
+static int g_is_dog_alive;
+static sem_t *g_is_dog_on;
+static sem_t g_should_stop;
+static pid_t g_pid;
+static sched_t *g_sched = NULL;
+static char *g_pathname;
+static char **g_argv;
+static int g_is_end;
 
-static void* ProcessThreadScheduler(void* arg);
-static void IsAliveReceived(int signum);
-static void ReleaseSem(int signum);
-static int SendSignal(void* dog_id);
-static int IsAliveCheck(void* arg);
+void __attribute__((constructor)) ConstructorFunct(); 
+void __attribute__((destructor)) DestructorFunct(); 
 
-/******FUNCTIONS******/
+void ConstructorFunct(void);
+void DestructorFunct(void);
 
-watchdog_t *WatchdogStart(char *program_name, char* arguments[])
+static int SiganlsInit(void);
+static void SginalHandler(int signal);
+
+static void *ThreadFunct(void *arg);
+
+void ConstructorFunct(void)
 {
-	pid_t pid = 0;
-	action_handler_t sig_handler = {0};
-	action_handler_t sem_handler = {0};
-	watchdog_t* dog;
-	pthread_t watcher_thread;
-	int i = 0;
-
-	assert(NULL != program_name);
-
-	/*create watchdog*/
-	dog = malloc(sizeof(watchdog_t));
-	if (NULL == dog)
+	/* init the semaphores */
+	if (0 != SemInit(&g_is_dog_on, &g_should_stop))
 	{
-		return NULL;
-	}
-	dog->schedule = SchedCreate();
-	if (NULL == dog->schedule)
-	{
-		return NULL;
-	}
-	strncpy(dog->program_name, program_name, NAME_LIMIT);
-	dog->arguments[0] = "./dog";
-	for (i = 1; i < ARG_LIMIT; ++i)
-	{
-		dog->arguments[i] = arguments[i-1];
-	}
-
-	/*create dog watcher*/
-	ready_to_start_sem = sem_open("shared semaphore", O_CREAT, 0666, 0);
-	/*fork the process to begin watchdog*/
-	if (0 > (pid = fork()))
-	{
-		perror("Fork failed");
-		return NULL;
-	}	
-	if (0 == pid)
-	{
-		if (0 > execv("./dog", dog->arguments))
-		{
-			perror("Exec failed");
-			return NULL;
-		}		
-	}
-	else
-	{
-		/*set signal handler for dog watcher*/
-		sig_handler.sa_handler = IsAliveReceived;
-		if (0 > sigaction(SIGUSR1, &sig_handler, NULL))
-		{
-			perror("Sigaction error");
-			return NULL;
-		}
-		dog->watching_id = pid;
-		/*add signal sending task*/
-		SchedAdd(dog->schedule, SendSignal, &dog->watching_id, SEND_TIME, time(NULL));
-		/*add signal receiving task*/
-		SchedAdd(dog->schedule, IsAliveCheck, &dog_is_alive, RECEIVE_TIME, time(NULL));
-		/*semaphore to wait for dog*/
-		sem_wait(ready_to_start_sem);
-		/*create thread to run process scheduler*/
-		pthread_create(&watcher_thread, NULL, ProcessThreadScheduler, dog);
-		pthread_detach(pthread_self());
-		return dog;
-	}
-	return NULL;
-}
-
-void WatchdogStop(watchdog_t *dog)
-{
-	/*send stop to watchdog scheduler*/
-	if (0 > kill(dog->watching_id, SIGUSR2))
-	{
-		perror("send stop error");
-	}
-	sem_wait(ready_to_start_sem);
-	/*send process exit to watchdog*/
-	if (0 > kill(dog->watching_id, SIGQUIT))
-	{
-		perror("Kill error");
+		return ;
 	}
 	
-	/*send stop to process scheduler*/
-	SchedStop(dog->schedule);
-
-	/*destroy process scheduler*/
-	SchedDestroy(dog->schedule);
-
-	if (0 > sem_close(ready_to_start_sem))
+	/*call the signal handeling for SIGUSR1*/
+	if (0 != SiganlsInit())
 	{
-		perror("failed to close sem");
+		return ;
 	}
-	if (0 > sem_destroy(ready_to_start_sem))
+
+	/* create Schedular */
+	g_sched = SchedCreate();
+	if (NULL == g_sched)
 	{
-		perror("failed to close sem");
+		return ;
 	}
-}
 
-
-static void* ProcessThreadScheduler(void* arg)
-{
-	watchdog_t* dog = arg;
-	SchedRun(dog->schedule);
-	return NULL;
-}
-
-static void IsAliveReceived(int signum)
-{
-	(void)signum;
-	printf("watcher recieved\n");
-	dog_is_alive = 1;
-}
-
-static void ReleaseSem(int signum)
-{
-	(void)signum;
+	pthread_create(&g_thread_id, NULL, &ThreadFunct, NULL);
 
 }
 
-int SendSignal(void* dog_id)
+void DestructorFunct(void)
 {
-	pid_t id = *(int*)dog_id;
-	printf("watcher sent\n");
-	/*send signal to other process*/
-	if (0 > kill(id, SIGUSR1))
+	if (0 > sem_destroy(&g_should_stop))
 	{
-		perror("Signal Error");
-		return 0;
+		perror("sem_destroy fail: ");
 	}
-	return 1;
+
+	if (0 > sem_close(g_is_dog_on))
+	{
+		perror("sem_close fail: ");
+	}
+
+	g_is_end = 1;
+	sem_post(&g_should_stop);
+
+	pthread_join(g_thread_id, NULL);
+
 }
 
-int IsAliveCheck(void* arg)
-{
-	pid_t pid = 0;
-	watchdog_t* dog = arg;
 
-	printf("watcher check\n");
-	if (!dog_is_alive)
+int WatchdogStart(char *pathname, char **argv)
+{	
+	g_pathname = pathname;
+	g_argv = argv;
+
+	if (0 > sem_post(&g_should_stop))
 	{
-			printf("rebooting\n\n\n");
-		/*reboot process*/
-		if(0 > (pid = fork()))
+		perror("sem_post fail: ");
+		return 1;
+	}
+
+	return 0;
+}	
+
+static void *ThreadFunct(void* arg)
+{	
+	check_arg_t check_arg = {0};
+
+	(void)arg;
+
+	check_arg.sched = &g_sched;
+	check_arg.to_stop = &g_to_stop;
+	check_arg.is_alive = &g_is_dog_alive;
+	check_arg.is_child = 0;
+	check_arg.pid = &g_pid;
+	check_arg.argv = g_argv;
+
+	while (!g_is_end)
+	{
+		/* wait fot WatchdogStart call */
+		if (0 > sem_wait(&g_should_stop))
 		{
-			perror("Fork error");
+			return NULL;
 		}
-		if(0 == pid)
+
+		if (!g_is_end)
 		{
-			
-			if (0 > execv("./dog", dog->arguments))
+			/* create the dog process */
+			CheckSignal(&check_arg);
+		
+			/*wait to dog start*/
+			if (0 > sem_wait(g_is_dog_on))
 			{
-				perror("Exec failed");
-				return 0;
+				perror("sem_wait fail: ");
+				return NULL;
 			}		
+
+			/* schedular init */
+			if (0 != SchedularInit(&check_arg))
+			{
+				return NULL;
+			}
+		}
+	}
+
+	SchedDestroy(g_sched);
+
+	return NULL;
+
+}
+
+int SemInit(sem_t **is_dog_on, sem_t *should_stop)
+{
+	*is_dog_on = sem_open("is_dog_on", O_CREAT, 0644, 0);
+	if (SEM_FAILED == *is_dog_on)
+	{
+		perror("sem_open fail: ");
+		return 1;
+	}
+
+	if (0 > sem_init(should_stop, 0, 0))
+	{
+		perror("sem_init fail: ");
+		return 1;
+	}
+
+	return 0;
+}
+
+void WatchdogStop(void)
+{
+	/* signal to kill the children */
+	if (0 > kill(g_pid, SIGUSR2))
+	{
+		perror("kill fail: ");
+	}
+
+	g_to_stop = 1;
+}
+
+static int SiganlsInit(void)
+{
+	struct sigaction signal_action = {0};
+
+	signal_action.sa_handler = SginalHandler;
+
+	if (0 > sigaction(SIGUSR1, &signal_action, NULL))
+	{
+		perror("sigaction fail: ");
+		return 1;
+	}
+	/* same other signals should be also included and ignored if received */
+
+	return 0;
+}
+
+static void SginalHandler(int signal)
+{
+	if (SIGUSR1 == signal)
+	{
+		g_is_dog_alive = 1;
+	}
+}
+
+int SchedularInit(check_arg_t *check_arg)
+{
+	ilrd_uid_t uid = {0};
+
+	uid = SchedAdd(*(check_arg->sched), CheckSignal, (void*)check_arg,
+					 FREC + 5, time(NULL) + 5);
+	if (0 != UIDIsSame(bad_uid, uid))
+	{
+		return 1;
+	}
+	
+	uid = SchedAdd(*(check_arg->sched), SendSignal, check_arg, FREC, time(NULL));
+	if (0 != UIDIsSame(bad_uid, uid))
+	{
+		return 1;
+	}
+	
+	if (0 != SchedRun(*(check_arg->sched)))
+	{
+		return 1;
+	}
+
+	*(check_arg->to_stop) = 0;
+
+	return 0;
+}
+
+int CheckSignal(void *arg)
+{
+	check_arg_t *check_arg = (check_arg_t*)arg;
+
+	#ifndef NDEBUG
+		static int i;
+		printf("checking signal ... %d\n", i++);
+		printf("pid is: %d\n", *(check_arg->pid));
+    #endif
+	
+	if (!*(check_arg->is_alive))
+	{
+		if (!(check_arg->is_child))
+		{
+			printf("fork and  execv\n");
+			*(check_arg->pid) = fork();
+
+			if (0 == *(check_arg->pid))
+			{
+				if (0 > execv("./dog", check_arg->argv))
+				{
+					perror("execv fail: ");
+					return (-1);
+				}
+			}
 		}
 		else
 		{
-			dog->watching_id = pid;
+			printf("only execv\n");
+			printf("check_arg->argv[0] %s\n", check_arg->argv[0]);
+			if (0 > execv(check_arg->argv[0], check_arg->argv))
+			{
+				perror("execv fail: ");
+				return (-1);
+			}
 		}
-		
 	}
-	dog_is_alive = 0;
-	return 1;
+	else
+	{
+		*(check_arg->is_alive) = 0;
+	}
+
+	if (*(check_arg->to_stop))
+	{
+		return 0;
+	}
+	else
+	{
+		return 1;
+	}
 }
+	
+int SendSignal(void *arg)
+{
+	check_arg_t *check_arg = (check_arg_t*)arg;
+
+	#ifndef NDEBUG
+		static int i;
+        printf("sending signal ...%d\n", i++);
+		printf("pid is: %d\n", *(check_arg->pid));
+    #endif
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+	if (0 > kill(*(check_arg->pid), SIGUSR1))
+	{
+		perror("kill fail: ");
+		return (-1);
+	}
+		
+	if (*(check_arg->to_stop))
+	{
+		return 0;
+	}
+	else
+	{
+		return 1;
+	}
+}
