@@ -9,10 +9,11 @@
 #include <stdio.h>      /* printf */
 #include <assert.h>		/* assert */
 #include <pthread.h>    /* thread functions */
+#include <string.h>     /* strlen */
 
 /******MACROS******/
 #define ASSERT_NOT_NULL(ptr)	(assert(NULL != ptr))
-#define DICTIONARY_SIZE         ()
+#define DICTIONARY_SIZE         (100000)
 #define DICT_LOCAL              ("/usr/share/dict/american-english")
 #define THREAD_LIMIT            (2)
 #define ARRAY_SIZE              (DICTIONARY_SIZE)
@@ -34,7 +35,7 @@ void* ArrayCount(void* arg);
 
 int CountArray(sort_hand_t* handler, size_t tid);
 int SortCount(sort_hand_t* handler);
-int DictionaryScan(sort_hand_t* handler, size_t tid)
+int DictionaryScan(sort_hand_t* handler, size_t tid);
 
 static void CreateLUT(int *lookup_array, size_t range);
 static size_t ABSRange(int max, int min);
@@ -46,8 +47,6 @@ int main()
     sort_hand_t handler = {0};
     pthread_t threads[THREAD_LIMIT];
     size_t i = 0;
-    int array[ARRAY_SIZE] = {5, 7, 9, 1, 3, 8, 2, 6, 4, 0};
-
     
     handler.array_size = ARRAY_SIZE;
     handler.min = 0;
@@ -77,12 +76,13 @@ int main()
     {
         pthread_join(threads[i], NULL);
     }
-    
+
     SortCount(&handler);
 
     for (i = 0; i < ARRAY_SIZE; ++i)
     {
-        printf("%d\n", array[i]);
+        printf("%d\n", handler.array[i]);
+        /*sleep(1);*/
     }
     
     free(handler.array);   
@@ -93,7 +93,7 @@ int main()
 void* ArrayCount(void* arg)
 {
     size_t tid = __sync_fetch_and_add(&thread, 1);
-    DictionaryScan(arg, tid)
+    DictionaryScan(arg, tid);
     CountArray(arg, tid);
     return NULL;
 }
@@ -158,18 +158,26 @@ int DictionaryScan(sort_hand_t* handler, size_t tid)
     if (NULL == fp)
     {
         perror("failed to open dictionary");
+        sleep(5);
         return 1;
     }
 	for (index = lowest_index; index < handler->array_size && index < (lowest_index + handler->array_breakdown); ++index)
 	{
-        fscanf(fp, "%s", buffer)
-		handler->array[index]= strlen(buffer);
+
+        fscanf(fp, "%s", buffer);
+		handler->array[index] = strlen(buffer);
+        if (feof(fp))
+        {
+            break;
+        }
 	}
 
     if (fclose(fp))
     {
         perror("failed to close dicxtionary");
+        sleep(5);
         return 1;
     }
+
     return 0;
 }
