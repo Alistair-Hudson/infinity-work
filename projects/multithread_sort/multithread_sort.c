@@ -178,10 +178,6 @@ int DictionaryScan(sort_hand_t* handler, size_t tid)
         sleep(5);
         return 1;
     }
-<<<<<<< HEAD
     
-=======
-
->>>>>>> 8deed0c1f641a62cbf36cd38999de7fe9bca6e28
     return 0;
 }
