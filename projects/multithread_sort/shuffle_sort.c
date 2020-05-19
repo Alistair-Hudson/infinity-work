@@ -54,6 +54,9 @@ int main ()
     {
         return 1;
     }
+    qsort(&handler.array, 
+        handler.array_breakdown, 
+        sizeof (char*), Shuffle);
     printf("start\n");
     ThreadBreakDown(&handler);
     return 0;
@@ -90,7 +93,7 @@ int DictionaryScan(sort_hand_t* handler)
 
 int Shuffle(const void* word1, const void* word2)
 {
-    return 0;
+    return rand() - rand();
 }
 
 int CompareWords(const void* word1, const void* word2)
@@ -130,10 +133,14 @@ void* QSort(void* arg)
     sort_hand_t* handler = arg;
     int tid = __sync_fetch_and_add(&threadID, 1);
     printf("thread %d start\n", tid);
-    QSortImp(handler->array_breakdown*tid, 
+   /* QSortImp(handler->array_breakdown*tid, 
             handler->array_breakdown*(tid+1), 
             handler);
-    return NULL;
+    */
+   qsort((handler->array+(handler->array_breakdown*tid)), 
+            handler->array_breakdown, 
+            sizeof (char*), CompareWords);
+   return NULL;
 }
 
 static void QSortImp(size_t begin, size_t end, sort_hand_t* handler)
