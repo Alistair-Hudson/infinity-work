@@ -9,6 +9,7 @@
 #include <stdio.h>      /* printf */
 #include <assert.h>		/* assert */
 #include <pthread.h>    /* thread functions */
+#include <string.h>     /* strcmp, strcpy */
 
 /******MACROS******/
 #define ASSERT_NOT_NULL(ptr)	(assert(NULL != ptr))
@@ -16,7 +17,7 @@
 #define DICT_LOCAL              ("/usr/share/dict/american-english")
 #define THREAD_LIMIT            (4)
 #define ARRAY_SIZE              (DICTIONARY_SIZE)
-#define MAX_CHAR                (100)
+#define MAX_CHAR                (25)
 
 /******TYPEDEFS, GLOBAL VARIABLES AND INTERNAL FUNCTIONS******/
 typedef struct handler
@@ -29,25 +30,32 @@ typedef struct handler
 }sort_hand_t;
 
 static size_t threadID = 0;
-void* ArrayCount(void* arg);
 
 int DictionaryScan(sort_hand_t* handler);
+int Shuffle(const void* word1, const void* word2);
+int CompareWords(const void* word1, const void* word2);
+void ThreadBreakDown(sort_hand_t* handler);
+void* QSort(void* arg);
+static void QSortImp(size_t begin, size_t end, sort_hand_t* handler);
+static size_t QSPartion(size_t begin, size_t end, sort_hand_t* handler);
+static void QSSwap(size_t item1, size_t item2, sort_hand_t* handler);
 
 /******FUNCTIONS******/
 
 int main ()
 {
-    handler_t handler = {0};
+    sort_hand_t handler;
 
     handler.array_size = ARRAY_SIZE;
     handler.threads = THREAD_LIMIT;
     handler.array_breakdown = ARRAY_SIZE/THREAD_LIMIT;
 
-    if (ScanDictionary(handler))
+    if (DictionaryScan(&handler))
     {
         return 1;
     }
-    ThreadBreakDown(handler);
+    printf("start\n");
+    ThreadBreakDown(&handler);
     return 0;
 }
 
@@ -98,21 +106,21 @@ void ThreadBreakDown(sort_hand_t* handler)
     {
         return;
     }
-
+    handler->array_breakdown = handler->array_size / handler->threads; 
     for (i = 0; i < handler->threads; ++i)
     {
-        while(pthread_create(&thread[i], NULL, QSort, &handler))
+        while(pthread_create(&thread[i], NULL, QSort, handler))
         {
         }
     }
     
     for (i = 0; i < handler->threads; ++i)
     {
-        pthread_join(threads[i], NULL);
+        pthread_join(thread[i], NULL);
     }
-
+    threadID = 0;
     handler->threads /= 2;
-    handler->array_breakdown = handler->array_size / handler->threads;
+
     ThreadBreakDown(handler);
 
 }
@@ -120,7 +128,8 @@ void ThreadBreakDown(sort_hand_t* handler)
 void* QSort(void* arg)
 {
     sort_hand_t* handler = arg;
-    int tid = _sync_fetch_and_add(threadID, 1);
+    int tid = __sync_fetch_and_add(&threadID, 1);
+    printf("thread %d start\n", tid);
     QSortImp(handler->array_breakdown*tid, 
             handler->array_breakdown*(tid+1), 
             handler);
@@ -132,6 +141,7 @@ static void QSortImp(size_t begin, size_t end, sort_hand_t* handler)
     end = end <= handler->array_size ? end : handler->array_size;
 	if (begin == end)
 	{
+        printf("begining == end\n");
 		return;
 	}
 	/*if low is before high*/
