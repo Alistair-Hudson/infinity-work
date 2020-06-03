@@ -5,7 +5,7 @@
  *	Version:	27.05.2020.0
  ******************************************************************************/
 #include <iostream> /* std io functions */
-#include <string.h> /* strlen, strcpy, strdup */
+#include <string.h> /* strlen, strcmp, strdup */
 
 /******MACROS******/
 
@@ -27,6 +27,7 @@ public:
     }
     ~String()//dtor
     {
+        delete[] m_cstr;
         m_cstr = 0;
     }
     int Length(void)
@@ -39,20 +40,22 @@ public:
     }
     String& operator=(const String& other_)
     {
-        m_cstr = other_.m_cstr;
+        
+        delete[] m_cstr;
+        m_cstr = strdup(other_.m_cstr);
         return *this;
     }
     bool operator==(const String& o_) const 
     { 
-        return m_cstr == o_.m_cstr; 
+        return !strcmp(m_cstr, o_.m_cstr); 
     }
     bool operator>(const String& o_) const 
     { 
-        return m_cstr > o_.m_cstr; 
+        return 0 < strcmp(m_cstr, o_.m_cstr); 
     }
     bool operator<(const String& o_) const 
     { 
-        return m_cstr < o_.m_cstr; 
+        return 0 > strcmp(m_cstr, o_.m_cstr); 
     }
     friend bool operator==(const char* o_, const String &str) 
     { 

@@ -42,11 +42,7 @@ public:
 
 	RCString& Concat(const RCString& o_);
 	
-	bool operator==(/*const RCString& s1, */const RCString& s2);
-    bool operator!=(/*const RCString& s1, */const RCString& s2);
-    bool operator<(/*const RCString& s1, */const RCString& s2);
-    bool operator>(/*const RCString& s1, */const RCString& s2);
-    friend std::ostream& operator<<(std::ostream& os, const RCString& s);
+	
 
 };
 
@@ -115,39 +111,29 @@ RCString& RCString::Concat(const RCString& o_)
     char* strbuffer = new char[length1 + length2];
     strcpy(strbuffer, ToCStr());
     
-    strcat(strbuffer, o_.strhld->str);
+    strcat(strbuffer, o_.ToCStr());
     
+    --strhld->instances;
+    if (0 == strhld->instances)
+    {
+        delete strhld;
+    }
+    
+    strhld = new (string_holder);
     strhld->str = strbuffer;
+    ++strhld->instances;
     
     return *this;
 }
 
-bool RCString::operator==(/*const RCString& s1, */const RCString& s2)
-{
-    return !strcmp(strhld->str, s2.strhld->str);
-}
 
-bool RCString::operator!=(/*const RCString& s1, */const RCString& s2)
-{
-    return strcmp(strhld->str, s2.strhld->str);
-}
-
-bool RCString::operator<(/*const RCString& s1, */const RCString& s2)
-{
-    return 0 > strcmp(strhld->str, s2.strhld->str);
-}
-
-bool RCString::operator>(/*const RCString& s1, */const RCString& s2)
-{
-    return 0 < strcmp(strhld->str, s2.strhld->str);
-}
-
-std::ostream& operator<<(std::ostream& os, const RCString& s)
-{
-    return os << s.ToCStr();
-}
 
 /******INTERNAL FUNCTION DECLARATION******/
+bool operator==(const RCString& s1, const RCString& s2);
+bool operator!=(const RCString& s1, const RCString& s2);
+bool operator<(const RCString& s1, const RCString& s2);
+bool operator>(const RCString& s1, const RCString& s2);
+std::ostream& operator<<(std::ostream& os, const RCString& s);
 
 /*****FUNCTION DEFINITION******/
 
@@ -155,6 +141,7 @@ int main()
 {
    RCString str1 = "Hello ";
    RCString str2(str1);
+   RCString str3(str1);
    
    str2 = "world!";
    
@@ -168,7 +155,32 @@ int main()
    std::cout << "str1 > str2: " << (str1>str2) << std::endl;
    
    str1.Concat(str2);
-   std::cout << "Concat string = " << str1.ToCStr() << std::endl;
-   
+   std::cout << "Concat str1 = " << str1.ToCStr() << std::endl;
+   std::cout << "str3 = " << str3 << std::endl;
     return 0;
+}
+
+bool operator==(const RCString& s1, const RCString& s2)
+{
+    return !strcmp(s1.ToCStr(), s2.ToCStr());
+}
+
+bool operator!=(const RCString& s1, const RCString& s2)
+{
+    return strcmp(s1.ToCStr(), s2.ToCStr());
+}
+
+bool operator<(const RCString& s1, const RCString& s2)
+{
+    return 0 > strcmp(s1.ToCStr(), s2.ToCStr());
+}
+
+bool operator>(const RCString& s1, const RCString& s2)
+{
+    return 0 < strcmp(s1.ToCStr(), s2.ToCStr());
+}
+
+std::ostream& operator<<(std::ostream& os, const RCString& s)
+{
+    return os << s.ToCStr();
 }
