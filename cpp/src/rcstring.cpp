@@ -1,13 +1,15 @@
 /******************************************************************************
- *	Title:		RC String Numbers
+ *	Title:		RC String
  *	Authour:	Alistair Hudson
  *	Reviewer:	
- *	Version:	02.06.2020.0
+ *	Version:	04.06.2020.1
  ******************************************************************************/
 #include <iostream>     /* std io functions */
 #include <string.h>       /* strlen, strcmp */
 #include <exception>
 #include <cstdlib>
+
+#include "rcstring.hpp"
 
 /******MACROS******/
 
@@ -16,35 +18,9 @@
 /****** GLOBAL VARIABLES*****/
 
 /*****STRUCTS*******/
-struct string_holder
-{
-    char* str;
-    int instances;
-};
 
 /*****CLASSES******/
-class RCString
-{
-private:
-    string_holder* strhld;
-    
-public:
-	RCString(const char* str_ = "");
-	RCString(const RCString& o_);
-	~RCString();
-	RCString& operator=(const RCString& o_);
-	
-	const char* ToCStr() const;
-	size_t Length() const;
 
-	char operator[](size_t idx_) const;
-	char& operator[](size_t idx_);
-
-	RCString& Concat(const RCString& o_);
-	
-	
-
-};
 
 /******CLASS FUNCTIONS*******/
 RCString::RCString(const char* str_): strhld(new string_holder)
@@ -95,11 +71,34 @@ size_t RCString::Length() const
 
 char RCString::operator[](size_t idx_) const
 {
+    if (Length() < idx_)
+    {
+        return '\0';
+    }
     return strhld->str[idx_];
 }
 
 char& RCString::operator[](size_t idx_)
 {
+    /*if(Length() < idx_)
+    {
+        return '\0';
+    }
+    */int length = Length();
+    
+    char* strbuffer = new char[length];
+    strcpy(strbuffer, ToCStr());
+    
+    --strhld->instances;
+    if(0 == strhld->instances)
+    {
+        delete strhld;
+    }
+    
+    strhld = new (string_holder);
+    strhld->str = strbuffer;
+    ++strhld->instances;
+    
     return strhld->str[idx_];
 }
 
@@ -126,39 +125,9 @@ RCString& RCString::Concat(const RCString& o_)
     return *this;
 }
 
-
-
 /******INTERNAL FUNCTION DECLARATION******/
-bool operator==(const RCString& s1, const RCString& s2);
-bool operator!=(const RCString& s1, const RCString& s2);
-bool operator<(const RCString& s1, const RCString& s2);
-bool operator>(const RCString& s1, const RCString& s2);
-std::ostream& operator<<(std::ostream& os, const RCString& s);
 
 /*****FUNCTION DEFINITION******/
-
-int main()
-{
-   RCString str1 = "Hello ";
-   RCString str2(str1);
-   RCString str3(str1);
-   
-   str2 = "world!";
-   
-   std::cout << "str1 = " << str1.ToCStr() << std::endl;
-   std::cout << "str2 = " << str2.ToCStr() << std::endl;
-   std::cout << "length of str1 = " << str1.Length() << std::endl;
-   std::cout << "character at positon 1 = " << str1[1] << std::endl;
-   std::cout << "str1 == str2: " << (str1==str2) << std::endl;
-   std::cout << "str1 != str2: " << (str1!=str2) << std::endl;
-   std::cout << "str1 < str2: " << (str1<str2) << std::endl;
-   std::cout << "str1 > str2: " << (str1>str2) << std::endl;
-   
-   str1.Concat(str2);
-   std::cout << "Concat str1 = " << str1.ToCStr() << std::endl;
-   std::cout << "str3 = " << str3 << std::endl;
-    return 0;
-}
 
 bool operator==(const RCString& s1, const RCString& s2)
 {

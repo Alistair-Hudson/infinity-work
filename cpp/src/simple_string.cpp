@@ -2,10 +2,12 @@
  *	Title:		Simple String
  *	Authour:	Alistair Hudson
  *	Reviewer:	
- *	Version:	27.05.2020.0
+ *	Version:	04.06.2020.1
  ******************************************************************************/
 #include <iostream> /* std io functions */
-#include <string.h> /* strlen, strcmp, strdup */
+#include <string.h> /* strlen, strcmp */
+
+#include "simple_string.hpp"
 
 /******MACROS******/
 
@@ -14,76 +16,83 @@
 /****** GLOBAL VARIABLES*****/
 
 /*****CLASSES******/
-class String
+
+/****CLASS FUNCTIONS*****/
+
+String::String(char str[]) //ctor, not explicit in the case that a user wishes to have other data types stored as a string
 {
-public:
-    String(char str[]) //ctor
+    m_cstr = new char[strlen(str) + 1];
+    for (int i = 0; i <= strlen(str); ++i)
     {
-        m_cstr = strdup(str);
+        m_cstr[i] = str[i];
     }
-    String(const String& str)//ctor copy
+    m_cstr[strlen(str) + 1] = '\0';
+}
+
+String::String(const String& str)//ctor copy
+{
+    m_cstr = new char[str.Length() + 1];
+    for (int i = 0; i <= str.Length(); ++i)
     {
-        m_cstr = strdup(str.m_cstr);
+        m_cstr[i] = str.CStr()[i];
     }
-    ~String()//dtor
+    m_cstr[str.Length() + 1] = '\0';
+}
+
+String::~String()//dtor
+{
+    delete[] m_cstr;
+    m_cstr = 0;
+}
+
+int String::Length(void) const
+{
+    return strlen(m_cstr);
+}
+
+const char* String::CStr(void) const
+{
+    return m_cstr;
+}
+
+String& String::operator=(const String& other_)
+{
+    //allocate to temp ptr
+    delete[] m_cstr;
+    m_cstr = new char[other_.Length() + 1];
+    for (int i = 0; i <= other_.Length(); ++i)
     {
-        delete[] m_cstr;
-        m_cstr = 0;
+        m_cstr[i] = other_.CStr()[i];
     }
-    int Length(void)
-    {
-        return strlen(m_cstr);
-    }
-    char* CStr(void)
-    {
-        return m_cstr;
-    }
-    String& operator=(const String& other_)
-    {
-        
-        delete[] m_cstr;
-        m_cstr = strdup(other_.m_cstr);
-        return *this;
-    }
-    bool operator==(const String& o_) const 
-    { 
-        return !strcmp(m_cstr, o_.m_cstr); 
-    }
-    bool operator>(const String& o_) const 
-    { 
-        return 0 < strcmp(m_cstr, o_.m_cstr); 
-    }
-    bool operator<(const String& o_) const 
-    { 
-        return 0 > strcmp(m_cstr, o_.m_cstr); 
-    }
-    friend bool operator==(const char* o_, const String &str) 
-    { 
-        return !strcmp(o_, str.m_cstr); 
-    }
-    friend std::ostream& operator<< (std::ostream& os_, const String& x_) 
-    {
-        return os_ << x_.m_cstr;
-    }
-    
-private:
-    
-    char* m_cstr;
-};
+    m_cstr[other_.Length() + 1] = '\0';
+    return *this; //this is to ensure that a void is not returned
+}
 
 /******INTERNAL FUNCTION DECLARATION******/
 
 /*****FUNCTION DEFINITION******/
 
-int main()
-{
-    String s1("hello");
-    String s2(s1);
-
-    s1 = s2;
+    bool operator==(const String& s1_, const String& s2_) 
+    { 
+        return !strcmp(s1_.CStr(), s2_.CStr()); 
+    }
     
-    std::cout << s1.CStr() << std::endl;
-    std::cout << s1.Length() << std::endl;
-    std::cout << s1 << std::endl;
-    return 0;
-}
+    bool operator>(const String& s1_, const String& s2_) 
+    { 
+        return 0 < strcmp(s1_.CStr(), s2_.CStr()); 
+    }
+    
+    bool operator<(const String& s1_, const String& s2_) 
+    { 
+        return 0 > strcmp(s1_.CStr(), s2_.CStr()); 
+    }
+    
+    bool operator==(const char* o_, const String &str) 
+    { 
+        return !strcmp(o_, str.CStr()); 
+    }
+    
+    std::ostream& operator<< (std::ostream& os_, const String& x_) 
+    {
+        return os_ << x_.CStr();
+    }
