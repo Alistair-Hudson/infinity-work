@@ -2,6 +2,8 @@
 #include <mcheck.h>
 
 #include "../include/glut_utils.h"
+#include "../include/rectangle.hpp"
+#include "../include/circle.hpp"
 
 
 int drawCircle = 1;
@@ -41,7 +43,8 @@ static void DrawFunction()
     /* printf("Drawing\n"); */
 
     /* draw rectangle */
-    DrawPolygon(COLOR_MAGENTA, 4, (int)150, (int)400, (int)300, (int)650, (int)150, (int)650, (int)300, (int)400);
+    Rectangle rect(150, 400, 0, 500, 200, COLOR_MAGENTA);
+    rect.DrawInternal();
 
     if (drawCircle)
         DrawCircle(COLOR_GREEN, xCircle, yCircle, rCircle);
