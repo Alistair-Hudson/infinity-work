@@ -3,7 +3,7 @@
 
 /*******************************************************************************
                                 * OL85 API FOR LINE
-                                * version 04.06.2020.0
+                                * version 08.06.2020.0
 ******************************************************************************/
 
 #include "shape.hpp"
@@ -11,7 +11,11 @@
 class Line : public Shape
 {
 public:
-    Line(int xpos = 0, int ypos = 0, double angle = 0, int length = 0);
+    Line(int xpos = 0, 
+        int ypos = 0, 
+        double angle = 0, 
+        int length = 0, 
+        COLORS color_ = COLOR_WHITE);
     Line(const Line& line_);
     Line& operator= (const Line& line_);
     ~Line();

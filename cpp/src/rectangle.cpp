@@ -19,9 +19,15 @@
 /*****CLASSES******/
 
 /******CLASS FUNCTIONS*******/
-Rectangle::Rectangle(int xpos, int ypos, double angle, int length, int width)
+Rectangle::Rectangle(   int xpos, 
+                        int ypos, 
+                        double angle, 
+                        int length, 
+                        int width, 
+                        COLORS color_)
 {
     Point m_point(xpos, ypos);
+    Color m_color(color_);
     SetAngle(angle);
     m_length = length;
 }
@@ -61,7 +67,16 @@ int Rectangle::GetWidth() const
 
 void Rectangle::DrawInternal()
 {
-
+    DrawPolygon(GetColor().GetColor(), 
+                4, 
+                GetPos().GetX(), 
+                GetPos().GetY(), 
+                (GetPos().GetX()+m_length*cos(GetAngle())), 
+                (GetPos().GetY()+m_length*sin(GetAngle())), 
+                (GetPos().GetX()+m_length*cos(GetAngle())+m_width*cos(-GetAngle())), 
+                (GetPos().GetY()+m_length*sin(GetAngle())+m_width*sin(-GetAngle())), 
+                (GetPos().GetX()+m_width*cos(-GetAngle())), 
+                (GetPos().GetY()+m_width*sin(-GetAngle()));
 }
 
 /******INTERNAL FUNCTION DECLARATION******/

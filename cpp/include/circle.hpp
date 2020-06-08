@@ -3,7 +3,7 @@
 
 /*******************************************************************************
                                 * OL85 API FOR CIRCLE
-                                * version 04.06.2020.0
+                                * version 08.06.2020.0
 ******************************************************************************/
 
 #include "shape.hpp"
@@ -11,7 +11,11 @@
 class Circle : public Shape
 {
 public:
-    Circle(int xpos = 0, int ypos = 0, double angle = 0, int radius = 0);
+    Circle( int xpos = 0, 
+            int ypos = 0, 
+            double angle = 0, 
+            int radius = 0,
+            COLORS color_ = COLOR_WHITE);
     Circle(const Circle& Circle_);
     Circle& operator= (const Circle& Circle_);
     ~Circle();

@@ -5,7 +5,6 @@
  *	Version:	08.06.2020.0
  ******************************************************************************/
 
-
 #include "shape.hpp"
 
 /******MACROS******/
@@ -64,19 +63,19 @@ void Point::SetY(int y_)
 }
 
 /*===COLOR CLASS FUNCTIONS===*/
-Color::Color()
+Color::Color(COLORS color_)
 {
-
+    m_color = color_;
 }
 
 Color::Color(const Color& color_)
 {
-
+    m_color = color_.m_color;
 }
 
 Color& Color::operator= (const Color& color_)
 {
-
+    m_color = color_.m_color;
 }
 
 Color::~Color()
@@ -84,10 +83,16 @@ Color::~Color()
 
 }
 
+COLORS Color::GetColor() const
+{
+    return m_color;
+}
+
 /*===SHAPE CLASS FUNCTIONS===*/
-Shape::Shape(int xpos, int ypos, double angle)
+Shape::Shape(int xpos, int ypos, double angle, COLORS color_)
 {
     Point m_point(xpos, ypos);
+    Color m_color(color_);
     m_angle = angle;
 }
 
@@ -132,7 +137,7 @@ void Shape::SetPos(Point point_)
 
 void Shape::SetColor(Color color_)
 {
-
+    m_color = color_.GetColor();
 }
 
 void Shape::SetAngle(double angle_)
@@ -152,17 +157,25 @@ void Shape::DrawInternal()
 
 void Shape::Rotate(double delta_angle)
 {
-
+    m_angle += delta_angle;
 }
 
 void Shape::Revolve(Point c_point, double angle)
 {
+    Point relative_pos((m_point - c_point));
+    double current_angel = atan2(relative_pos.GetX(), relative_pos.GetY());
+    current_angel += angle;
+    double  hype = hypot(relative_pos.GetX(), relative_pos.GetY());
 
+    relative_pos.SetX(hype*cos(current_angel));
+    relative_pos.SetY(hype*sin(current_angel));
+
+    SetPos(relative_pos+c_point);
 }
 
 void Shape::Move(Point vector)
 {
-
+    m_point = m_point + vector;
 }
 
 

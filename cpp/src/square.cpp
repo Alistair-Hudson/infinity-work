@@ -19,9 +19,10 @@
 /*****CLASSES******/
 
 /******CLASS FUNCTIONS*******/
-Square::Square(int xpos, int ypos, double angle, int length)
+Square::Square(int xpos, int ypos, double angle, int length, COLORS color_)
 {
     Point m_point(xpos, ypos);
+    Color m_color(color_);
     SetAngle(angle);
     m_length = length;
 }
@@ -54,7 +55,16 @@ int Square::GetLength() const
 
 void Square::DrawInternal()
 {
-
+    DrawPolygon(GetColor().GetColor(), 
+            4, 
+            GetPos().GetX(), 
+            GetPos().GetY(), 
+            (GetPos().GetX()+m_length*cos(GetAngle())), 
+            (GetPos().GetY()+m_length*sin(GetAngle())), 
+            (GetPos().GetX()+m_length*cos(GetAngle())+m_length*cos(-GetAngle())), 
+            (GetPos().GetY()+m_length*sin(GetAngle())+m_length*sin(-GetAngle())), 
+            (GetPos().GetX()+m_length*cos(-GetAngle())), 
+            (GetPos().GetY()+m_length*sin(-GetAngle()));
 }
 
 /******INTERNAL FUNCTION DECLARATION******/

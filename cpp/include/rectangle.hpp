@@ -3,7 +3,7 @@
 
 /*******************************************************************************
                                 * OL85 API FOR RECTANGLE
-                                * version 04.06.2020.0
+                                * version 08.06.2020.0
 ******************************************************************************/
 
 #include "shape.hpp"
@@ -15,7 +15,8 @@ public:
                 int ypos = 0, 
                 double angle = 0, 
                 int length = 0,
-                int width = 0);
+                int width = 0, 
+                COLORS color_ = COLOR_WHITE);
     Rectangle(const Rectangle& Rectangle_);
     Rectangle& operator= (const Rectangle& Rectangle_);
     ~Rectangle();

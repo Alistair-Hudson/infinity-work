@@ -3,7 +3,7 @@
 
 /*******************************************************************************
                                 * OL85 API FOR SQUARE
-                                * version 04.06.2020.0
+                                * version 08.06.2020.0
 ******************************************************************************/
 
 #include "shape.hpp"
@@ -11,7 +11,11 @@
 class Square : public Shape
 {
 public:
-    Square(int xpos = 0, int ypos = 0, double angle = 0, int length = 0);
+    Square( int xpos = 0, 
+            int ypos = 0, 
+            double angle = 0, 
+            int length = 0, 
+            COLORS color_ = COLOR_WHITE);
     Square(const Square& Square_);
     Square& operator= (const Square& Square_);
     ~Square();

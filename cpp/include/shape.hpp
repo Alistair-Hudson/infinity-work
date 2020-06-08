@@ -3,8 +3,12 @@
 
 /*******************************************************************************
                                 * OL85 API FOR SHAPE
-                                * version 04.06.2020.0
+                                * version 08.06.2020.0
 ******************************************************************************/
+
+#include <cmath>
+
+#include "glut_utils.h"
 
 class Point
 {
@@ -28,21 +32,21 @@ private:
 class Color
 {
 public:
-    Color();
+    Color(COLORS color_ = COLOR_WHITE);
     Color(const Color& color_);
     Color& operator= (const Color& color_);
     ~Color();
 
+    COLORS GetColor() const;
+
 private:
-    int m_red;
-    int m_green;
-    int m_blue;
+    COLORS m_color;
 };
 
 class Shape
 {
 public:
-    Shape(int xpos = 0, int ypos = 0, double angle = 0);
+    Shape(int xpos = 0, int ypos = 0, double angle = 0, COLORS color_ = COLOR_WHITE);
     Shape(const Shape& shape_);
     Shape& operator= (const Shape& shape_);
     ~Shape();
