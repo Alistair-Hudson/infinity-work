@@ -35,6 +35,7 @@ Point& Point::operator= (const Point& point_)
 {
     m_x = point_.GetX();
     m_y = point_.GetY();
+    return *this;
 }
 
 Point::~Point()
@@ -76,6 +77,7 @@ Color::Color(const Color& color_)
 Color& Color::operator= (const Color& color_)
 {
     m_color = color_.m_color;
+    return *this;
 }
 
 Color::~Color()
@@ -91,8 +93,8 @@ COLORS Color::GetColor() const
 /*===SHAPE CLASS FUNCTIONS===*/
 Shape::Shape(int xpos, int ypos, double angle, COLORS color_)
 {
-    Point m_point(xpos, ypos);
-    Color m_color(color_);
+    SetPos(Point (xpos, ypos));
+    SetColor(Color (color_));
     m_angle = angle;
 }
 
@@ -108,6 +110,7 @@ Shape& Shape::operator= (const Shape& shape_)
     Point m_point(shape_.GetPos());
     Color m_color(shape_.GetColor());
     m_angle = shape_.GetAngle();
+    return *this;
 }
 
 Shape::~Shape()

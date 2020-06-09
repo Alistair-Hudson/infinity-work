@@ -1,9 +1,10 @@
 #include <stdio.h>
 #include <mcheck.h>
 
-#include "../include/glut_utils.h"
-#include "../include/rectangle.hpp"
-#include "../include/circle.hpp"
+#include "glut_utils.h"
+#include "rectangle.hpp"
+#include "circle.hpp"
+#include "line.hpp"
 
 
 int drawCircle = 1;
@@ -43,7 +44,7 @@ static void DrawFunction()
     /* printf("Drawing\n"); */
 
     /* draw rectangle */
-    Rectangle rect(150, 400, 0, 500, 200, COLOR_MAGENTA);
+    Rectangle rect(150, 400, 90, 500, 100, COLOR_MAGENTA);
     rect.DrawInternal();
 
     if (drawCircle)

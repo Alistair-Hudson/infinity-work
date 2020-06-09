@@ -22,8 +22,8 @@
 /******CLASS FUNCTIONS*******/
 Circle::Circle(int xpos, int ypos, double angle, int radius, COLORS color_)
 {
-    Point m_point(xpos, ypos);
-    Color m_color(color_);
+    SetPos(Point (xpos, ypos));
+    SetColor(Color (color_));
     SetAngle(angle);
     m_radius = radius;
 }
@@ -42,6 +42,7 @@ Circle& Circle::operator= (const Circle& circle_)
     Color m_color(circle_.GetColor());
     SetAngle(circle_.GetAngle());
     m_radius = circle_.GetRadius();
+    return *this;
 }
 
 Circle::~Circle()

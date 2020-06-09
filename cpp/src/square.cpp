@@ -21,8 +21,8 @@
 /******CLASS FUNCTIONS*******/
 Square::Square(int xpos, int ypos, double angle, int length, COLORS color_)
 {
-    Point m_point(xpos, ypos);
-    Color m_color(color_);
+    SetPos(Point (xpos, ypos));
+    SetColor(Color (color_));
     SetAngle(angle);
     m_length = length;
 }
@@ -41,6 +41,7 @@ Square& Square::operator= (const Square& square_)
     Color m_color(square_.GetColor());
     SetAngle(square_.GetAngle());
     m_length = square_.GetLength();
+    return *this;
 }
 
 Square::~Square()
@@ -59,12 +60,12 @@ void Square::DrawInternal()
             4, 
             GetPos().GetX(), 
             GetPos().GetY(), 
-            (GetPos().GetX()+m_length*cos(GetAngle())), 
-            (GetPos().GetY()+m_length*sin(GetAngle())), 
-            (GetPos().GetX()+m_length*cos(GetAngle())+m_length*cos(-GetAngle())), 
-            (GetPos().GetY()+m_length*sin(GetAngle())+m_length*sin(-GetAngle())), 
-            (GetPos().GetX()+m_length*cos(-GetAngle())), 
-            (GetPos().GetY()+m_length*sin(-GetAngle()));
+            (int)(GetPos().GetX()+m_length*cos(GetAngle())), 
+            (int(GetPos().GetY()+m_length*sin(GetAngle())), 
+            (int(GetPos().GetX()+m_length*cos(GetAngle())+m_length*sin(GetAngle())), 
+            (int(GetPos().GetY()+m_length*sin(GetAngle())+m_length*cos(GetAngle())), 
+            (int)(GetPos().GetX()+m_length*sin(GetAngle())), 
+            (int(GetPos().GetY()+m_length*cos(GetAngle())));
 }
 
 /******INTERNAL FUNCTION DECLARATION******/

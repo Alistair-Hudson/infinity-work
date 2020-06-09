@@ -26,8 +26,8 @@ Rectangle::Rectangle(   int xpos,
                         int width, 
                         COLORS color_)
 {
-    Point m_point(xpos, ypos);
-    Color m_color(color_);
+    SetPos(Point (xpos, ypos));
+    SetColor(Color (color_));
     SetAngle(angle);
     m_length = length;
 }
@@ -48,6 +48,7 @@ Rectangle& Rectangle::operator= (const Rectangle& rectangle_)
     SetAngle(rectangle_.GetAngle());
     m_length = rectangle_.GetLength();
     m_width = rectangle_.GetWidth();
+    return *this;
 }
 
 Rectangle::~Rectangle()
@@ -71,12 +72,12 @@ void Rectangle::DrawInternal()
                 4, 
                 GetPos().GetX(), 
                 GetPos().GetY(), 
-                (GetPos().GetX()+m_length*cos(GetAngle())), 
-                (GetPos().GetY()+m_length*sin(GetAngle())), 
-                (GetPos().GetX()+m_length*cos(GetAngle())+m_width*cos(-GetAngle())), 
-                (GetPos().GetY()+m_length*sin(GetAngle())+m_width*sin(-GetAngle())), 
-                (GetPos().GetX()+m_width*cos(-GetAngle())), 
-                (GetPos().GetY()+m_width*sin(-GetAngle()));
+                (int)(GetPos().GetX()+m_length*(int)cos(GetAngle())), 
+                (int)(GetPos().GetY()+m_length*(int)sin(GetAngle())), 
+                (int)(GetPos().GetX()+m_length*(int)cos(GetAngle())+m_width*(int)sin(GetAngle())), 
+                (int)(GetPos().GetY()+m_length*(int)sin(GetAngle())+m_width*(int)cos(GetAngle())), 
+                (int)(GetPos().GetX()+m_width*(int)sin(GetAngle())), 
+                (int)(GetPos().GetY()+m_width*(int)cos(GetAngle())));
 }
 
 /******INTERNAL FUNCTION DECLARATION******/

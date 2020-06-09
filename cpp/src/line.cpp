@@ -21,8 +21,8 @@
 /******CLASS FUNCTIONS*******/
 Line::Line(int xpos, int ypos, double angle, int length, COLORS color_)
 {
-    Point m_point(xpos, ypos);
-    Color m_color(color_);
+    SetPos(Point (xpos, ypos));
+    SetColor(Color (color_));
     SetAngle(angle);
     m_length = length;
 }
@@ -41,6 +41,7 @@ Line& Line::operator= (const Line& line_)
     Color m_color(line_.GetColor());
     SetAngle(line_.GetAngle());
     m_length = line_.GetLength();
+    return *this;
 }
 
 Line::~Line()
@@ -55,13 +56,12 @@ int Line::GetLength() const
 
 void Line::DrawInternal()
 {
-    
     DrawPolygon(GetColor().GetColor(), 
                 2, 
                 GetPos().GetX(), 
                 GetPos().GetY(), 
-                (GetPos().GetX()+m_length*cos(GetAngle())), 
-                (GetPos().GetY()+m_length*sin(GetAngle()));
+                (int)(GetPos().GetX()+m_length*cos(GetAngle())), 
+                (int)(GetPos().GetY()+m_length*sin(GetAngle())));
 }
 
 /******INTERNAL FUNCTION DECLARATION******/
