@@ -5,12 +5,16 @@
 #include "rectangle.hpp"
 #include "circle.hpp"
 #include "line.hpp"
+#include "square.hpp"
 
 
 int drawCircle = 1;
 int xCircle = 250;
 int yCircle = 100;
 double rCircle = 100;
+
+Circle circle(xCircle, yCircle, 0, rCircle, COLOR_GREEN);
+Square rect(500, 500, 0, 100, COLOR_RED);
 
 static void DrawFunction();
 static int KeyboardFunction(unsigned char key, int x, int y);
@@ -43,12 +47,14 @@ static void DrawFunction()
 {
     /* printf("Drawing\n"); */
 
-    /* draw rectangle */
-    Rectangle rect(150, 400, 90, 500, 100, COLOR_MAGENTA);
+    /* draw rectangle */     
+
     rect.DrawInternal();
 
     if (drawCircle)
-        DrawCircle(COLOR_GREEN, xCircle, yCircle, rCircle);
+        
+        circle.DrawInternal();
+        
 }
 
 
@@ -98,8 +104,8 @@ static int MotionFunction(int x, int y)
 
 static int TimerFunction()
 {
-    xCircle += 1;
-    yCircle += 1;
+    circle.Revolve((500, 500), 1);
+    rect.Rotate(1);
 
     return 1;  /* draw */
 }

@@ -165,7 +165,8 @@ void Shape::Rotate(double delta_angle)
 
 void Shape::Revolve(Point c_point, double angle)
 {
-    Point relative_pos((m_point - c_point));
+    Point relative_pos(m_point.GetX() - c_point.GetX(),
+                        m_point.GetY() - c_point.GetY());
     double current_angel = atan2(relative_pos.GetX(), relative_pos.GetY());
     current_angel += angle;
     double  hype = hypot(relative_pos.GetX(), relative_pos.GetY());
@@ -173,12 +174,17 @@ void Shape::Revolve(Point c_point, double angle)
     relative_pos.SetX(hype*cos(current_angel));
     relative_pos.SetY(hype*sin(current_angel));
 
-    SetPos(relative_pos+c_point);
+    relative_pos.SetX(relative_pos.GetX()+c_point.GetX());
+    relative_pos.SetY(relative_pos.GetY()+ c_point.GetY());
+
+    SetPos(relative_pos);
 }
 
 void Shape::Move(Point vector)
 {
-    m_point = m_point + vector;
+    Point new_local(m_point.GetX()+vector.GetX(), 
+                    m_point.GetY()+vector.GetY());
+    SetPos(new_local);
 }
 
 

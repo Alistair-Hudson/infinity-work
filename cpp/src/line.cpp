@@ -58,10 +58,10 @@ void Line::DrawInternal()
 {
     DrawPolygon(GetColor().GetColor(), 
                 2, 
-                GetPos().GetX(), 
-                GetPos().GetY(), 
-                (int)(GetPos().GetX()+m_length*cos(GetAngle())), 
-                (int)(GetPos().GetY()+m_length*sin(GetAngle())));
+                (int)(GetPos().GetX()+(m_length/2)*cos(GetAngle())), 
+                (int)(GetPos().GetY()+(m_length/2)*sin(GetAngle())), 
+                (int)(GetPos().GetX()-(m_length/2)*cos(GetAngle())), 
+                (int)(GetPos().GetY()-(m_length/2)*sin(GetAngle())));
 }
 
 /******INTERNAL FUNCTION DECLARATION******/
