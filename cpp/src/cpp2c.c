@@ -28,6 +28,7 @@ struct PublicTransport
 
 void PublicTransport_Deconstuctor(struct PublicTransport* p_this)
 {
+    --s_count;
     printf("PublicTransport::Dtor() %d\n", p_this->m_license_plate);
 }
 
@@ -48,7 +49,7 @@ void PublicTransport_Constuctor(struct PublicTransport* p_this)
 void PublicTransport_CConstuctor(struct PublicTransport* p_this, struct PublicTransport* other)
 {
     p_this->v_ptr = &g_VTable_PublicTransport;
-    p_this->m_license_plate = other->m_license_plate;
+    p_this->m_license_plate = ++s_count;
     printf("PublicTransport::CCtor() %d\n", p_this->m_license_plate);
 }
 
@@ -141,6 +142,10 @@ void Taxi_Display(struct Taxi* p_this)
 }
 
 /*===T Class===*/
+int max_function(int t1, int t2)
+{
+    return t1 > t2 ? t1 : t2;
+}
 
 /*===Special Taxi Class===*/
 struct SpecialTaxi
@@ -174,7 +179,7 @@ void SpecialTaxi_Display(struct SpecialTaxi* p_this)
 /*===Other Functions===*/
 void PT_print_info(struct PublicTransport* a)
 {
-    a->v_ptr.display(a);
+    a->v_ptr->display(a);
 }
 
 void V_print_info(void)
@@ -184,7 +189,7 @@ void V_print_info(void)
 
 void M_print_info(struct Minibus* m)
 {
-    m->v_ptr.wash(m, 3);
+    m->v_ptr->wash(m, 3);
 }
 
 struct PublicTransport I_print_info(int i)
@@ -207,7 +212,8 @@ int main(int argc, char **argv, char **envp)
     struct Minibus m;
     Minibus_Constructor(&m);
     M_print_info(&m);
-    I_print_info(3).v_ptr.display();
+    struct PublicTransport pt = I_print_info(3);
+    pt.v_ptr->display(&pt);
     struct PublicTransport *array[] = { new Minibus(), new Taxi(), new Minibus() };
 
     for (int i = 0; i < 3; ++i) {
@@ -215,13 +221,13 @@ int main(int argc, char **argv, char **envp)
     }
 
     for (int i = 0; i < 3; ++i) {
-        delete array[i];
+        free(array[i]);
     }
 
     struct PublicTransport arr2[] = { Minibus(), Taxi(), PublicTransport() };
 
     for (int i = 0; i < 3; ++i) {
-        arr2[i].v_ptr.display();
+        arr2[i].v_ptr->display(&arr2[i]);
     }
     print_info(arr2[0]);
 
@@ -231,13 +237,13 @@ int main(int argc, char **argv, char **envp)
     PublicTransport_print_count();
 
     struct Minibus arr3[4];
-    struct Taxi *arr4 = new Taxi[4];
-    delete[] arr4;
+    struct Taxi *arr4 = malloc(sizeof(struct Taxi)*4);
+    free(arr4);
 
-    std::cout << max_func(1, 2) << "\n";
-    std::cout << max_func<int>(1, 2.0f)<< "\n";
-    SpecialTaxi st;
-    taxi_display(st);
+    printf("%d\n", max_func(1, 2));
+    printf("%d\n", max_func(1, (int)2.0f));
+    struct SpecialTaxi st;
+    taxi_display(&st.base_class);
 
     /*PublicConvoy *ts1 = new PublicConvoy();
     PublicConvoy *ts2 = new PublicConvoy(*ts1);
