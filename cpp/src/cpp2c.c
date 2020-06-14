@@ -1,17 +1,5 @@
 #include <stdio.h>
 
-
-/*===PUBLIC TRANSPORT CLASS===*/
-static int s_count = 0;
-/*class PublicTransport {
-public:
-protected:
-    int get_ID()
-    {
-        return m_license_plate;
-    }
-};
-int PublicTransport::s_count = 0;*/
 struct PublicTransport;
 
 struct VTable_PublicTransport
@@ -20,9 +8,36 @@ struct VTable_PublicTransport
     void (*display)(struct PublicTransport*);
 };
 
+struct Minibus;
+
+struct VTable_Minibus
+{
+    void (*Deconstructor)(struct Minibus*);
+    void (*display)(struct Minibus*);
+    void (*wash)(struct Minibus*, int);
+};
+
+struct Taxi;
+
+struct VTable_Taxi
+{
+    void (*Deconstructor)(struct Taxi*);
+    void (*display)(struct Taxi*);
+};
+
+union VTable
+{
+    struct VTable_PublicTransport pt;
+    struct VTable_Minibus m;
+    struct VTable_Taxi t;
+};
+
+/*===PUBLIC TRANSPORT CLASS===*/
+static int s_count = 0;
+
 struct PublicTransport
 {
-    struct VTable_PublicTransport* v_ptr;
+    union VTable* v_ptr;
     int m_license_plate;
 };
 
@@ -64,41 +79,11 @@ int PublicTransport_id(struct PublicTransport* p_this)
 }
 
 /*===Minibus Class===*/
-struct Minibus;
-
-struct VTable_Minibus
-{
-    void (*wash)(struct Minibus* p_this, int minutes);
-};
-
 struct Minibus
 {
     struct PublicTransport base_class;
-    struct VTable_Minibus* v_ptr;
     int m_numSeats;
 };
-
-void Minibus_Wash(struct Minibus* p_this, int minutes)
-{
-    printf("Minibus::wash(%d) ID: %d", minutes, PublicTransport_id(&p_this->base_class));
-}
-
-struct VTable_Minibus g_VTable_Minibus = {Minibus_Wash};
-
-void Minibus_Constructor(struct Minibus* p_this)
-{
-    PublicTransport_Constuctor(&p_this->base_class);
-    p_this->v_ptr = &g_VTable_Minibus;
-    p_this->m_numSeats = 20;
-    printf("Minibus::Ctor()\n");
-}
-
-void Minibus_CConstructor(struct Minibus* p_this, struct Minibus* other)
-{
-    PublicTransport_CConstuctor(&p_this->base_class, &other->base_class);
-    p_this->m_numSeats = other->m_numSeats;
-    printf("Minibus::CCtor()\n");
-}
 
 void Minibus_Deconstructor(struct Minibus* p_this)
 {
@@ -112,23 +97,33 @@ void Minibus_Display(struct Minibus* p_this)
     printf("num seats: %d", p_this->m_numSeats);
 }
 
+void Minibus_Wash(struct Minibus* p_this, int minutes)
+{
+    printf("Minibus::wash(%d) ID: %d", minutes, PublicTransport_id(&p_this->base_class));
+}
+
+struct VTable_Minibus g_VTable_Minibus = {Minibus_Deconstructor, Minibus_Display, Minibus_Wash};
+
+void Minibus_Constructor(struct Minibus* p_this)
+{
+    PublicTransport_Constuctor(&p_this->base_class);
+    p_this->base_class.v_ptr = &g_VTable_Minibus;
+    p_this->m_numSeats = 20;
+    printf("Minibus::Ctor()\n");
+}
+
+void Minibus_CConstructor(struct Minibus* p_this, struct Minibus* other)
+{
+    PublicTransport_CConstuctor(&p_this->base_class, &other->base_class);
+    p_this->m_numSeats = other->m_numSeats;
+    printf("Minibus::CCtor()\n");
+}
+
 /*===Taxi Class===*/
 struct Taxi
 {
     struct PublicTransport base_class;
 };
-
-void Taxi_Constructor(struct Taxi* p_this)
-{
-    PublicTransport_Constuctor(&p_this->base_class);
-    printf("TAxi::Ctor()\n");
-}
-
-void Taxi_CConstructor(struct Taxi* p_this, struct Taxi* other)
-{
-    PublicTransport_CConstuctor(&p_this->base_class, &other->base_class);
-    printf("Taxi::CCtor()\n");
-}
 
 void Taxi_Deconstructor(struct Taxi* p_this)
 {
@@ -139,6 +134,21 @@ void Taxi_Deconstructor(struct Taxi* p_this)
 void Taxi_Display(struct Taxi* p_this)
 {
     printf("Taxi::display() ID: %d", PublicTransport_id(&p_this->base_class));
+}
+
+struct VTable_Taxi g_VTable_Taxi = {Taxi_Deconstructor, Taxi_Display};
+
+void Taxi_Constructor(struct Taxi* p_this)
+{
+    PublicTransport_Constuctor(&p_this->base_class);
+    p_this->base_class.v_ptr = &g_VTable_Taxi;
+    printf("Taxi::Ctor()\n");
+}
+
+void Taxi_CConstructor(struct Taxi* p_this, struct Taxi* other)
+{
+    PublicTransport_CConstuctor(&p_this->base_class, &other->base_class);
+    printf("Taxi::CCtor()\n");
 }
 
 /*===T Class===*/
@@ -189,7 +199,7 @@ void V_print_info(void)
 
 void M_print_info(struct Minibus* m)
 {
-    m->v_ptr->wash(m, 3);
+    m->base_class.v_ptr->wash(m, 3);
 }
 
 struct PublicTransport I_print_info(int i)
@@ -206,6 +216,14 @@ void taxi_display(struct Taxi* s)
     Taxi_display(s);
 }
 
+union Transport
+{
+    struct PublicTransport pt;
+    struct Minibus m;
+    struct Taxi t;
+    struct SpecialTaxi st;
+};
+
 /*===Main===*/
 int main(int argc, char **argv, char **envp)
 {
@@ -214,18 +232,26 @@ int main(int argc, char **argv, char **envp)
     M_print_info(&m);
     struct PublicTransport pt = I_print_info(3);
     pt.v_ptr->display(&pt);
-    struct PublicTransport *array[] = { new Minibus(), new Taxi(), new Minibus() };
+    union Transport *array[] = {(struct Minibus**)malloc(sizeof(struct Minibus)), 
+                                (struct Taxi**)malloc(sizeof(struct Taxi)), 
+                                (struct Minibus**)malloc(sizeof(struct Minibus))};
+    Minibus_Constructor(array[0]);
+    Taxi_Constructor(array[1]);
+    Minibus_Constructor(array[2]);
 
     for (int i = 0; i < 3; ++i) {
-        array[i]->display();
+        array[i]->v_ptr->display(array[i]);
     }
 
     for (int i = 0; i < 3; ++i) {
+        array[i]->v_ptr->Deconstructor(array[i]);
         free(array[i]);
     }
 
-    struct PublicTransport arr2[] = { Minibus(), Taxi(), PublicTransport() };
-
+    union Transport arr2[] = { (struct Minibus*)malloc(sizeof(struct Minibus)), 
+                                (struct Taxi*)malloc(sizeof(struct Taxi)), 
+                                (struct PublicTransport*)malloc(sizeof(struct PublicTransport)) };
+    
     for (int i = 0; i < 3; ++i) {
         arr2[i].v_ptr->display(&arr2[i]);
     }
@@ -237,7 +263,19 @@ int main(int argc, char **argv, char **envp)
     PublicTransport_print_count();
 
     struct Minibus arr3[4];
+    for (int i = 0; i < 4; ++i) {
+        Minibus_Constructor(&arr3[i]);
+    }
+
     struct Taxi *arr4 = malloc(sizeof(struct Taxi)*4);
+    for (int i = 0; i < 4; ++i) {
+        Taxi_Constructor(&arr4[i]);
+    }
+
+    for (int i = 0; i < 4; ++i) {
+        arr4[i].base_class.v_ptr->Deconstructor(&arr4[i]);
+        free(arr4[i]);
+    }
     free(arr4);
 
     printf("%d\n", max_func(1, 2));
@@ -252,6 +290,15 @@ int main(int argc, char **argv, char **envp)
     delete ts1;
     ts2->display(); // this crashes. fix the bug!
     delete ts2;*/
+    st.base_class.base_class.v_ptr->Deconstructor(&st);
+    for (int i = 0; i < 4; ++i) {
+        arr3[i].base_class.v_ptr->Deconstructor(&arr3[i]);
+    }
+    for (int i = 0; i < 3; ++i) {
+        arr2[i].base_class.v_ptr->Deconstructor(&arr2[i]);
+    }
+    m2.base_class.v_ptr->Deconstructor(&m2);
+    m.base_class.v_ptr->Deconstructor(&m);
 
     return 0;
 }
