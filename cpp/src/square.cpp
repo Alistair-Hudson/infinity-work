@@ -54,6 +54,11 @@ int Square::GetLength() const
     return m_length;
 }
 
+void Square::SetLength(int length_)
+{
+    m_length = length_;
+}
+
 void Square::DrawInternal()
 {
     Point prel;

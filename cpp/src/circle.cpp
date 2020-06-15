@@ -55,6 +55,11 @@ int Circle::GetRadius() const
     return m_radius;
 }
 
+void Circle::SetRadius(int radius_)
+{
+    m_radius = radius_;
+}
+
 void Circle::DrawInternal()
 {
     DrawCircle( GetColor().GetColor(), 

@@ -21,6 +21,7 @@ public:
     ~Line();
 
     int GetLength() const;
+    void SetLength(int length_);
     void DrawInternal();
 
 private:

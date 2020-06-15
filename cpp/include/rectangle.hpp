@@ -23,6 +23,8 @@ public:
 
     int GetLength() const;
     int GetWidth() const;
+    void SetLength(int length_);
+    void SetWidth(int width_);
     void DrawInternal();
     
 private:

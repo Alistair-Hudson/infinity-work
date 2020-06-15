@@ -67,6 +67,16 @@ int Rectangle::GetWidth() const
     return m_width;
 }
 
+void Rectangle::SetLength(int length_)
+{
+    m_length = length_;
+}
+
+void Rectangle::SetWidth(int width_)
+{
+    m_width = width_;
+}
+
 void Rectangle::DrawInternal()
 {
     Point prel;

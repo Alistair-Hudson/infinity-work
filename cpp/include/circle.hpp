@@ -21,6 +21,7 @@ public:
     ~Circle();
 
     int GetRadius() const;
+    void SetRadius(int radius_);
     void DrawInternal();
     
 private:

@@ -54,6 +54,11 @@ int Line::GetLength() const
     return m_length;
 }
 
+void Line::SetLength(int length_)
+{
+    m_length = length_;
+}
+
 void Line::DrawInternal()
 {
     DrawPolygon(GetColor().GetColor(), 
