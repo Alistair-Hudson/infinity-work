@@ -33,6 +33,28 @@ private:
     T m_y;
 };
 
+class String
+{
+public:
+    String(char x_, char y_)
+    {
+        x = x_;
+        y = y_;
+    }
+    char GetY() const
+    {
+        return y;
+    }
+    char GetX() const
+    {
+        return x;
+    }
+private:
+    char x;
+    char y;
+    
+};
+
 /******CLASS FUNCTIONS*******/
 template <typename T>
 Point<T>::Point(T x_, T y_):m_x(x_), m_y(y_)
@@ -80,18 +102,17 @@ Point<T>& Point<T>::operator-=(const Point<T>& p2)
     return *this;
 }
 
-template <typename T>
-Point<T> operator+(const Point<T>& p1, const Point<T>& p2)
+template <class T>
+T operator+(const T& p1, const T& p2)
 {
-    Point<T> output(p1.GetX()+p2.GetX(), p1.GetY()+p2.GetY());
-    return output;
+    return T (p1.GetX()+p2.GetX(), p1.GetY()+p2.GetY());
+    
 }
 
-template <typename T>
-Point<T> operator-(const Point<T>& p1, const Point<T>& p2)
+template <class T>
+T operator-(const T& p1, const T& p2)
 {
-    Point<T> output(p1.GetX()-p2.GetX(), p1.GetY()-p2.GetY());
-    return output;
+    return T (p1.GetX()-p2.GetX(), p1.GetY()-p2.GetY());
 }
 
 /****** GLOBAL VARIABLES*****/
@@ -109,6 +130,12 @@ int main()
     std::cout << i1.GetX() << "," << i1.GetY() << std::endl;
     Point<int> i3 = i2 + i1;
     std::cout << i3.GetX() << "," << i3.GetY() << std::endl;
+ 
+ 
+    String str1(69, 69);
+    String str2(1,1);
     
+    String str3 = str1 + str2;
+    std::cout << str3.GetX() << "," << str3.GetY() << std::endl;
     return 0;
 }
