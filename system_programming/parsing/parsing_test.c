@@ -17,25 +17,30 @@ struct HEADER
 
 int main()
 {
-    struct ext2_super_block super;
+    
     struct ext2_group_desc group;
+    struct ext2_inode inode;
+    struct ext2_inode inode2;
+    char* path;
 
     int fd = open("/dev/ram0", O_RDONLY);
-    
     if (-1 == fd)
     {
         perror("failed to open:");
         return 1;
     }
-    lseek(fd, BASE_OFFSET, SEEK_SET);
-    read(fd, &super, sizeof(super));
-
-    size_t block_size = 1024 << super.s_log_block_size;
-
-    lseek(fd, BASE_OFFSET+block_size, SEEK_SET);
-    read(fd, &group, sizeof(group));
     
-    printf("%d\n", group.bg_used_dirs_count);
+    void FindFirstGroupDecriptor(fd, &group);
+    void read_inode(fd, 
+                    &group,
+                    2, 
+                    &inode);
+    void search_directory_by_path(fd, 
+                                    &group, 
+                                    &inode,
+                                    path,
+                                    &inode2)
+    //printf("%d\n", group.bg_used_dirs_count);
     
     return 0;
 }
