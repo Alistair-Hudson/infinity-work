@@ -6,7 +6,7 @@
                                  * version 23.06.2020.0
  ******************************************************************************/
 
-#include <ext2.h>
+#include <ext2fs/ext2fs.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -16,7 +16,7 @@ void FindFirstGroupDecriptor(int fd,struct ext2_group_desc* ret_group);
 void read_inode(int fd, 
                 const struct ext2_group_desc *group_descriptor,
                 int inode_number, 
-                struct  *ret_inode);
+                struct  ext2_inode *ret_inode);
 
 // Given a path of a directory, find its corresponding inode:
 void search_directory_by_path(int fd, 
@@ -35,7 +35,7 @@ void find_filein_dir(int fd,
 // Given an inode of a file, print the file:
 void print_file(int fd, 
                 struct ext2_inode *inode, 
-                int level = 0/*recursive call support*/);
+                int level /*= 0/*recursive call support*/);
 
 
 #endif /*__OL85_PARSING_H__ */
