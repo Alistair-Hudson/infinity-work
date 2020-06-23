@@ -30,16 +30,25 @@ int main() {
     int socket_id;
     int length;
     int bytes_received;
+    char braodcast = 1;
     char buffer[MSGSIZE]; 
     char *message = "ping"; 
     struct sockaddr_in server_addr;
     struct sockaddr_in client_addr; 
     
-    if ( (socket_id = socket(AF_INET, SOCK_DGRAM, 0)) < 0 ) { 
+    if ( (socket_id = socket(AF_INET, SOCK_DGRAM, 0)) < 0 ) 
+    { 
         perror("socket creation failed"); 
         exit(EXIT_FAILURE); 
     } 
-      
+    
+    if (setsockopt(socket_id, SOL_SOCKET, SO_BROADCAST, 
+                            &broadcast, sizeof(broadcast))) 
+    { 
+        perror("setsockopt"); 
+        exit(EXIT_FAILURE); 
+    }
+
     memset(&server_addr, 0, sizeof(server_addr)); 
     memset(&client_addr, 0, sizeof(client_addr)); 
     
