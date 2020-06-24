@@ -76,24 +76,28 @@ int main()
 
     while(1)
     {
-        int i = 0;
-        int fd = select(nfds, &listening_list, NULL, NULL, &TIMEOUT);
-        if (0 == fd)
+        int fd = 0;
+        int number_of_fds = select(nfds, &listening_list, NULL, NULL, &TIMEOUT);
+        if (0 == number_of_fds)
         {
             printf("Listen timed out\n");
         }
-        printf("%d\n", fd);/*
-        for (i = 0; i <= nfds, ++i)
+        
+        for (fd = 0; fd <= number_of_fds, ++fd)
         {
             if (FD_ISSET(fd, listening_list))
             {
                 if (fd == tcp_socket_id)
                 {
+                    char buffer[50];
                     int new_fd = accept(fd, NULL, 0);
                     FD_SET(new_fd, listening_list);
                     FD_SET(new_fd, client_list);
                     //read
+                    read(tcp_socket_id, buffer, sizeof(buffer));
+                    printf("%s", buffer);
                     //respond
+
                 }
                 if (fd == udp_socket_id)
                 {
@@ -112,11 +116,14 @@ int main()
                 }
                 if (FD_ISSET(fd, client_list))
                 {
+                    char buffer[50];
                     //read
+                    read(fd, buffer, sizeof(buffer));
+                    printf("%s", buffer);
                     //respond
                 }
             }
-        }*/
+        }
     }
 
     return 0;
