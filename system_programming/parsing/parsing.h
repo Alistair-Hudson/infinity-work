@@ -9,6 +9,12 @@
 #include <ext2fs/ext2fs.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/statfs.h>
+#include <string.h>
 
 void FindFirstGroupDecriptor(int fd,struct ext2_group_desc* ret_group);
 

@@ -20,17 +20,20 @@
 /******MACROS******/
 #define ASSERT_NOT_NULL(ptr)	(assert(NULL != ptr))
 #define MSGSIZE                 (100)
-#define PORT                    (8080)
-#define TIMEOUT                 (7)
+#define TCP_PORT                (8080)
+#define UDP_PORT                (8081)
+#define BROADCAST_PORT          (8082)
 
 /******TYPEDEFS*****/
 
 /******GLOBAL VARIABLES******/
 static int nfds = 1;
+struct timeval TIMEOUT = {7};
 
 /******STRUCTS******/
 
 /*****FUNCTIONS DECLARATIONS******/
+int SetSocket(struct sockaddr_in* server, size_t server_size, fd_set* set, int port);
 
 /******FUNCTIONS******/
 //Server
@@ -48,23 +51,23 @@ int main()
     struct sockaddr_in broadcast_server;
 
     //create fds set list
-    FD_ZERO(listening_list);
-    FD_ZERO(client_list);
+    FD_ZERO(&listening_list);
+    FD_ZERO(&client_list);
 
     //create TCP server listener socket
-    if (0 > tcp_socket_id = SetSocket(tcp_server, sizeof(tcp_server), listening_list))
+    if (0 > (tcp_socket_id = SetSocket(&tcp_server, sizeof(tcp_server), &listening_list, TCP_PORT)))
     {
         return 1;
     }
     printf("tcp = %d\n", tcp_socket_id);
     //create UDP server listener socket
-    if (0 > udp_socket_id = SetSocket(udp_server, sizeof(udp_server), listening_list))
+    if (0 > (udp_socket_id = SetSocket(&udp_server, sizeof(udp_server), &listening_list, UDP_PORT)))
     {
         return 1;
     }
     printf("udp = %d\n", udp_socket_id);
     //create UDP broadcast server listener socket
-    if (0 > udp_broadcast_id = SetSocket(broadcast_server, sizeof(broadcast_server), listening_list))
+    if (0 > (udp_broadcast_id = SetSocket(&broadcast_server, sizeof(broadcast_server), &listening_list, BROADCAST_PORT)))
     {
         return 1;
     }
@@ -74,7 +77,7 @@ int main()
     while(1)
     {
         int i = 0;
-        int fd = select(nfds, listening_list, NULL, NULL, TIMEOUT);
+        int fd = select(nfds, &listening_list, NULL, NULL, &TIMEOUT);
         if (0 == fd)
         {
             printf("Listen timed out\n");
@@ -119,7 +122,7 @@ int main()
     return 0;
 }
 
-int SetSocket(struct sockaddr_in* server, size_t server_size, fd_set* set)
+int SetSocket(struct sockaddr_in* server, size_t server_size, fd_set* set, int port)
 {
     int socket_id = socket(AF_INET, SOCK_STREAM, 0); 
     if (socket_id == -1) 
@@ -129,7 +132,7 @@ int SetSocket(struct sockaddr_in* server, size_t server_size, fd_set* set)
     }
     server->sin_family = AF_INET; 
     server->sin_addr.s_addr = htonl(INADDR_ANY); 
-    server->sin_port = htons(PORT); 
+    server->sin_port = htons(port); 
   
     if ((bind(socket_id, (struct sockaddr*)server, server_size)) != 0) 
     { 

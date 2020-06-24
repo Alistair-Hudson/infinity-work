@@ -1,8 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <unistd.h>
+
 
 #include "parsing.h"
 
@@ -30,16 +28,16 @@ int main()
         return 1;
     }
     
-    void FindFirstGroupDecriptor(fd, &group);
-    void read_inode(fd, 
-                    &group,
-                    2, 
-                    &inode);
-    void search_directory_by_path(fd, 
-                                    &group, 
-                                    &inode,
-                                    path,
-                                    &inode2)
+    FindFirstGroupDecriptor(fd, &group);
+    read_inode(fd, 
+                &group,
+                11, 
+                &inode);
+    search_directory_by_path(fd, 
+                            &group, 
+                            &inode,
+                            path,
+                            &inode2);
     //printf("%d\n", group.bg_used_dirs_count);
     
     return 0;
