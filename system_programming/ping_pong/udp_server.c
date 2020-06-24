@@ -17,7 +17,7 @@
 /******MACROS******/
 #define ASSERT_NOT_NULL(ptr)	(assert(NULL != ptr))
 #define MSGSIZE                 (100)
-#define PORT                    (8080)
+#define PORT                    (8081)
 
 /******TYPEDEFS, GLOBAL VARIABLES******/
 

@@ -17,7 +17,7 @@
 /******MACROS******/
 #define ASSERT_NOT_NULL(ptr)	(assert(NULL != ptr))
 #define MSGSIZE                 (100)
-#define PORT                    (8080)
+#define PORT                    (8081)
 
 /******TYPEDEFS, GLOBAL VARIABLES******/
 
@@ -45,12 +45,12 @@ int main() {
     server_addr.sin_addr.s_addr = INADDR_ANY; 
     server_addr.sin_port = htons(PORT); 
      
-    if ( bind(socket_id, (const struct sockaddr *)&server_addr,  
+    /*if ( bind(socket_id, (const struct sockaddr *)&server_addr,  
             sizeof(server_addr)) < 0 ) 
     { 
         perror("bind failed"); 
         exit(EXIT_FAILURE); 
-    }  
+    }  */
   
     sendto(socket_id, (const char *)message, strlen(message),  
         MSG_CONFIRM, (const struct sockaddr *) &server_addr, 
