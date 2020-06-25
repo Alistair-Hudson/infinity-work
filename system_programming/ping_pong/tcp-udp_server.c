@@ -57,7 +57,7 @@ int main()
     FD_ZERO(&listening_list);
     FD_ZERO(&client_list);
 
-    FD_SET(0, &listening_list);//set to listenm to stdin
+    FD_SET(0, &listening_list);//set to listen to stdin
     ++nfds;
 
     //create TCP server listener socket
@@ -169,7 +169,12 @@ int main()
                     char buffer[MSGSIZE];
                     bzero(buffer, MSGSIZE);
                     //read
-                    read(fd, buffer, sizeof(buffer));
+                    if (!read(fd, buffer, sizeof(buffer)))
+                    {
+                        printf("client %d lost\n", fd);
+                        FD_CLEAR(fd, &client_list);
+                        close(fd);
+                    }
                     //respond
                     write(fd, "old pong\n", sizeof(buffer));
                 }
