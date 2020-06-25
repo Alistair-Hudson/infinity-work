@@ -28,12 +28,12 @@
 
 /******GLOBAL VARIABLES******/
 static int nfds = 1;
-struct timeval TIMEOUT = {7};
+struct timeval TIMEOUT = {7, 0};
 
 /******STRUCTS******/
 
 /*****FUNCTIONS DECLARATIONS******/
-int SetSocket(struct sockaddr_in* server, size_t server_size, fd_set* set, int port);
+int SetSocket(struct sockaddr_in* server, size_t server_size, fd_set* set, int port, int packet_type);
 
 /******FUNCTIONS******/
 //Server
@@ -45,7 +45,8 @@ int main()
     int tcp_socket_id = 0;
     int udp_socket_id = 0;
     int udp_broadcast_id = 0;
-    int lowest_socket = 0;
+    int run = 1;
+    int broadcast = 1;
 
     struct sockaddr_in tcp_server;
     struct sockaddr_in udp_server;
@@ -56,54 +57,59 @@ int main()
     FD_ZERO(&listening_list);
     FD_ZERO(&client_list);
 
-    //create TCP server listener socket
-    if (0 > (tcp_socket_id = SetSocket(&tcp_server, sizeof(tcp_server), &listening_list, TCP_PORT)))
-    {
-        return 1;
-    }
-    lowest_socket = tcp_socket_id;
-    printf("tcp = %d\n", tcp_socket_id);
-    //create UDP server listener socket
-    if (0 > (udp_socket_id = SetSocket(&udp_server, sizeof(udp_server), &listening_list, UDP_PORT)))
-    {
-        return 1;
-    }
-    if (lowest_socket > udp_socket_id)
-    {
-        lowest_socket = udp_socket_id;
-    }
-    printf("udp = %d\n", udp_socket_id);
-    //create UDP broadcast server listener socket
-    if (0 > (udp_broadcast_id = SetSocket(&broadcast_server, sizeof(broadcast_server), &listening_list, BROADCAST_PORT)))
-    {
-        return 1;
-    }
-    if (lowest_socket > udp_broadcast_id)
-    {
-        lowest_socket = udp_broadcast_id;
-    }
-    printf("broadcast = %d\n", udp_broadcast_id);
-    //initialize with all previous sockets
+    FD_SET(0, &listening_list);//set to listenm to stdin
+    ++nfds;
 
-    while(1)
+    //create TCP server listener socket
+    if (0 > (tcp_socket_id = SetSocket(&tcp_server, sizeof(tcp_server), &listening_list, TCP_PORT, SOCK_STREAM)))
+    {
+        return 1;
+    }
+    if ((listen(tcp_socket_id, 5)) != 0) 
+    { 
+        perror("Listen failed: "); 
+        return -1; 
+    } 
+
+    //create UDP server listener socket
+    if (0 > (udp_socket_id = SetSocket(&udp_server, sizeof(udp_server), &listening_list, UDP_PORT, SOCK_DGRAM)))
+    {
+        return 1;
+    }
+
+    //create UDP broadcast server listener socket
+    if (0 > (udp_broadcast_id = SetSocket(&broadcast_server, sizeof(broadcast_server), &listening_list, BROADCAST_PORT, SOCK_DGRAM)))
+    {
+        return 1;
+    }
+    if(setsockopt(udp_broadcast_id, SOL_SOCKET, SO_BROADCAST, 
+                    &broadcast, sizeof(broadcast)));
+    //initialize with all previous sockets
+    while(run)
     {
         int fd = 0;
-        int number_of_fds = select(nfds, &listening_list, NULL, NULL, &TIMEOUT);
-        /*if (0 == number_of_fds)
+        int number_of_fds = select(nfds+1, &listening_list, NULL, NULL, &TIMEOUT);
+        if (0 == number_of_fds)
         {
             printf("Listen timed out\n");
-        }*/
-        for (fd = lowest_socket; fd < nfds+lowest_socket; ++fd)
+        }
+        for (fd = 0; fd <= nfds; ++fd)
         {
             if (FD_ISSET(fd, &listening_list))
             {
+                
                 if (fd == tcp_socket_id)
                 {
                     char buffer[MSGSIZE];
                     int new_fd = accept(fd, NULL, 0);
+                    if (0 > new_fd)
+                    {
+                        perror("Socket acception failed: ");
+                    }
+                    bzero(buffer, MSGSIZE);
                     FD_SET(new_fd, &listening_list);
                     FD_SET(new_fd, &client_list);
-                    ++nfds;
+                    nfds = nfds < new_fd ? new_fd : nfds;
                     //read
                     read(new_fd, buffer, sizeof(buffer));
                     
@@ -115,45 +121,74 @@ int main()
                 {
                     char buffer[MSGSIZE];
                     int bytes_received = 0;
+                    int length = sizeof(client_addr);
+                    char message[] = "udp pong\n";
                     //Recieve
-                    bytes_received = recvfrom(fd, buffer, MSGSIZE, 
+                    bytes_received = recvfrom(fd, (char*)buffer, MSGSIZE, 
                                                 MSG_WAITALL, (struct sockaddr*)&client_addr,
-                                                (int*)sizeof(client_addr));
+                                                &length);
                     buffer[bytes_received] = '\0';
                     //Send
-                    sendto(fd, "pomg\n", MSGSIZE, 
+                    sendto(fd, (const char*)message, strlen(message), 
                             MSG_CONFIRM, (struct sockaddr*)&client_addr, 
-                            sizeof(client_addr));
+                            length);
                 }
                 if (fd == udp_broadcast_id)
                 {
+                    char buffer[MSGSIZE];
+                    int bytes_received = 0;
+                    int length = sizeof(client_addr);
+                    char message[] = "broadcast pong\n";
                     //Recieve
+                    bytes_received = recvfrom(fd, (char*)buffer, MSGSIZE, 
+                                                MSG_WAITALL, (struct sockaddr*)&client_addr,
+                                                &length);
+                    buffer[bytes_received] = '\0';
                     //Send
+                    sendto(fd, (const char*)message, strlen(message), 
+                            MSG_CONFIRM, (struct sockaddr*)&client_addr, 
+                            length);
                 }
-                if (fd == stdin)
+                if (0 == fd)
                 {
+                    char buffer[MSGSIZE];
                     //read from fd//scanf
-                    //write to stdout//printf
+                    scanf("%s", buffer);
+                    if(!strcmp(buffer, "ping"))
+                    {
+                        //write to stdout//printf
+                        printf("pong\n");
+                    }
+                    if (!strcmp(buffer, "quit"))
+                    {
+                        run = 0;
+                    }
                 }
                 if (FD_ISSET(fd, &client_list))
                 {
-                    char buffer[50];
+                    char buffer[MSGSIZE];
+                    bzero(buffer, MSGSIZE);
                     //read
                     read(fd, buffer, sizeof(buffer));
-                    
                     //respond
                     write(fd, "old pong\n", sizeof(buffer));
                 }
             }
+            FD_SET(fd, &listening_list);
         }
+        TIMEOUT.tv_sec = 7;
     }
 
+    for(int socket = 0; socket <= nfds; ++socket)
+    {
+        close(socket);
+    }
     return 0;
 }
 
-int SetSocket(struct sockaddr_in* server, size_t server_size, fd_set* set, int port)
+int SetSocket(struct sockaddr_in* server, size_t server_size, fd_set* set, int port, int packet_type)
 {
-    int socket_id = socket(AF_INET, SOCK_STREAM, 0); 
+    int socket_id = socket(AF_INET, packet_type, 0); 
     if (socket_id == -1) 
     { 
         perror("socket creation failed: "); 
@@ -163,19 +198,14 @@ int SetSocket(struct sockaddr_in* server, size_t server_size, fd_set* set, int p
     server->sin_addr.s_addr = htonl(INADDR_ANY); 
     server->sin_port = htons(port); 
   
-    if ((bind(socket_id, (struct sockaddr*)server, server_size)) != 0) 
+    if ((bind(socket_id, (const struct sockaddr*)server, server_size)) != 0) 
     { 
         perror("socket bind failed: "); 
         return -1; 
     } 
 
-    if ((listen(socket_id, 5)) != 0) 
-    { 
-        perror("Listen failed: "); 
-        return -1; 
-    } 
     FD_SET(socket_id, set);
-    ++nfds;
+    nfds = nfds < socket_id ? socket_id : nfds;
 
     return socket_id;
 }
