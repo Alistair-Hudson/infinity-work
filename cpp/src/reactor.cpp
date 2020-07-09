@@ -5,7 +5,7 @@
  *	Version:	08.06.2020.0
  ******************************************************************************/
 
-#include <sys/select.h> /* select, FD Macros */
+#include <boost/foreach.hpp> /* BOOST_FOREACH */
 
 #include "reactor.hpp"
 
@@ -56,10 +56,12 @@ void Reactor::Run()
         // call listener
         eventVector = m_Listener->Listen(eventVector);
         //run all active functions
-        while (!eventVector.empty())
+        BOOST_FOREACH(HandleAndMode handle, eventVector)
         {
-            m_EventHandlers.find(eventVector.back())->second(eventVector.back().second);
-            eventVector.pop_back();
+            BOOST_FOREACH(HandleFunc handler, m_EventHandlers[handle])
+            {
+                handler(handle.second);
+            }
         }
     }
 }

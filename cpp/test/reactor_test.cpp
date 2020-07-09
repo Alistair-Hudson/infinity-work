@@ -41,7 +41,7 @@ private:
 class SetSet
 {
 public:
-    SetSet(fd_set* read, fd_set* write, fd_set* excep):m_read(read), m_write(write), m_excep(excep){}
+    SetSet(fd_set* read, fd_set* write, fd_set* excep, int* max_fd):m_read(read), m_write(write), m_excep(excep), m_max_fd(max_fd){}
     void operator() (const HandleAndMode& handle)
     {
 
@@ -59,12 +59,14 @@ public:
             default:
                 break;
         }
+        *m_max_fd = *m_max_fd < handle.second ? handle.second : *m_max_fd;
     }
 
 private:
     fd_set* m_read;
     fd_set* m_write;
     fd_set* m_excep;
+    int* m_max_fd;
 };
 
 /****ClASSES*****/
@@ -83,11 +85,12 @@ public:
         fd_set* read_set = new fd_set[read_count];
         fd_set* write_set = new fd_set[write_count];
         fd_set* excep_set = new fd_set[excep_count];
+        int max_fd = 0;
         //set file descriptors into each of the fd sets
-        for_each(handle.begin(), handle.end(), SetSet(read_set, write_set, excep_set));
+        for_each(handle.begin(), handle.end(), SetSet(read_set, write_set, excep_set, &max_fd));
     
         //see which fds are active
-        int activeEvents = select(read_count + write_count + excep_count + 1,
+        int activeEvents = select(max_fd + 1,
                                 read_set, write_set, excep_set, &TIMEOUT);
 
         std::vector<HandleAndMode> output;
