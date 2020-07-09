@@ -32,6 +32,12 @@ void func(int socket_id)
         character = 0; 
         while ((buff[character++] = getchar()) != '\n') 
             ; 
+        if ((strncmp(buff, "exit", 4)) == 0) { 
+        printf("Client Exit...\n"); 
+        break; 
+        }
+        else
+        {         
         write(socket_id, buff, sizeof(buff)); 
         bzero(buff, sizeof(buff)); 
         read(socket_id, buff, sizeof(buff)); 
@@ -39,6 +45,7 @@ void func(int socket_id)
         if ((strncmp(buff, "exit", 4)) == 0) { 
             printf("Client Exit...\n"); 
             break; 
+        }
         } 
     } 
 } 

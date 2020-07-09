@@ -169,10 +169,10 @@ int main()
                     char buffer[MSGSIZE];
                     bzero(buffer, MSGSIZE);
                     //read
-                    if (!read(fd, buffer, sizeof(buffer)))
+                    if(!read(fd, buffer, sizeof(buffer)))
                     {
                         printf("client %d lost\n", fd);
-                        FD_CLEAR(fd, &client_list);
+                        FD_CLR(fd, &client_list);
                         close(fd);
                     }
                     //respond

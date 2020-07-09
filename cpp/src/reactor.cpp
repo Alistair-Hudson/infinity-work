@@ -25,8 +25,8 @@ static struct timeval TIMEOUT = {7, 0};
 class Count
 {
 public:
-    Count(int* read, int* write, int* execp):m_read(read), m_write(write), m_excep(excep){}
-    void operator() (const std::vector<HandleAndMode>& handle)
+    Count(int* read, int* write, int* excep):m_read(read), m_write(write), m_excep(excep){}
+    void operator() (const HandleAndMode& handle)
     {
         switch(handle.first)
         {
@@ -39,7 +39,7 @@ public:
             case(EXCEPTION):
                 ++*m_excep;
                 break;
-            default
+            default:
                 break;
         }
     }
@@ -53,8 +53,8 @@ private:
 class SetSet
 {
 public:
-    SetSet(fd_set* read, fd_set* write, fd_set* execp):m_read(read), m_write(write), m_excep(excep){}
-    void operator() (const std::vector<HandleAndMode>& handle)
+    SetSet(fd_set* read, fd_set* write, fd_set* excep):m_read(read), m_write(write), m_excep(excep){}
+    void operator() (const HandleAndMode& handle)
     {
         switch(handle.first)
         {
@@ -67,7 +67,7 @@ public:
             case(EXCEPTION):
                 FD_SET(handle.second, m_excep);
                 break;
-            default
+            default:
                 break;
         }
     }
@@ -88,19 +88,19 @@ std::vector<HandleAndMode> IListener::Listen(const std::vector<HandleAndMode>& h
     //count the number of read, write, and exception file desscriptors
     for_each(handle.begin(), handle.end(), Count(&read_count, &write_count, &excep_count));
 
-    fd_set read_set = new fd_set[read_count];
-    fd_set write_set = new fd_set[write_count];
-    fd_set excep_set = new fd_set[excep_count];
+    fd_set* read_set = new fd_set[read_count];
+    fd_set* write_set = new fd_set[write_count];
+    fd_set* excep_set = new fd_set[excep_count];
     //set file descriptors into each of the fd sets
-    for_each(handle.begin(), handle.end(), SetSet(&read_set, &write_set, &excep_set));
+    for_each(handle.begin(), handle.end(), SetSet(read_set, write_set, excep_set));
  
     //see which fds are active
-    int activeEvents = sys::select(read_count + write_count + excep_count + 1,
-                                    &read_set, &write_set, &excep_set, &TIMEOUT);
+    int activeEvents = select(read_count + write_count + excep_count + 1,
+                              read_set, write_set, excep_set, &TIMEOUT);
     std::vector<HandleAndMode> output;
     if(0 > activeEvents)
     {
-        std:cout << "Select Error" << std::endl;
+        std::cout << "Select Error" << std::endl;
         g_running = 0;
     }
     else if(0 == activeEvents)
@@ -112,32 +112,32 @@ std::vector<HandleAndMode> IListener::Listen(const std::vector<HandleAndMode>& h
         //add read to output
         for (int fd = 0; fd < read_count; ++fd)
         {
-            if(FD_ISSET(&read_set))
+            if(FD_ISSET(fd, read_set))
             {
-                output.push_back(make_pair(READ, fd));
+                output.push_back(std::make_pair(READ, fd));
             }
         }
         //add write to output
         for (int fd = 0; fd < write_count; ++fd)
         {
-            if(FD_ISSET(&write_set))
+            if(FD_ISSET(fd, write_set))
             {
-                output.push_back(make_pair(WRITE, fd));
+                output.push_back(std::make_pair(WRITE, fd));
             }
         }
         //add exception to output
         for (int fd = 0; fd < excep_count; ++fd)
         {
-            if(FD_ISSET(&excep_set))
+            if(FD_ISSET(fd, excep_set))
             {
-                output.push_back(make_pair(EXCEPTION, fd));
+                output.push_back(std::make_pair(EXCEPTION, fd));
             }
         }
 
     }
-    delete read_set[];
-    delete write_set[];
-    delete excep_set[];
+    delete[] read_set;
+    delete[] write_set;
+    delete[] excep_set;
 
     return output;
  }
@@ -146,7 +146,7 @@ std::vector<HandleAndMode> IListener::Listen(const std::vector<HandleAndMode>& h
 /*=====Reactor=====*/
 void Reactor::Add(HandleAndMode handle_and_mode, HandleFunc func)
 {
-    m_EventHandlers.insert(pair<handle_and_mode, func));
+    m_EventHandlers.insert(std::make_pair(handle_and_mode, func));
 }
 
 void Reactor::Remove(HandleAndMode handle_and_mode)
@@ -176,7 +176,7 @@ void Reactor::Run()
         //run all active functions
         while (!eventVector.empty())
         {
-            m_EventHandlers.find(eventVector.back())->second(eventVector.back()->first.second);
+            m_EventHandlers.find(eventVector.back())->second(eventVector.back().second);
             eventVector.pop_back();
         }
         TIMEOUT.tv_sec = 7;
