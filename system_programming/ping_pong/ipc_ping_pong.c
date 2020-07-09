@@ -48,7 +48,7 @@ int PingPong1(void)
 	int p[2];
 	char msg_buffer[MSGSIZE];
 	
-	if(pipe(p)<0)
+	if (pipe(p)<0)
 	{
 	    perror("Pipe error");
 	    return 1;
@@ -62,7 +62,7 @@ int PingPong1(void)
 		return 1;
 	}
 
-	while(1)
+	while (1)
 	{
 		sleep(1);
 		if (0 == pid)

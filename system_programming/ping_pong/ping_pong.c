@@ -90,14 +90,14 @@ int PingPong1(void)
 		}
 	}
 
-	while(1)
+	while (1)
 	{
 		sleep(10);
-		if(1 == hit_back)
+		if (1 == hit_back)
 		{
 			printf("%s\n", str);
 			hit_back = 0;
-			if(0 > kill(id, signum))
+			if (0 > kill(id, signum))
 			{
 				perror("Signal error");
 				return 1;
@@ -109,7 +109,7 @@ int PingPong1(void)
 			}
 			if (10 <= rally)
 			{
-				if(0 > kill(id, SIGQUIT))
+				if (0 > kill(id, SIGQUIT))
 				{
 					perror("Kill error");
 					return 1;
