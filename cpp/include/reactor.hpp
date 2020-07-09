@@ -24,7 +24,7 @@ class IListener
 {
 public:
     virtual ~IListener(){}
-    virtual std::vector<HandleAndMode> Listen(const std::vector<HandleAndMode>& handle); // = 0;
+    virtual std::vector<HandleAndMode> Listen(const std::vector<HandleAndMode>& handle) = 0;
 };
 
 // Registration interface of the Reactor
