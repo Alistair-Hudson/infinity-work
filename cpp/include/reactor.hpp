@@ -11,7 +11,7 @@ typedef int Handle;
 
 enum MODE
 {
-    WRITE,
+    WRITE = 0,
     READ,
     EXCEPTION
 };
@@ -23,8 +23,8 @@ typedef std::pair<MODE, Handle> HandleAndMode;
 class IListener
 {
 public:
-    virtual ~IListener();
-    virtual std::vector<HandleAndMode> Listen(const std::vector<HandleAndMode>& handle) = 0;
+    virtual ~IListener(){}
+    virtual std::vector<HandleAndMode> Listen(const std::vector<HandleAndMode>& handle); // = 0;
 };
 
 // Registration interface of the Reactor

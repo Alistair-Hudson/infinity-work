@@ -28,7 +28,7 @@ public:
     Count(int* read, int* write, int* excep):m_read(read), m_write(write), m_excep(excep){}
     void operator() (const HandleAndMode& handle)
     {
-        switch(handle.first)
+        switch(handle.second)
         {
             case(READ):
                 ++*m_read;
@@ -56,16 +56,16 @@ public:
     SetSet(fd_set* read, fd_set* write, fd_set* excep):m_read(read), m_write(write), m_excep(excep){}
     void operator() (const HandleAndMode& handle)
     {
-        switch(handle.first)
+        switch(handle.second)
         {
             case(READ):
-                FD_SET(handle.second, m_read);
+                FD_SET(handle.first, m_read);
                 break;
             case(WRITE):
-                FD_SET(handle.second, m_write);
+                FD_SET(handle.first, m_write);
                 break;
             case(EXCEPTION):
-                FD_SET(handle.second, m_excep);
+                FD_SET(handle.first, m_excep);
                 break;
             default:
                 break;
@@ -97,6 +97,7 @@ std::vector<HandleAndMode> IListener::Listen(const std::vector<HandleAndMode>& h
     //see which fds are active
     int activeEvents = select(read_count + write_count + excep_count + 1,
                               read_set, write_set, excep_set, &TIMEOUT);
+
     std::vector<HandleAndMode> output;
     if(0 > activeEvents)
     {
