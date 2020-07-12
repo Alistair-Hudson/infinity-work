@@ -10,11 +10,25 @@
 #include <algorithm> /* find */
 
 template<typename T>
+class ASubject;
+
+template<typename T>
 class IObserver
 {
 public:
-    virtual ~IObserver(){}
+    virtual IObserver(ASubject<T>& subject):m_subject(subject)
+    {
+        m_subject->Attach(this);
+    }
+    virtual ~IObserver()
+    {
+        m_subject->Detach(this);
+    }
     virtual void Update(T* arg) = 0;
+protected:
+    ASubject<T>& m_subject;
+private:
+
 };
 
 template<typename T>

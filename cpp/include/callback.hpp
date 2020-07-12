@@ -3,11 +3,11 @@
 
 /*******************************************************************************
                                 * OL85 API FOR CALLBACK
-                                * version 09.07.2020.0
+                                * version 12.07.2020.0
 ******************************************************************************/
 #include <iostream>
-#include <vector>
-#include <algorithm> /* find */
+#include <assert.h> /* assert */
+#include <boost/function.hpp> /* function */
 
 /*****CALSSES*****/
 
@@ -23,12 +23,12 @@ public:
     ~Source();
     typedef T dataType; // nested type
 
-    void Subscribe(Callback* callback);
-    void Unsubscribe(Callback* callback);
+    void Subscribe(Callback<Source<T>>* callback);
+    void Unsubscribe(Callback<Source<T>>* callback);
     void Notify(dataType data);
 
 private:
-    Callback* m_callback;
+    Callback<Source<T>>* m_callback;
 };
 
 /*===Callback===*/
@@ -39,20 +39,22 @@ public:
     typedef boost::function< void(SOURCE::dataType) > CallbackPointer;
     typedef boost::function< void() > DeathPointer;
 
+
     Callback(const CallbackPointer& func,
              const DeathPointer&
                  death_func); // initialize an empty function for death_func
 
     ~Callback();
-
-    // should move to the private section
+private:
     void Link(SOURCE* source);
     void Unlink(SOURCE* source);
     void Invoke(SOURCE::dataType data);
-    // friend SOURCE;
 
-private:
     SOURCE* m_source;
+    CallbackPointer callBackFunction;
+    DeathPointer deathFunction;
+    
+    friend SOURCE;
 };
 
 /*****METHODS*****/
@@ -67,18 +69,26 @@ template <typename T>
 Source<T>::~Source()
 {
     //Unlink callback
+    if (NULL != m_callback)
+    {
+        m_callback->Unlink(this);
+    }
 }
 
 template <typename T>
-void Source<T>::Subscribe(Callback* callback)
+void Source<T>::Subscribe(Callback<Source<T>>* callback)
 {
+    assert(NULL != callback);
     //set pointer to callback object
     m_callback = callback;
+    m_callback->Link(this);
 }
 
-template <typname T>
-void Source<T>::Unsubscribe(Callback* callback)
+template <typename T>
+void Source<T>::Unsubscribe(Callback<Source<T>>* callback)
 {
+    assert(NULL != callback);
+    m_callback->Unlink(this);
     //set callback pointer to NULL
     m_callback = NULL;
 }
@@ -87,6 +97,7 @@ template <typename T>
 void Source<T>::Notify(dataType data)
 {
     //send notification to callback
+    m_callback->Invoke(data);
 }
 
 /*===CALLBACK===*/
@@ -95,38 +106,42 @@ Callback<SOURCE>::Callback(const CallbackPointer& func,
                             const DeathPointer&
                             death_func)
 {
-    
+    callBackFunction = func;
+    deathFunction = death_func;
 }
 
 template <typename SOURCE>
 Callback<SOURCE>::~Callback()
 {
-    //Unlink source
-    Unlink(m_source);
+    if (NULL != m_source)
+    {
+        //Unlink source
+        m_source->Unsubscribe(this);
+    }
 }
 
 template <typename SOURCE>
 void Callback<SOURCE>::Link(SOURCE* source)
 {
-    //Subscribe to source
-    source->Subscribe(this);
+    assert(NULL != source);
     //set pointer to source
     m_source = source;
 }
 
 template <typename SOURCE>
-void Callback<SOURCE>Unlink(SOURCE* source)
+void Callback<SOURCE>::Unlink(SOURCE* source)
 {
-    //Unsubscribe to source 
-    source->Unsubscribe(this);
+    assert(NULL != source);
+
     //set pointer to NULL
     m_source = NULL;
 }
 
 template <typename SOURCE>
-void Callback<SOURCE>Invoke(SOURCE::dataType data)
+void Callback<SOURCE>::Invoke(SOURCE::dataType data)
 {
-    
+    //invoke action based on the data
+    callBackFunction(data);
 }
 
 #endif /* __CALLBACK_HPP__ */
