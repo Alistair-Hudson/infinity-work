@@ -9,90 +9,11 @@
 
 /****GLOBAL VARIABLES****/
 static struct timeval TIMEOUT = {7, 0};
-Reactor reactor(new TestListen);
+Reactor reactor();
 
 /****FUNCTORS*****/
 
 /****ClASSES*****/
-class TestListen: public IListener
-{
-public:
-    TestListen(){}
-    ~TestListen(){}
-    void Listen(const std::vector<Handle>& read,
-                const std::vector<Handle>& write,
-                const std::vector<Handle>& exception)
-    {
-        int read_count = read.size();
-        int write_count = write.size();
-        int excep_count = exception.size();
-        
-        //set file descriptors into each of the fd sets
-        fd_set* read_set = new fd_set[read_count];
-        for (int i = 0; i < read_count; ++i)
-        {
-            FD_SET(i, read_set)
-        }
-        fd_set* write_set = new fd_set[write_count];
-        for (int i = 0; i < write_count; ++i)
-        {
-            FD_SET(i, write_set)
-        }
-        fd_set* excep_set = new fd_set[excep_count];
-        for (int i = 0; i < excep_count; ++i)
-        {
-            FD_SET(i, excep_set)
-        }
-        int max_fd = read_count > write_count ? read_count : write_count;
-        max_fd = max_fd > excep_count ? max_fd : excep_count;
-
-        //see which fds are active
-        int activeEvents = select(max_fd + 1,
-                                read_set, write_set, excep_set, &TIMEOUT);
-
-        if(0 > activeEvents)
-        {
-            std::cout << "Select Error" << std::endl;
-        }
-        else if(0 == activeEvents)
-        {
-            std::cout << "Listening Time out" << std::endl;
-        }
-        else
-        {
-            //add read to output
-            for (int fd = 0; fd < read_count; ++fd)
-            {
-                if(!FD_ISSET(fd, read_set))
-                {
-                    read.at(fd) = NULL;
-                }
-            }
-            //add write to output
-            for (int fd = 0; fd < write_count; ++fd)
-            {
-                if(!FD_ISSET(fd, write_set))
-                {
-                    write.at(fd) = NULL;
-                }
-            }
-            //add exception to output
-            for (int fd = 0; fd < excep_count; ++fd)
-            {
-                if(!FD_ISSET(fd, excep_set))
-                {
-                    exception.at(fd) = NULL;
-                }
-            }
-
-        }
-        delete[] read_set;
-        delete[] write_set;
-        delete[] excep_set;
-        TIMEOUT.tv_sec = 7;
-    }
-private:
-};
 
 /******FUNCTIONS****/
 void TestFoo(int);

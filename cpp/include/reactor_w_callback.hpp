@@ -3,8 +3,10 @@
 #include <vector>
 #include <queue>
 #include <map>
-#include <boost/function.hpp>
 #include <utility>
+
+#include <boost/function.hpp>
+#include <boost/noncopyable.hpp>
 
 #include "callback.hpp"
 
@@ -19,20 +21,21 @@ enum MODE
 };
 
 //The user may derieves from this class to define his own Listener class 
-class IListener
+class Listener
 {
 public:
-    virtual ~IListener(){}
-    virtual void Listen(const std::vector<Handle>& read,
-                        const std::vector<Handle>& write,
-                        const std::vector<Handle>& exception) = 0;
+    Listener(){}
+    ~IListener(){}
+    void Listen(const std::vector<Handle>& read,
+                const std::vector<Handle>& write,
+                const std::vector<Handle>& exception);
 };
 
 // Registration interface of the Reactor
-class Reactor
+class Reactor: private boost::noncopyable
 {
 public:
-    Reactor(IListener *listener):m_Listener(listener){}
+    Reactor(){}
     void Add(Mode mode, Handle fd, Callback<Source<int>>* callback);
     void Remove(MODE mode, Handle fd);
     void Run();
@@ -40,12 +43,10 @@ public:
     ~Reactor();
 
 private:
-    Reactor(Reactor&) = delete;
-    Reactor& operator= (Reactor&)const = delete;
-    std::vector<Source<int>> m_read;
-    std::vector<Source<int>> m_write;
-    std::vector<Source<int>> m_exception;
-    IListener *m_Listener;
+    std::map<Source<int>*> m_read; TODO change to map //shared pointer
+    std::map<Source<int>*> m_write;
+    std::map<Source<int>*> m_exception;
+    Listener m_Listener;
 };
 
 //An example for a user derieved listener
