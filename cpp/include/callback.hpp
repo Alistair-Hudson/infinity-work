@@ -8,6 +8,10 @@
 #include <iostream>
 #include <assert.h> /* assert */
 #include <boost/function.hpp> /* function */
+#include <boost/core/noncopyable.hpp> /* noncopyable */
+
+#define LOG_ERR(X)      (std::cerr << "ERROR: " <<(X) << std::endl;)
+#define LOG_WRN(X)      (std::cerr << "WARNING: " <<(X) << std::endl;)
 
 /*****CALSSES*****/
 
@@ -47,12 +51,12 @@ public:
     ~Callback();
 private:
     void Link(SOURCE* source);
-    void Unlink(SOURCE* source);
+    void Unlink();
     void Invoke(SOURCE::dataType data);
 
     SOURCE* m_source;
-    CallbackPointer callBackFunction;
-    DeathPointer deathFunction;
+    const CallbackPointer callBackFunction;
+    const DeathPointer deathFunction;
     
     friend SOURCE;
 };
@@ -71,7 +75,7 @@ Source<T>::~Source()
     //Unlink callback
     if (NULL != m_callback)
     {
-        m_callback->Unlink(this);
+        m_callback->Unlink();
     }
 }
 
@@ -87,8 +91,7 @@ void Source<T>::Subscribe(Callback<Source<T>>* callback)
 template <typename T>
 void Source<T>::Unsubscribe(Callback<Source<T>>* callback)
 {
-    assert(NULL != callback);
-    m_callback->Unlink(this);
+    m_callback->Unlink();
     //set callback pointer to NULL
     m_callback = NULL;
 }
@@ -104,7 +107,7 @@ void Source<T>::Notify(dataType data)
 template <typename SOURCE>
 Callback<SOURCE>::Callback(const CallbackPointer& func,
                             const DeathPointer&
-                            death_func)
+                            death_func = NULL)
 {
     callBackFunction = func;
     deathFunction = death_func;
@@ -129,7 +132,7 @@ void Callback<SOURCE>::Link(SOURCE* source)
 }
 
 template <typename SOURCE>
-void Callback<SOURCE>::Unlink(SOURCE* source)
+void Callback<SOURCE>::Unlink()
 {
     assert(NULL != source);
 

@@ -3,7 +3,7 @@
 #include <netdb.h> 
 #include <netinet/in.h> 
 
-#include "reactor.hpp"
+#include "reactor_w_callback.hpp"
 
 #define PORT (8080)
 
@@ -12,91 +12,44 @@ static struct timeval TIMEOUT = {7, 0};
 Reactor reactor(new TestListen);
 
 /****FUNCTORS*****/
-class Count
-{
-public:
-    Count(int* read, int* write, int* excep):m_read(read), m_write(write), m_excep(excep){}
-    void operator() (const HandleAndMode& handle)
-    {
-        switch(handle.first)
-        {
-            case(READ):
-                ++*m_read;
-                break;
-            case(WRITE):
-                ++*m_write;
-                break;
-            case(EXCEPTION):
-                ++*m_excep;
-                break;
-            default:
-                break;
-        }
-    }
-
-private:
-    int* m_read;
-    int* m_write;
-    int* m_excep;
-};
-
-class SetSet
-{
-public:
-    SetSet(fd_set* read, fd_set* write, fd_set* excep, int* max_fd):m_read(read), m_write(write), m_excep(excep), m_max_fd(max_fd){}
-    void operator() (const HandleAndMode& handle)
-    {
-
-        switch(handle.first)
-        {
-            case(READ):
-                FD_SET(handle.second, m_read);
-                break;
-            case(WRITE):
-                FD_SET(handle.second, m_write);
-                break;
-            case(EXCEPTION):
-                FD_SET(handle.second, m_excep);
-                break;
-            default:
-                break;
-        }
-        *m_max_fd = *m_max_fd < handle.second ? handle.second : *m_max_fd;
-    }
-
-private:
-    fd_set* m_read;
-    fd_set* m_write;
-    fd_set* m_excep;
-    int* m_max_fd;
-};
 
 /****ClASSES*****/
 class TestListen: public IListener
 {
 public:
     TestListen(){}
-    ~TestListen(){ }
-    std::vector<HandleAndMode> Listen(const std::vector<HandleAndMode>& handle)
+    ~TestListen(){}
+    void Listen(const std::vector<Handle>& read,
+                const std::vector<Handle>& write,
+                const std::vector<Handle>& exception)
     {
-        int read_count = 0;
-        int write_count = 0;
-        int excep_count = 0;
-        //count the number of read, write, and exception file desscriptors
-        for_each(handle.begin(), handle.end(), Count(&read_count, &write_count, &excep_count));
-
-        fd_set* read_set = new fd_set[read_count];
-        fd_set* write_set = new fd_set[write_count];
-        fd_set* excep_set = new fd_set[excep_count];
-        int max_fd = 0;
+        int read_count = read.size();
+        int write_count = write.size();
+        int excep_count = exception.size();
+        
         //set file descriptors into each of the fd sets
-        for_each(handle.begin(), handle.end(), SetSet(read_set, write_set, excep_set, &max_fd));
-    
+        fd_set* read_set = new fd_set[read_count];
+        for (int i = 0; i < read_count; ++i)
+        {
+            FD_SET(i, read_set)
+        }
+        fd_set* write_set = new fd_set[write_count];
+        for (int i = 0; i < write_count; ++i)
+        {
+            FD_SET(i, write_set)
+        }
+        fd_set* excep_set = new fd_set[excep_count];
+        for (int i = 0; i < excep_count; ++i)
+        {
+            FD_SET(i, excep_set)
+        }
+        int max_fd = read_count > write_count ? read_count : write_count;
+        max_fd = max_fd > excep_count ? max_fd : excep_count;
+
         //see which fds are active
         int activeEvents = select(max_fd + 1,
                                 read_set, write_set, excep_set, &TIMEOUT);
 
-        std::vector<HandleAndMode> output;
         if(0 > activeEvents)
         {
             std::cout << "Select Error" << std::endl;
@@ -110,25 +63,25 @@ public:
             //add read to output
             for (int fd = 0; fd < read_count; ++fd)
             {
-                if(FD_ISSET(fd, read_set))
+                if(!FD_ISSET(fd, read_set))
                 {
-                    output.push_back(std::make_pair(READ, fd));
+                    read.at(fd) = NULL;
                 }
             }
             //add write to output
             for (int fd = 0; fd < write_count; ++fd)
             {
-                if(FD_ISSET(fd, write_set))
+                if(!FD_ISSET(fd, write_set))
                 {
-                    output.push_back(std::make_pair(WRITE, fd));
+                    write.at(fd) = NULL;
                 }
             }
             //add exception to output
             for (int fd = 0; fd < excep_count; ++fd)
             {
-                if(FD_ISSET(fd, excep_set))
+                if(!FD_ISSET(fd, excep_set))
                 {
-                    output.push_back(std::make_pair(EXCEPTION, fd));
+                    exception.at(fd) = NULL;
                 }
             }
 
@@ -137,8 +90,6 @@ public:
         delete[] write_set;
         delete[] excep_set;
         TIMEOUT.tv_sec = 7;
-
-        return output;
     }
 private:
 };
@@ -168,7 +119,7 @@ int main()
     //TestListen listen();
     
 
-     int socket_id;
+    int socket_id;
     int connection_id;
     unsigned int length; 
     struct sockaddr_in server_addr;

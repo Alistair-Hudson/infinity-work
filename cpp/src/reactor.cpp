@@ -29,11 +29,13 @@ static bool g_running = 0;
 void Reactor::Add(HandleAndMode handle_and_mode, HandleFunc func)
 {
     m_EventHandlers.insert(std::make_pair(handle_and_mode, func));
+    //link src/cb
 }
 
 void Reactor::Remove(HandleAndMode handle_and_mode)
 {
     m_EventHandlers.erase(m_EventHandlers.find(handle_and_mode));
+    //delink src/cb
 }
 
 void Reactor::Run()
@@ -41,17 +43,14 @@ void Reactor::Run()
     g_running = 1;
     std::vector<HandleAndMode> eventVector;
 
-    std::map<HandleAndMode, HandleFunc>::iterator mapIterator;
-
-    while (g_running)
+    while (g_running && !m_EventHandlers.empty())
     {
         eventVector.clear();
+        std::pair<HandleAndMode, std::vector<HandleFunc>> mapIterator;
         //push events into a vector for checking
-        for (mapIterator = m_EventHandlers.begin(); 
-            mapIterator != m_EventHandlers.end(); 
-            mapIterator = next(mapIterator, 1))
+        BOOST_FOREACH(mapIterator, m_EventHandlers)
         {
-            eventVector.push_back(mapIterator->first);
+            eventVector.push_back(mapIterator.first);
         }
         // call listener
         eventVector = m_Listener->Listen(eventVector);
@@ -74,6 +73,12 @@ void Reactor::Stop()
 Reactor::~Reactor()
 {
     m_EventHandlers.clear();
+    //while (conatiner not empty)
+    //{
+        //Delink link iterator
+        //remove iterator
+        //next iterator
+    //}
 }
 
 /******INTERNAL FUNCTION DECLARATION******/
