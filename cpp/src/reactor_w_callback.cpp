@@ -26,9 +26,9 @@ class PushToVector
 {
 public:
     PushToVector(std::vector<Handle>* v):m_v(v){}
-    void operator() (std::map<Handle, Source<int>*>::iterator handle)
+    void operator() (std::pair<Handle, boost::shared_ptr<Source<int> > > handle)
     {
-        m_v->push_back(handle->first);
+        m_v->push_back(handle.first);
     }
 private:
     std::vector<Handle>* m_v;
@@ -37,23 +37,23 @@ private:
 class CallNotify
 {
 public:
-    CallNotify(std::map<Handle, Source<int>>* map):m_map(map){}
+    CallNotify(std::map<Handle, boost::shared_ptr<Source<int> > >* map):m_map(map){}
     void operator() (Handle fd)
     {
-        Source<int> handle = m_map->find(fd)->second;
+        boost::shared_ptr<Source<int> > handle = m_map->find(fd)->second;
         handle->Notify(fd);
     }
 private:
-    std::map<Handle, Source<int>>* m_map;
+    std::map<Handle, boost::shared_ptr<Source<int> > >* m_map;
 };
 
 class Unsub
 {
 public:
     Unsub(){};
-    void operator() (std::map<Handle, Source<int>*>::iterator handle)
+    void operator() (std::pair<Handle, boost::shared_ptr<Source<int> > > handle)
     {
-        handle->second.Unsuscribe(NULL);
+        handle.second->Unsubscribe(NULL);
     }
 private:
 };
@@ -62,9 +62,9 @@ private:
 
 /******CLASS METHODS*******/
 /*=====Listener=====*/
-void Listen(const std::vector<Handle>& read,
-            const std::vector<Handle>& write,
-            const std::vector<Handle>& exception)
+void Listen( std::vector<Handle>& read,
+             std::vector<Handle>& write,
+             std::vector<Handle>& exception)
 {
     int read_count = read.size();
     int write_count = write.size();
@@ -149,34 +149,34 @@ void Reactor::Add( MODE mode, Handle fd, Callback<Source<int>>* callback)
     switch(mode)
     {
         case (READ):
-            m_read.insert({fd, newSrc});
+            m_read.insert(std::pair<Handle, boost::shared_ptr<Source<int>>>(fd, newSrc));
             break;
         case (WRITE):
-            m_write.insert({fd, newSrc});
+            m_write.insert(std::pair<Handle, boost::shared_ptr<Source<int>>>(fd, newSrc));
             break;
         case (EXCEPTION):
-            m_exception.insert({fd, newSrc});
+            m_exception.insert(std::pair<Handle, boost::shared_ptr<Source<int>>>(fd, newSrc));
             break;
     }
 }
 
 void Reactor::Remove( MODE mode, Handle fd)
 {   
-    std::shared_ptr<Source<int>> src;
+    boost::shared_ptr<Source<int>> src;
 
     switch(mode)
     {
         case (READ):
             src = m_read.find(fd)->second;
-            m_read.erase(fd);
+            m_read.erase(m_read.find(fd));
             break;
         case (WRITE):
             src = m_write.find(fd)->second;
-            m_write.erase(fd);
+            m_write.erase(m_write.find(fd));
             break;
         case (EXCEPTION):
             src = m_exception.find(fd)->second;
-            m_exception.erase(fd);
+            m_exception.erase(m_exception.find(fd));
             break;
     }
     if (NULL != src)
@@ -195,31 +195,30 @@ void Reactor::Run()
         std::vector<Handle> readVector;
         std::for_each(m_read.begin(), 
                         m_read.end(),
-                        PushToVector(readVector));
+                        PushToVector(&readVector));
         
         std::vector<Handle> writeVector;
         std::for_each(m_write.begin(), 
                         m_write.end(),
-                        PushToVector(writeVector));
+                        PushToVector(&writeVector));
         
         std::vector<Handle> exceptionVector;
         std::for_each(m_exception.begin(), 
                         m_exception.end(),
-                        PushToVector(exceptionVector));
+                        PushToVector(&exceptionVector));
 
-        int fd = 0;
         // call listener
-        m_Listener->Listen(readVector, writeVector, exceptionVector);
+        m_Listener.Listen(readVector, writeVector, exceptionVector);
         //run all active functions
         for_each(readVector.begin(), 
                 readVector.end(), 
-                CallNotify(m_read));
+                CallNotify(&m_read));
         for_each(writeVector.begin(), 
                 writeVector.end(), 
-                CallNotify(m_write));
+                CallNotify(&m_write));
         for_each(exceptionVector.begin(), 
                 exceptionVector.end(), 
-                CallNotify(m_exception));
+                CallNotify(&m_exception));
         
         readVector.clear();
         writeVector.clear();

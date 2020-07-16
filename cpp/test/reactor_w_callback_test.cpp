@@ -46,7 +46,9 @@ int main()
     unsigned int length; 
     struct sockaddr_in server_addr;
     struct sockaddr_in client_addr; 
-    Callback<Source<int>> callback1(TestFoo);
+
+    Callback<Source<int>>::CallbackPointer FooNotify(TestFoo);
+    Callback<Source<int>> callback1(FooNotify);
   
     socket_id = socket(AF_INET, SOCK_STREAM, 0); 
     if (socket_id == -1) { 

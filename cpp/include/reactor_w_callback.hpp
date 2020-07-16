@@ -26,9 +26,9 @@ class Listener
 public:
     Listener(){}
     ~Listener(){}
-    void Listen(const std::vector<Handle>& read,
-                const std::vector<Handle>& write,
-                const std::vector<Handle>& exception);
+    void Listen( std::vector<Handle>& read,
+                 std::vector<Handle>& write,
+                 std::vector<Handle>& exception);
 };
 
 // Registration interface of the Reactor
@@ -43,9 +43,9 @@ public:
     ~Reactor();
 
 private:
-    std::map<Handle, Source<int>*> m_read;
-    std::map<Handle, Source<int>*> m_write;
-    std::map<Handle, Source<int>*> m_exception;
+    std::map<Handle, boost::shared_ptr<Source<int> > > m_read;
+    std::map<Handle, boost::shared_ptr<Source<int> > > m_write;
+    std::map<Handle, boost::shared_ptr<Source<int> > > m_exception;
     Listener m_Listener;
 };
 

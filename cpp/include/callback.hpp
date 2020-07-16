@@ -45,8 +45,8 @@ public:
     typedef boost::function< void() > DeathPointer;
 
 
-    Callback(const CallbackPointer& func,
-             const DeathPointer& death_func = &DefaultDeath);
+    Callback( CallbackPointer& func,
+              DeathPointer& death_func = &DefaultDeath);
     ~Callback();
 
 private:
@@ -114,8 +114,8 @@ void Source<T>::Notify(DataType data)
 
 /*===CALLBACK===*/
 template <typename SOURCE>
-Callback<SOURCE>::Callback(const CallbackPointer& func,
-                            const DeathPointer& death_func)
+Callback<SOURCE>::Callback(CallbackPointer& func,
+                            DeathPointer& death_func)
 {
     assert(func);
     callBackFunction = func;
