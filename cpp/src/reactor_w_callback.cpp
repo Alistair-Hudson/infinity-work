@@ -6,6 +6,7 @@
  ******************************************************************************/
 
 #include <boost/foreach.hpp> /* BOOST_FOREACH */
+#include <boost/shared_ptr.hpp> /* boost::shared_ptr */
 
 #include "reactor_w_callback.hpp"
 
@@ -127,7 +128,7 @@ void Reactor::Add(MODE mode, Handle fd, Callback<Source<int>>* callback)
 {
     assert(callback);
 
-    std::shared_ptr<Source<int>> newSrc = std::make_shared<Source<int>>();
+    boost::shared_ptr<Source<int>> newSrc(new Source<int>);
     newSrc->Subscribe(callback);
     
     switch(mode)
