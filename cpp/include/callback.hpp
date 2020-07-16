@@ -41,19 +41,19 @@ template < typename SOURCE >
 class Callback : private boost::noncopyable
 {
 public:
-    typedef boost::function< void (SOURCE::DataType) > CallbackPointer;
+    typedef boost::function< void (typename SOURCE::DataType) > CallbackPointer;
     typedef boost::function< void() > DeathPointer;
 
 
     Callback(const CallbackPointer& func,
-             const DeathPointer& death_func = DefaultDeath);
+             const DeathPointer& death_func = &DefaultDeath);
     ~Callback();
 
 private:
     void Link(SOURCE* source);
     void Unlink(bool has_died = 0);
     void Invoke(typename SOURCE::DataType data);
-    void DefaultDeath(){}
+    static void DefaultDeath(){}
 
     SOURCE* m_source;
     const CallbackPointer callBackFunction;
