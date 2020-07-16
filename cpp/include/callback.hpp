@@ -11,8 +11,8 @@
 #include <boost/function.hpp> /* function */
 #include <boost/core/noncopyable.hpp> /* noncopyable */
 
-#define LOG_ERR(X)      (std::cerr << "ERROR: " <<(X) << std::endl;)
-#define LOG_WRN(X)      (std::cerr << "WARNING: " <<(X) << std::endl;)
+#define LOG_ERR(X)      (std::cerr << "ERROR: " <<(X) << std::endl)
+#define LOG_WRN(X)      (std::cerr << "WARNING: " <<(X) << std::endl)
 
 /*****CALSSES*****/
 
@@ -41,7 +41,7 @@ template < typename SOURCE >
 class Callback : private boost::noncopyable
 {
 public:
-    typedef boost::function< void(SOURCE::DataType) > CallbackPointer;
+    typedef boost::function< void (SOURCE::DataType) > CallbackPointer;
     typedef boost::function< void() > DeathPointer;
 
 
@@ -67,7 +67,7 @@ private:
 template <typename T>
 Source<T>::Source()
 {
-    m_callback = NULL
+    m_callback = NULL;
 }
 
 template <typename T>
@@ -117,7 +117,7 @@ template <typename SOURCE>
 Callback<SOURCE>::Callback(const CallbackPointer& func,
                             const DeathPointer& death_func)
 {
-    assert(NULL != func);
+    assert(func);
     callBackFunction = func;
     deathFunction = death_func;
 }

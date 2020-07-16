@@ -17,6 +17,7 @@
 /****** GLOBAL VARIABLES*****/
 static bool g_running = 0;
 
+
 /*****STRUCTS*******/
 
 /*****CLASSES******/
@@ -26,13 +27,13 @@ class PushToVector
 {
 public:
     PushToVector(std::vector<Handle>* v):m_v(v){}
-    void operator() (std::map<Handle, Source<int>*> handle)
+    void operator() (std::map<Handle, Source<int>*>::iterator handle)
     {
-        m_v->push_back(handle.first);
+        m_v->push_back(handle->first);
     }
 private:
     std::vector<Handle>* m_v;
-}
+};
 
 class CallNotify
 {
@@ -40,12 +41,23 @@ public:
     CallNotify(std::map<Handle, Source<int>>* map):m_map(map){}
     void operator() (Handle fd)
     {
-        Source<int>* handle = m_map->find(fd);
+        Source<int> handle = m_map->find(fd)->second;
         handle->Notify(fd);
     }
 private:
     std::map<Handle, Source<int>>* m_map;
-}
+};
+
+class Unsub
+{
+public:
+    Unsub(){};
+    void operator() (std::map<Handle, Source<int>*>::iterator handle)
+    {
+        handle->second.Unsuscribe(NULL);
+    }
+private:
+};
 
 /******INTERNAL FUNCTION DECLARATION******/
 
@@ -59,21 +71,22 @@ void Listen(const std::vector<Handle>& read,
     int write_count = write.size();
     int excep_count = exception.size();
     
+    struct timeval TIMEOUT = {7, 0};
     //set file descriptors into each of the fd sets
     fd_set* read_set = new fd_set[read_count];
     for (int i = 0; i < read_count; ++i)
     {
-        FD_SET(i, read_set)
+        FD_SET(i, read_set);
     }
     fd_set* write_set = new fd_set[write_count];
     for (int i = 0; i < write_count; ++i)
     {
-        FD_SET(i, write_set)
+        FD_SET(i, write_set);
     }
     fd_set* excep_set = new fd_set[excep_count];
     for (int i = 0; i < excep_count; ++i)
     {
-        FD_SET(i, excep_set)
+        FD_SET(i, excep_set);
     }
     int max_fd = read_count > write_count ? read_count : write_count;
     max_fd = max_fd > excep_count ? max_fd : excep_count;
@@ -92,27 +105,30 @@ void Listen(const std::vector<Handle>& read,
     else
     {
         //add read to output
+        read.clear();
         for (int fd = 0; fd < read_count; ++fd)
         {
-            if(!FD_ISSET(fd, read_set))
+            if(FD_ISSET(fd, read_set))
             {
-                read.erase(fd);
+                read.push_back(fd);
             }
         }
         //add write to output
+        write.clear();
         for (int fd = 0; fd < write_count; ++fd)
         {
-            if(!FD_ISSET(fd, write_set))
+            if(FD_ISSET(fd, write_set))
             {
-                write.erase(fd);
+                write.push_back(fd);
             }
         }
         //add exception to output
+        exception.clear();
         for (int fd = 0; fd < excep_count; ++fd)
         {
-            if(!FD_ISSET(fd, excep_set))
+            if(FD_ISSET(fd, excep_set))
             {
-                exception.erase(fd);
+                exception.push_back(fd);
             }
         }
 
@@ -120,11 +136,11 @@ void Listen(const std::vector<Handle>& read,
     delete[] read_set;
     delete[] write_set;
     delete[] excep_set;
-    TIMEOUT.tv_sec = 7;
+
 }
 
 /*=====Reactor=====*/
-void Reactor::Add(MODE mode, Handle fd, Callback<Source<int>>* callback)
+void Reactor::Add( MODE mode, Handle fd, Callback<Source<int>>* callback)
 {
     assert(callback);
 
@@ -145,22 +161,22 @@ void Reactor::Add(MODE mode, Handle fd, Callback<Source<int>>* callback)
     }
 }
 
-void Reactor::Remove(MODE mode, Handle fd)
+void Reactor::Remove( MODE mode, Handle fd)
 {   
     std::shared_ptr<Source<int>> src;
 
     switch(mode)
     {
         case (READ):
-            src = m_read.find(fd).second;
+            src = m_read.find(fd)->second;
             m_read.erase(fd);
             break;
         case (WRITE):
-            src = m_write.find(fd).second;
+            src = m_write.find(fd)->second;
             m_write.erase(fd);
             break;
         case (EXCEPTION):
-            src = m_exception.find(fd).second;
+            src = m_exception.find(fd)->second;
             m_exception.erase(fd);
             break;
     }
@@ -219,29 +235,11 @@ void Reactor::Stop()
 
 Reactor::~Reactor()
 {
-    BOOST_FOREACH(std::shared_ptr<Source<int>> handle, m_read)
-    {
-        if (NULL != handle)
-        {
-            handle->Unsuscribe(NULL);
-        }
-    }
+    for_each(m_read.begin(), m_read.end(), Unsub());
     m_read.clear();
-    BOOST_FOREACH(Source<int>* handle, m_write)
-    {
-        if (NULL != handle)
-        {
-            handle->Unsuscribe(NULL);
-        }
-    }
+    for_each(m_write.begin(), m_write.end(), Unsub());
     m_write.clear();
-    BOOST_FOREACH(Source<int>* handle, m_exception)
-    {
-        if (NULL != handle)
-        {
-            handle->Unsuscribe(NULL);
-        }
-    }
+    for_each(m_exception.begin(), m_exception.end(), Unsub());
     m_exception.clear();
 
 }

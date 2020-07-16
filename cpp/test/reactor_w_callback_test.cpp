@@ -8,8 +8,8 @@
 #define PORT (8080)
 
 /****GLOBAL VARIABLES****/
-static struct timeval TIMEOUT = {7, 0};
-Reactor reactor();
+
+Reactor reactor;
 
 /****FUNCTORS*****/
 
@@ -27,8 +27,9 @@ void TestFoo(int fd)
         printf("server acccept failed...\n"); 
         exit(0); 
     }
-    reactor.Add(std::make_pair(READ, connection_id), TestBar);
-}
+ /*   Callback<Source<int>> newCB(TestBar);
+    reactor.Add(READ, connection_id, &newCB);
+*/}
 
 void TestBar(int fd)
 {
@@ -45,6 +46,7 @@ int main()
     unsigned int length; 
     struct sockaddr_in server_addr;
     struct sockaddr_in client_addr; 
+    Callback<Source<int>> callback1(TestFoo);
   
     socket_id = socket(AF_INET, SOCK_STREAM, 0); 
     if (socket_id == -1) { 
@@ -72,7 +74,7 @@ int main()
    
 
 
-    reactor.Add(std::make_pair(READ, socket_id), TestFoo);
+    reactor.Add(READ, socket_id, &callback1);
     
 
     reactor.Run();

@@ -1,7 +1,7 @@
 //Reactor design pattern API
 #include <iostream>
 #include <vector>
-#include <queue>
+#include <iterator>
 #include <map>
 #include <utility>
 
@@ -36,16 +36,16 @@ class Reactor: private boost::noncopyable
 {
 public:
     Reactor(){}
-    void Add(Mode mode, Handle fd, Callback<Source<int>>* callback);
-    void Remove(MODE mode, Handle fd);
+    void Add( MODE mode, Handle fd, Callback<Source<int>>* callback);
+    void Remove( MODE mode, Handle fd);
     void Run();
     void Stop(); // can be called only from the handler/run if there is nothing to listen to (if the map is empty)
     ~Reactor();
 
 private:
-    std::map<Source<int>*> m_read;
-    std::map<Source<int>*> m_write;
-    std::map<Source<int>*> m_exception;
+    std::map<Handle, Source<int>*> m_read;
+    std::map<Handle, Source<int>*> m_write;
+    std::map<Handle, Source<int>*> m_exception;
     Listener m_Listener;
 };
 
