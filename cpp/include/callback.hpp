@@ -26,11 +26,11 @@ class Source : private boost::noncopyable
 public:
     Source();
     ~Source();
-    typedef T dataType; // nested type
+    typedef T DataType; // nested type
 
     void Subscribe(Callback<Source<T>>* callback);
     void Unsubscribe(Callback<Source<T>>* callback);
-    void Notify(dataType data);
+    void Notify(DataType data);
 
 private:
     Callback<Source<T>>* m_callback;
@@ -52,7 +52,7 @@ public:
 private:
     void Link(SOURCE* source);
     void Unlink(bool has_died = 0);
-    void Invoke(SOURCE::dataType data);
+    void Invoke(SOURCE::DataType data);
     void DefaultDeath(){}
 
     SOURCE* m_source;
@@ -135,7 +135,7 @@ Callback<SOURCE>::~Callback()
 template <typename SOURCE>
 void Callback<SOURCE>::Link(SOURCE* source)
 {
-    assert(NULL != source);
+    assert(NULL != source); assert(!m_source);
     //set pointer to source
     m_source = source;
 }
@@ -143,7 +143,7 @@ void Callback<SOURCE>::Link(SOURCE* source)
 template <typename SOURCE>
 void Callback<SOURCE>::Unlink(bool has_died)
 {
-    assert(NULL != source);
+    assert(m_source);
 
     //set pointer to NULL
     m_source = NULL;

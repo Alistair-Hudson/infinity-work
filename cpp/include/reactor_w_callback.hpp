@@ -13,7 +13,7 @@
 //The type of a handle is system specific. We're using UNIX so an handle is represented by an integer
 typedef int Handle;
 
-enum MODE
+typedef enum MODE
 {
     WRITE = 0,
     READ,
@@ -25,7 +25,7 @@ class Listener
 {
 public:
     Listener(){}
-    ~IListener(){}
+    ~Listener(){}
     void Listen(const std::vector<Handle>& read,
                 const std::vector<Handle>& write,
                 const std::vector<Handle>& exception);
@@ -43,7 +43,7 @@ public:
     ~Reactor();
 
 private:
-    std::map<Source<int>*> m_read; TODO change to map //shared pointer
+    std::map<Source<int>*> m_read;
     std::map<Source<int>*> m_write;
     std::map<Source<int>*> m_exception;
     Listener m_Listener;
