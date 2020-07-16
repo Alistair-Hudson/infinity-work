@@ -5,7 +5,6 @@
  *	Version:	08.06.2020.0
  ******************************************************************************/
 
-#include <boost/foreach.hpp> /* BOOST_FOREACH */
 #include <boost/shared_ptr.hpp> /* boost::shared_ptr */
 
 #include "reactor_w_callback.hpp"

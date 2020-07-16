@@ -52,7 +52,7 @@ public:
 private:
     void Link(SOURCE* source);
     void Unlink(bool has_died = 0);
-    void Invoke(SOURCE::DataType data);
+    void Invoke(typename SOURCE::DataType data);
     void DefaultDeath(){}
 
     SOURCE* m_source;
@@ -154,7 +154,7 @@ void Callback<SOURCE>::Unlink(bool has_died)
 }
 
 template <typename SOURCE>
-void Callback<SOURCE>::Invoke(SOURCE::DataType data)
+void Callback<SOURCE>::Invoke(typename SOURCE::DataType data)
 {
     //invoke action based on the data
     callBackFunction(data);
