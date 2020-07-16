@@ -45,6 +45,7 @@ public:
 private:
     std::map<Handle, Source<int>>* m_map;
 }
+
 /******INTERNAL FUNCTION DECLARATION******/
 
 /******CLASS METHODS*******/
@@ -126,7 +127,7 @@ void Reactor::Add(MODE mode, Handle fd, Callback<Source<int>>* callback)
 {
     assert(callback);
 
-    Source<int>* newSrc = new Source<int>;
+    std::shared_ptr<Source<int>> newSrc = std::make_shared<Source<int>>();
     newSrc->Subscribe(callback);
     
     switch(mode)
@@ -145,7 +146,7 @@ void Reactor::Add(MODE mode, Handle fd, Callback<Source<int>>* callback)
 
 void Reactor::Remove(MODE mode, Handle fd)
 {   
-    Source<int> src*;
+    std::shared_ptr<Source<int>> src;
 
     switch(mode)
     {
@@ -165,7 +166,6 @@ void Reactor::Remove(MODE mode, Handle fd)
     if (NULL != src)
     {
         src->Unsubscribe(NULL);
-        delete src;
     }
     
 }
@@ -218,13 +218,12 @@ void Reactor::Stop()
 
 Reactor::~Reactor()
 {
-    BOOST_FOREACH(Source<int>* handle, m_read)
+    BOOST_FOREACH(std::shared_ptr<Source<int>> handle, m_read)
     {
         if (NULL != handle)
         {
             handle->Unsuscribe(NULL);
         }
-        delete handle;
     }
     m_read.clear();
     BOOST_FOREACH(Source<int>* handle, m_write)
@@ -233,7 +232,6 @@ Reactor::~Reactor()
         {
             handle->Unsuscribe(NULL);
         }
-        delete handle;
     }
     m_write.clear();
     BOOST_FOREACH(Source<int>* handle, m_exception)
@@ -242,7 +240,6 @@ Reactor::~Reactor()
         {
             handle->Unsuscribe(NULL);
         }
-        delete handle;
     }
     m_exception.clear();
 
