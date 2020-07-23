@@ -6,12 +6,13 @@
                                 * version 12.07.2020.0
 ******************************************************************************/
 #include <iostream>
-#include <assert.h> /* assert */
+#include <assert.h> /* assert */ 
+
 #include <boost/function.hpp> /* function */
 #include <boost/core/noncopyable.hpp> /* noncopyable */
 
-#define LOG_ERR(X)      (std::cerr << "ERROR: " <<(X) << std::endl;)
-#define LOG_WRN(X)      (std::cerr << "WARNING: " <<(X) << std::endl;)
+#define LOG_ERR(X)      (std::cerr << "ERROR: " <<(X) << std::endl)
+#define LOG_WRN(X)      (std::cerr << "WARNING: " <<(X) << std::endl)
 
 /*****CALSSES*****/
 
@@ -25,11 +26,11 @@ class Source : private boost::noncopyable
 public:
     Source();
     ~Source();
-    typedef T dataType; // nested type
+    typedef T DataType; // nested type
 
     void Subscribe(Callback<Source<T>>* callback);
     void Unsubscribe(Callback<Source<T>>* callback);
-    void Notify(dataType data);
+    void Notify(DataType data);
 
 private:
     Callback<Source<T>>* m_callback;
@@ -40,19 +41,19 @@ template < typename SOURCE >
 class Callback : private boost::noncopyable
 {
 public:
-    typedef boost::function< void(SOURCE::dataType) > CallbackPointer;
+    typedef boost::function< void (typename SOURCE::DataType) > CallbackPointer;
     typedef boost::function< void() > DeathPointer;
 
 
-    Callback(const CallbackPointer& func,
-             const DeathPointer&
-                 death_func); // initialize an empty function for death_func
-
+    Callback( CallbackPointer& func,
+              DeathPointer& death_func = &DefaultDeath);
     ~Callback();
+
 private:
     void Link(SOURCE* source);
-    void Unlink();
-    void Invoke(SOURCE::dataType data);
+    void Unlink(bool has_died = 0);
+    void Invoke(typename SOURCE::DataType data);
+    static void DefaultDeath(){}
 
     SOURCE* m_source;
     const CallbackPointer callBackFunction;
@@ -66,7 +67,7 @@ private:
 template <typename T>
 Source<T>::Source()
 {
-    
+    m_callback = NULL;
 }
 
 template <typename T>
@@ -75,14 +76,14 @@ Source<T>::~Source()
     //Unlink callback
     if (NULL != m_callback)
     {
-        m_callback->Unlink();
+        m_callback->Unlink(1);
     }
 }
 
 template <typename T>
 void Source<T>::Subscribe(Callback<Source<T>>* callback)
 {
-    assert(NULL != callback);
+    assert(NULL != callback); assert(!m_callback);
     //set pointer to callback object
     m_callback = callback;
     m_callback->Link(this);
@@ -91,25 +92,32 @@ void Source<T>::Subscribe(Callback<Source<T>>* callback)
 template <typename T>
 void Source<T>::Unsubscribe(Callback<Source<T>>* callback)
 {
+    assert(!m_callback);
     m_callback->Unlink();
     //set callback pointer to NULL
     m_callback = NULL;
 }
 
 template <typename T>
-void Source<T>::Notify(dataType data)
+void Source<T>::Notify(DataType data)
 {
     //send notification to callback
-    m_callback->Invoke(data);
+    if (m_callback)
+    {
+        m_callback->Invoke(data);
+    }
+    else
+    {
+        LOG_WRN("No one is subscribed\n");
+    }
 }
 
 /*===CALLBACK===*/
 template <typename SOURCE>
-Callback<SOURCE>::Callback(const CallbackPointer& func,
-                            const DeathPointer&
-                            death_func = NULL)
+Callback<SOURCE>::Callback(CallbackPointer& func,
+                            DeathPointer& death_func)
 {
-    assert(NULL != func);
+    assert(func);
     callBackFunction = func;
     deathFunction = death_func;
 }
@@ -127,22 +135,26 @@ Callback<SOURCE>::~Callback()
 template <typename SOURCE>
 void Callback<SOURCE>::Link(SOURCE* source)
 {
-    assert(NULL != source);
+    assert(NULL != source); assert(!m_source);
     //set pointer to source
     m_source = source;
 }
 
 template <typename SOURCE>
-void Callback<SOURCE>::Unlink()
+void Callback<SOURCE>::Unlink(bool has_died)
 {
-    assert(NULL != source);
+    assert(m_source);
 
     //set pointer to NULL
     m_source = NULL;
+    if (has_died)
+    {
+        deathFunction();
+    }
 }
 
 template <typename SOURCE>
-void Callback<SOURCE>::Invoke(SOURCE::dataType data)
+void Callback<SOURCE>::Invoke(typename SOURCE::DataType data)
 {
     //invoke action based on the data
     callBackFunction(data);

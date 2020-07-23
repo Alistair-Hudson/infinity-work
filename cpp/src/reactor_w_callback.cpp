@@ -6,6 +6,7 @@
  ******************************************************************************/
 
 #include <boost/shared_ptr.hpp> /* boost::shared_ptr */
+#include <boost/make_shared.hpp> /* boost::make_shared */
 
 #include "reactor_w_callback.hpp"
 
@@ -25,8 +26,8 @@ static bool g_running = 0;
 class PushToVector
 {
 public:
-    PushToVector(std::vector<Handle>* v):m_v(v){}
-    void operator() (std::pair<Handle, boost::shared_ptr<Source<int> > > handle)
+    PushToVector(std::vector< Handle >* v):m_v(v){}
+    void operator() (std::pair< Handle, boost::shared_ptr< Source< int > > > handle)
     {
         m_v->push_back(handle.first);
     }
@@ -37,34 +38,24 @@ private:
 class CallNotify
 {
 public:
-    CallNotify(std::map<Handle, boost::shared_ptr<Source<int> > >* map):m_map(map){}
+    CallNotify(std::map< Handle, boost::shared_ptr< Source< int > > >* map):m_map(map){}
     void operator() (Handle fd)
     {
-        boost::shared_ptr<Source<int> > handle = m_map->find(fd)->second;
+        boost::shared_ptr< Source< int > > handle = m_map->find(fd)->second;
         handle->Notify(fd);
     }
 private:
-    std::map<Handle, boost::shared_ptr<Source<int> > >* m_map;
+    std::map< Handle, boost::shared_ptr< Source< int > > >* m_map;
 };
 
-class Unsub
-{
-public:
-    Unsub(){};
-    void operator() (std::pair<Handle, boost::shared_ptr<Source<int> > > handle)
-    {
-        handle.second->Unsubscribe(NULL);
-    }
-private:
-};
 
 /******INTERNAL FUNCTION DECLARATION******/
 
 /******CLASS METHODS*******/
 /*=====Listener=====*/
-void Listen( std::vector<Handle>& read,
-             std::vector<Handle>& write,
-             std::vector<Handle>& exception)
+void Listener::Listen( std::vector< Handle >& read,
+             std::vector< Handle >& write,
+             std::vector< Handle >& exception)
 {
     int read_count = read.size();
     int write_count = write.size();
@@ -139,30 +130,30 @@ void Listen( std::vector<Handle>& read,
 }
 
 /*=====Reactor=====*/
-void Reactor::Add( MODE mode, Handle fd, Callback<Source<int>>* callback)
+void Reactor::Add( MODE mode, Handle fd, Callback< Source< int > >* callback)
 {
     assert(callback);
 
-    boost::shared_ptr<Source<int>> newSrc(new Source<int>);
+    boost::shared_ptr< Source< int > > newSrc = boost::make_shared< Source< int > >();
     newSrc->Subscribe(callback);
     
     switch(mode)
     {
         case (READ):
-            m_read.insert(std::pair<Handle, boost::shared_ptr<Source<int>>>(fd, newSrc));
+            m_read.insert(std::pair< Handle, boost::shared_ptr< Source< int > > >(fd, newSrc));
             break;
         case (WRITE):
-            m_write.insert(std::pair<Handle, boost::shared_ptr<Source<int>>>(fd, newSrc));
+            m_write.insert(std::pair< Handle, boost::shared_ptr< Source< int > > >(fd, newSrc));
             break;
         case (EXCEPTION):
-            m_exception.insert(std::pair<Handle, boost::shared_ptr<Source<int>>>(fd, newSrc));
+            m_exception.insert(std::pair< Handle, boost::shared_ptr< Source< int > > >(fd, newSrc));
             break;
     }
 }
 
 void Reactor::Remove( MODE mode, Handle fd)
 {   
-    boost::shared_ptr<Source<int>> src;
+    boost::shared_ptr< Source< int > > src;
 
     switch(mode)
     {
@@ -192,17 +183,17 @@ void Reactor::Run()
 
     while (g_running && (!m_read.empty() || !m_write.empty()))
     {
-        std::vector<Handle> readVector;
+        std::vector< Handle > readVector;
         std::for_each(m_read.begin(), 
                         m_read.end(),
                         PushToVector(&readVector));
         
-        std::vector<Handle> writeVector;
+        std::vector< Handle > writeVector;
         std::for_each(m_write.begin(), 
                         m_write.end(),
                         PushToVector(&writeVector));
         
-        std::vector<Handle> exceptionVector;
+        std::vector< Handle > exceptionVector;
         std::for_each(m_exception.begin(), 
                         m_exception.end(),
                         PushToVector(&exceptionVector));
@@ -233,12 +224,6 @@ void Reactor::Stop()
 
 Reactor::~Reactor()
 {
-    for_each(m_read.begin(), m_read.end(), Unsub());
-    m_read.clear();
-    for_each(m_write.begin(), m_write.end(), Unsub());
-    m_write.clear();
-    for_each(m_exception.begin(), m_exception.end(), Unsub());
-    m_exception.clear();
 
 }
 

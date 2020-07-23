@@ -28,12 +28,12 @@ public:
     ~Source();
     typedef T DataType; // nested type
 
-    void Subscribe(Callback<Source<T>>* callback);
-    void Unsubscribe(Callback<Source<T>>* callback);
+    void Subscribe(Callback< Source< T > >* callback);
+    void Unsubscribe(Callback< Source< T > >* callback);
     void Notify(DataType data);
 
 private:
-    Callback<Source<T>>* m_callback;
+    Callback< Source< T > >* m_callback;
 };
 
 /*===Callback===*/
@@ -45,11 +45,14 @@ public:
     typedef boost::function< void() > DeathPointer;
 
 
-    Callback( CallbackPointer& func,
-              DeathPointer& death_func = &DefaultDeath);
+    Callback( const CallbackPointer& func,
+              const DeathPointer& death_func = &DefaultDeath);
     ~Callback();
 
 private:
+    struct FriendHelper {typedef SOURCE MySource;};
+    friend class FriendHelper::MySource;
+    
     void Link(SOURCE* source);
     void Unlink(bool has_died = 0);
     void Invoke(typename SOURCE::DataType data);
@@ -58,21 +61,19 @@ private:
     SOURCE* m_source;
     const CallbackPointer callBackFunction;
     const DeathPointer deathFunction;
-    
-    friend SOURCE;
 };
 
 /*****METHODS*****/
 /*===SOURCE===*/
 template <typename T>
-Source<T>::Source()
+Source< T >::Source()
 {
     m_callback = NULL;
 }
 
 template <typename T>
-Source<T>::~Source()
-{
+Source< T >::~Source()
+{ 
     //Unlink callback
     if (NULL != m_callback)
     {
@@ -81,7 +82,7 @@ Source<T>::~Source()
 }
 
 template <typename T>
-void Source<T>::Subscribe(Callback<Source<T>>* callback)
+void Source< T >::Subscribe(Callback< Source< T > >* callback)
 {
     assert(NULL != callback); assert(!m_callback);
     //set pointer to callback object
@@ -90,16 +91,17 @@ void Source<T>::Subscribe(Callback<Source<T>>* callback)
 }
 
 template <typename T>
-void Source<T>::Unsubscribe(Callback<Source<T>>* callback)
+void Source< T >::Unsubscribe(Callback< Source< T > >* callback)
 {
     assert(!m_callback);
     m_callback->Unlink();
     //set callback pointer to NULL
     m_callback = NULL;
+    (void)callback;
 }
 
 template <typename T>
-void Source<T>::Notify(DataType data)
+void Source< T >::Notify(DataType data)
 {
     //send notification to callback
     if (m_callback)
@@ -114,16 +116,17 @@ void Source<T>::Notify(DataType data)
 
 /*===CALLBACK===*/
 template <typename SOURCE>
-Callback<SOURCE>::Callback(CallbackPointer& func,
-                            DeathPointer& death_func)
+Callback< SOURCE >::Callback(const CallbackPointer& func,
+                            const DeathPointer& death_func):
+                            m_source(NULL), 
+                            callBackFunction(func),
+                            deathFunction(death_func)
 {
-    assert(func);
-    callBackFunction = func;
-    deathFunction = death_func;
+    
 }
 
 template <typename SOURCE>
-Callback<SOURCE>::~Callback()
+Callback< SOURCE >::~Callback()
 {
     if (NULL != m_source)
     {
@@ -133,7 +136,7 @@ Callback<SOURCE>::~Callback()
 }
 
 template <typename SOURCE>
-void Callback<SOURCE>::Link(SOURCE* source)
+void Callback< SOURCE >::Link(SOURCE* source)
 {
     assert(NULL != source); assert(!m_source);
     //set pointer to source
@@ -141,7 +144,7 @@ void Callback<SOURCE>::Link(SOURCE* source)
 }
 
 template <typename SOURCE>
-void Callback<SOURCE>::Unlink(bool has_died)
+void Callback< SOURCE >::Unlink(bool has_died)
 {
     assert(m_source);
 
@@ -154,7 +157,7 @@ void Callback<SOURCE>::Unlink(bool has_died)
 }
 
 template <typename SOURCE>
-void Callback<SOURCE>::Invoke(typename SOURCE::DataType data)
+void Callback< SOURCE >::Invoke(typename SOURCE::DataType data)
 {
     //invoke action based on the data
     callBackFunction(data);
