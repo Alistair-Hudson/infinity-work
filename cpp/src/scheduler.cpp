@@ -42,7 +42,8 @@ void ilrd::Scheduler::ScheduleAction(TimePoint timepoint,
 
     MS wait = (timepoint - Now());
 
-    if (timepoint < m_tasks.top().m_timepoint)
+
+    if (m_tasks.empty() || timepoint < m_tasks.top().m_timepoint)
     {
         m_timer.Set(wait);
     }
@@ -60,10 +61,12 @@ void ilrd::Scheduler::ScheduleAction(MS nanoseconds,
 {
 TimePoint insert = TimePoint(nanoseconds + Now());
 
-    if (insert < m_tasks.top().m_timepoint)
+
+    if (m_tasks.empty() || insert < m_tasks.top().m_timepoint)
     {
         m_timer.Set(nanoseconds);
     }
+
 
     Task new_task;
     new_task.m_function = function;
@@ -79,6 +82,13 @@ ilrd::Scheduler::TimePoint ilrd::Scheduler::Now()
 
 void ilrd::Scheduler::FlyYouFools(int fd)
 {
+    if (m_tasks.empty())
+    {
+        return;
+    }
+
+    m_tasks.top().m_function(fd);
+    m_tasks.pop();
 
 }
 

@@ -15,6 +15,7 @@
 #include <sys/stat.h>
 
 #include <boost/chrono.hpp>
+#include <boost/chrono/duration.hpp>
 #include <boost/function.hpp>
 #include <boost/noncopyable.hpp>
 
