@@ -1,8 +1,8 @@
 /*******************************************************************************
- * File: timer.hpp - 	header file				 		     *
- * Author: Yehuda Levavi                                         *
- * Reviewed by: 				                                   			   *
- * Date: 		                                                           	   *
+ * File: timer.hpp - header for timer functions			 		     
+ * Author: Yurii Yashchuk                                     
+ * Reviewed by: Esti Binder		                                   			   
+ * Date: 23.07.2020		                                                           	   *
  ******************************************************************************/
 
 #ifndef ILRD_RD8586_FD_TIMER_HPP
@@ -11,20 +11,22 @@
 #include <boost/chrono.hpp>
 #include <boost/function.hpp>
 #include <boost/noncopyable.hpp>
+#include <boost/bind.hpp>
+#include <sys/timerfd.h>
 
-#include "callback.hpp"
-#include "reactor_w_callback.hpp"
+#include "source_callback.hpp"
+#include "advanced_reactor.hpp"
 
 namespace ilrd
 {
 
-
+// use #include <sys/timerfd.h> in the implementation
 class FDTimer : private boost::noncopyable
 {
 public:
     // typedefs for inner types
-    typedef Callback< Source< int > >::CallbackPointer ActionFunc;
-    typedef boost::chrono::nanoseconds MS;
+    typedef Callback< Source< int > >::NotifyFunction ActionFunc;
+    typedef boost::chrono::milliseconds MS;
 
     // FDTimer Constructor
     // Receives: reactor - a reference to a reactor to work with
@@ -32,18 +34,18 @@ public:
     //                           calls timer file descriptors' handler
     // Exceptions: throws runtime_error if timer file descriptor can't be
     //             created
-    explicit FDTimer(Reactor& reactor, ActionFunc& callback_func);
+    explicit FDTimer(Reactor& reactor, ActionFunc callback_func);
 
     // FDTimer Destructor
     // Exceptions: no exceptions
     ~FDTimer();
 
     // Set
-    // Receives: milliseconds - a chrono::miliiseconds object with the time
+    // Receives: microseconds - a chrono::microseconds object with the time
     //           requested from now
     // Exceptions: throws runtime_error if timer file descriptor can't be
     //             written
-    void Set(MS nanoseconds);
+    void Set(MS milliseconds);
 
     // Unset
     // Exceptions: throws runtime_error if timer file descriptor can't be

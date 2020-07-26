@@ -1,17 +1,17 @@
 /*******************************************************************************
- * File: scheduler.hpp - 	header file				 		     *
- * Author: Yehuda Levavi                                         *
- * Reviewed by: 				                                   			   *
- * Date: 		                                                           	   *
+ * File: scheduler.hpp - 	header file				 		     
+ * Author: Yurii Yashchuk                                         
+ * Reviewed by: Esti Binder				                                   			   *
+ * Date: 23.07.2020		                                                           	   *
  ******************************************************************************/
 
 #ifndef ILRD_RD8586_SCHEDULER_HPP
 #define ILRD_RD8586_SCHEDULER_HPP
 
-#include <vector>
-#include <queue>
-
 #include <boost/noncopyable.hpp>
+#include <boost/chrono.hpp>
+#include <boost/chrono/duration.hpp>
+#include <queue>
 
 #include "fd_timer.hpp"
 
@@ -48,12 +48,12 @@ public:
     void ScheduleAction(TimePoint timepoint, ActionFunc function);
 
     // Schedule Action
-    // Receives: nanoseconds - a chrono::nanoseconds object with the time
+    // Receives: microseconds - a chrono::microseconds object with the time
     //           requested from now
     //           function - an function/functor to invoke at the timepoint
     // Exceptions: throws runtime_error if timer file descriptor can't be
     //             written
-    void ScheduleAction(MS milliseconds,
+    void ScheduleAction(MS nanoseconds,
                         ActionFunc function); // boost::chrono::microseconds
 
     // Now
@@ -67,17 +67,16 @@ private:
     {
         inline bool operator<(const Task& other_) const
         {
-            return (m_timepoint < other_.m_timepoint);
+            return (!(m_timepoint < other_.m_timepoint));
         }
 
         TimePoint m_timepoint;
         ActionFunc m_function;
     };
 
-    void FlyYouFools(int fd);
-
     FDTimer m_timer;
-    std::priority_queue< Task, std::vector< Task >, std::less< Task > > m_tasks;
+    std::priority_queue< Task > m_tasks;
+    void FlyYouFools(Handle fd);
 };
 
 ////////////////////////////////////////////////////////////////////////////////

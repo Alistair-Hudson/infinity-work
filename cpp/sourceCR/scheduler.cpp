@@ -1,75 +1,72 @@
-/******************************************************************************
- *	Title:		Scheduler
- *	Authour:	Alistair Hudson
- *	Reviewer:	
- *	Version:	21.07.2020.0
+/*******************************************************************************
+ * File: scheduler.cpp - header for scheduler functions			 		     
+ * Author: Yurii Yashchuk                                     
+ * Reviewed by: Esti Binder		                                   			   
+ * Date: 23.07.2020		                                                           	   *
  ******************************************************************************/
-
-#include <boost/bind.hpp>
 
 #include "scheduler.hpp"
 
-/******MACROS******/
+using namespace ilrd;
+using namespace std;
 
-/******TYPEDEFS*****/
-
-/****** GLOBAL VARIABLES*****/
-
-/*****STRUCTS*******/
-
-/*****CLASSES******/
-
-/*****FUNCTORS*****/
-
-/******INTERNAL FUNCTION DECLARATION******/
-
-/******CLASS METHODS*******/
-ilrd::Scheduler::Scheduler(Reactor& reactor)
+Scheduler::Scheduler(Reactor& reactor): m_timer
+                    (reactor, boost::bind(&Scheduler::StartTask, this, _1))
 {
-    FDTimer m_timer(reactor, 
-                    boost::bind(&Scheduler::FlyYouFools, this, _1));
-    
-}
-ilrd::Scheduler::~Scheduler()
-{
-
 }
 
-void ilrd::Scheduler::ScheduleAction(TimePoint timepoint, 
-                                    ActionFunc function)
+Scheduler::~Scheduler()
 {
-    MS fromNow = timepoint - Now();
-
-    m_timer.Set(fromNow);
-
-    Task newTask;
-    newTask.m_function = function;
-    newTask.m_timepoint = TimePoint(fromNow);
-
-    m_tasks.push(newTask);
 }
 
-void ilrd::Scheduler::ScheduleAction(MS nanoseconds,
-                                     ActionFunc function)
+void Scheduler::ScheduleAction(MS milliseconds, ActionFunc function)
 {
-
-    m_timer.Set(nanoseconds);
-
-    Task newTask;
-    newTask.m_function = function;
-    newTask.m_timepoint = TimePoint(nanoseconds + Now());
-
-    m_tasks.push(newTask);
+    Task new_task;
+    new_task.m_timepoint =  milliseconds + Now();
+    new_task.m_function = function;    
+    m_tasks.push(new_task);
+    if (m_tasks.top().m_timepoint == new_task.m_timepoint)
+    {
+        m_timer.Set(milliseconds);
+    }
 }
 
-ilrd::Scheduler::TimePoint ilrd::Scheduler::Now()
+void Scheduler::ScheduleAction(TimePoint timepoint, ActionFunc function)
 {
-    return boost::chrono::steady_clock::now();//the current time;
+    Task new_task;
+    new_task.m_timepoint = timepoint;
+    new_task.m_function = function;    
+    m_tasks.push(new_task);
+
+    if (m_tasks.top().m_timepoint == timepoint)
+    {
+        m_timer.Set(boost::chrono::duration_cast<MS>
+        (timepoint - Now()));
+    }
 }
 
-void ilrd::Scheduler::FlyYouFools()
-{
 
+Scheduler::TimePoint Scheduler::Now()
+{
+    return boost::chrono::system_clock::now();
 }
 
-/*****FUNCTION DEFINITION******/
+void Scheduler::StartTask(Handle fd)
+{
+    if (!m_tasks.empty())
+    {   
+        Task executable = m_tasks.top();    
+        executable.m_function(fd);
+        m_tasks.pop();
+        if (m_tasks.empty())
+        {
+            m_timer.Unset();
+        }
+        else
+        {
+            executable = m_tasks.top();            
+            m_timer.Set(boost::chrono::duration_cast<MS> 
+            (executable.m_timepoint - Now()));
+        }
+    }
+}

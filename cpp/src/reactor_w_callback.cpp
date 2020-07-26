@@ -5,8 +5,7 @@
  *	Version:	08.06.2020.0
  ******************************************************************************/
 
-#include <boost/shared_ptr.hpp> /* boost::shared_ptr */
-#include <boost/make_shared.hpp> /* boost::make_shared */
+
 
 #include "reactor_w_callback.hpp"
 
@@ -158,16 +157,16 @@ void Reactor::Remove( MODE mode, Handle fd)
     switch(mode)
     {
         case (READ):
-            src = m_read.find(fd)->second;
-            m_read.erase(m_read.find(fd));
+            src = m_read[fd];
+            m_read.erase(fd);
             break;
         case (WRITE):
-            src = m_write.find(fd)->second;
-            m_write.erase(m_write.find(fd));
+            src = m_write[fd];
+            m_write.erase(fd);
             break;
         case (EXCEPTION):
-            src = m_exception.find(fd)->second;
-            m_exception.erase(m_exception.find(fd));
+            src = m_exception[fd];
+            m_exception.erase(fd);
             break;
     }
     if (NULL != src)

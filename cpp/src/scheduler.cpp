@@ -2,7 +2,7 @@
  *	Title:		Scheduler
  *	Authour:	Alistair Hudson
  *	Reviewer:	
- *	Version:	21.07.2020.0
+ *	Version:	23.07.2020.0
  ******************************************************************************/
 
 #include <boost/bind.hpp>
@@ -27,10 +27,9 @@
 ilrd::Scheduler::Scheduler(Reactor& reactor): m_timer(reactor, 
                                                 boost::bind(&Scheduler::FlyYouFools, this, _1))
 {
-   /* FDTimer m_timer(reactor, 
-                    boost::bind(&Scheduler::FlyYouFools, this, _1));
-    */
+    
 }
+
 ilrd::Scheduler::~Scheduler()
 {
 
@@ -53,13 +52,14 @@ void ilrd::Scheduler::ScheduleAction(TimePoint timepoint,
     new_task.m_timepoint = timepoint;
 
     m_tasks.push(new_task);
-    
+   
 }
 
 void ilrd::Scheduler::ScheduleAction(MS nanoseconds,
                                      ActionFunc function)
 {
-TimePoint insert = TimePoint(nanoseconds + Now());
+
+    TimePoint insert = TimePoint(nanoseconds + Now());
 
 
     if (m_tasks.empty() || insert < m_tasks.top().m_timepoint)
@@ -73,6 +73,7 @@ TimePoint insert = TimePoint(nanoseconds + Now());
     new_task.m_timepoint = insert;
 
     m_tasks.push(new_task);
+    
 }
 
 ilrd::Scheduler::TimePoint ilrd::Scheduler::Now()
@@ -84,11 +85,15 @@ void ilrd::Scheduler::FlyYouFools(int fd)
 {
     if (m_tasks.empty())
     {
+        m_timer.Unset();
         return;
     }
 
     m_tasks.top().m_function(fd);
     m_tasks.pop();
+
+    m_timer.Set(boost::chrono::duration_cast<MS>
+                (m_tasks.top().m_timepoint.time_since_epoch() - Now().time_since_epoch()));
 
 }
 

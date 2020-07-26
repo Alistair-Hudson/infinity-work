@@ -2,9 +2,10 @@
  *	Title:		FDTimer
  *	Authour:	Alistair Hudson
  *	Reviewer:	
- *	Version:	21.07.2020.0
+ *	Version:	23.07.2020.0
  ******************************************************************************/
 
+#include <sys/timerfd.h>
 
 #include "fd_timer.hpp"
 
@@ -36,7 +37,7 @@ ilrd::FDTimer::FDTimer(Reactor& reactor, ActionFunc callback_func): m_reactor(re
 
 ilrd::FDTimer::~FDTimer()
 {
-    m_reactor.Remove(READ, m_fd);
+  //  m_reactor.Remove(READ, m_fd);
 }
 
 void ilrd::FDTimer::Set(ilrd::FDTimer::MS nanoseconds)

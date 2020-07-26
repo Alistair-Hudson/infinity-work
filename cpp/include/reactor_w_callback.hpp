@@ -7,6 +7,8 @@
 
 #include <boost/function.hpp>
 #include <boost/noncopyable.hpp>
+#include <boost/shared_ptr.hpp> /* boost::shared_ptr */
+#include <boost/make_shared.hpp> /* boost::make_shared */
 
 #include "callback.hpp"
 

@@ -60,7 +60,7 @@ int main()
     socket_id = socket(AF_INET, SOCK_STREAM, 0); 
     if (socket_id == -1) { 
         printf("socket creation failed...\n"); 
-        exit(0); 
+        return (0); 
     } 
   
     bzero(&sever_addr, sizeof(sever_addr)); 
@@ -71,7 +71,7 @@ int main()
   
     if (connect(socket_id, (struct sockaddr*)&sever_addr, sizeof(sever_addr)) != 0) { 
         printf("connection with the server failed...\n"); 
-        exit(0); 
+        return (0); 
     } 
     func(socket_id); 
 

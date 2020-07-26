@@ -1,63 +1,67 @@
-/******************************************************************************
- *	Title:		FDTimer
- *	Authour:	Alistair Hudson
- *	Reviewer:	
- *	Version:	21.07.2020.0
+/*******************************************************************************
+ * File: timer.hpp - header for timer functions	implementation			 		     
+ * Author: Yurii Yashchuk                                     
+ * Reviewed by: Esti Binder		                                   			   
+ * Date: 23.07.2020		                                                           	   *
  ******************************************************************************/
 
-
+#include <iostream>
 #include "fd_timer.hpp"
 
-/******MACROS******/
+using namespace ilrd;
 
-/******TYPEDEFS*****/
-
-/****** GLOBAL VARIABLES*****/
-
-/*****STRUCTS*******/
-
-/*****CLASSES******/
-
-/*****FUNCTORS*****/
-
-/******INTERNAL FUNCTION DECLARATION******/
-
-/******CLASS METHODS*******/
-/*===FDTimer===*/
-ilrd::FDTimer::FDTimer(Reactor& reactor, ActionFunc callback_func): m_reactor(reactor), 
-                                                                    m_callback(callback_func)
+FDTimer::FDTimer(Reactor& reactor, ActionFunc callback_func):
+                m_reactor(reactor), m_callback(callback_func),
+                m_fd(timerfd_create(CLOCK_REALTIME, 0))
 {
-    if (0 > (m_fd = timerfd_create(CLOCK_REALTIME, TFD_NONBLOCK)))
+    if (-1 == m_fd)
     {
-        throw "Failed to open fd for timer:";
+        throw "Timer file descriptor can't be created!"; 
     }
-    m_reactor.Add(READ, m_fd, &m_callback);
+    ModeAndHandle handle_and_mode;
+    handle_and_mode.first = READ; 
+    handle_and_mode.second = m_fd;
+    m_reactor.Add(handle_and_mode, &m_callback);
 }
 
-ilrd::FDTimer::~FDTimer()
+FDTimer::~FDTimer()
 {
-    m_reactor.Remove(READ, m_fd);
+    ModeAndHandle handle_and_mode;
+    handle_and_mode.first = READ; 
+    handle_and_mode.second = m_fd;
+    m_reactor.Remove(handle_and_mode);
+    close(m_fd);
 }
 
-void ilrd::FDTimer::Set(ilrd::FDTimer::MS nanoseconds)
+void FDTimer::Set(MS milliseconds)
 {
+    struct itimerspec new_value;
+    new_value.it_value.tv_sec = milliseconds.count()/1000;
+    new_value.it_value.tv_nsec = (milliseconds.count()%1000) *1000000;
 
-    struct itimerspec newSet;
-    newSet.it_interval.tv_sec = 0;
-    newSet.it_interval.tv_nsec = 0;
-    newSet.it_value.tv_sec = nanoseconds.count() / 1000000000;
-    newSet.it_value.tv_nsec = nanoseconds.count() % 1000000000;
-    timerfd_settime(m_fd, TFD_TIMER_ABSTIME, &newSet, NULL);
+    new_value.it_interval.tv_sec = 0;
+    new_value.it_interval.tv_nsec = 0;
+
+    if (-1 == timerfd_settime(m_fd, 0, &new_value, NULL))
+    {
+        throw ("timerfd_settime did not work");
+    }
+
 }
-
-void ilrd::FDTimer::Unset()
+void FDTimer::Unset()
 {
-    struct itimerspec newSet;
-    newSet.it_interval.tv_sec = 0;
-    newSet.it_interval.tv_nsec = 0;
-    newSet.it_value.tv_sec = 0;
-    newSet.it_value.tv_nsec = 0;
-    timerfd_settime(m_fd, TFD_TIMER_ABSTIME, &newSet, NULL);
+    struct itimerspec new_value;
+    new_value.it_value.tv_sec = 0;
+    new_value.it_value.tv_nsec = 0;
+
+    new_value.it_interval.tv_sec = 0;
+    new_value.it_interval.tv_nsec = 0;  
+
+    if (-1 == timerfd_settime(m_fd, 0, &new_value, NULL))
+    {
+        throw ("timerfd_settime did not work");
+    }    
 }
 
-/*****FUNCTION DEFINITION******/
+
+ 

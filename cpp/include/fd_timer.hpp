@@ -8,16 +8,11 @@
 #ifndef ILRD_RD8586_FD_TIMER_HPP
 #define ILRD_RD8586_FD_TIMER_HPP
 
-#include <fcntl.h>
-
-#include <sys/types.h> /* open */
-#include <sys/timerfd.h>
-#include <sys/stat.h>
-
 #include <boost/chrono.hpp>
-#include <boost/chrono/duration.hpp>
 #include <boost/function.hpp>
 #include <boost/noncopyable.hpp>
+#include <boost/bind.hpp>
+#include <sys/timerfd.h>
 
 #include "callback.hpp"
 #include "reactor_w_callback.hpp"
@@ -25,7 +20,7 @@
 namespace ilrd
 {
 
-
+// use #include <sys/timerfd.h> in the implementation
 class FDTimer : private boost::noncopyable
 {
 public:
@@ -46,11 +41,11 @@ public:
     ~FDTimer();
 
     // Set
-    // Receives: milliseconds - a chrono::miliiseconds object with the time
+    // Receives: microseconds - a chrono::microseconds object with the time
     //           requested from now
     // Exceptions: throws runtime_error if timer file descriptor can't be
     //             written
-    void Set(MS nanoseconds);
+    void Set(MS milliseconds);
 
     // Unset
     // Exceptions: throws runtime_error if timer file descriptor can't be
