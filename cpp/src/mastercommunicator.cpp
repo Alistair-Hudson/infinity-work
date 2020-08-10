@@ -11,7 +11,7 @@
 #include "mastercommunicator.hpp"
 
 /******MACROS******/
-
+#define WRITE_RESPONSE_BYTES (10)
 
 /******TYPEDEFS*****/
 
@@ -37,6 +37,7 @@ ilrd::MasterCommunicator::MasterCommunicator(int port,
                                                 m_port(port)
 {
     m_reactor.Add(READ, m_con.GetFD(), &m_callback);
+    memset((void*)&m_master_addr, 0, sizeof(m_master_addr));
     
 }
 
@@ -48,13 +49,8 @@ ilrd::MasterCommunicator::~MasterCommunicator()
 void ilrd::MasterCommunicator::ReadRequest(int fd)
 {
 
-    socklen_t length;
+    socklen_t length =sizeof(struct sockaddr_in);
     int bytes_received; 
-    struct sockaddr_in server_addr;
-
-    server_addr.sin_family = AF_INET; 
-    server_addr.sin_addr.s_addr = INADDR_ANY; 
-    server_addr.sin_port = htons(m_port);
 
     memset((void*)&m_request, 0, m_request.RequestSize());
 
@@ -62,10 +58,10 @@ void ilrd::MasterCommunicator::ReadRequest(int fd)
                                         (char *)&m_request, 
                                         m_request.RequestSize(),  
                                         MSG_WAITALL, 
-                                        ( struct sockaddr *) &server_addr, 
+                                        ( struct sockaddr *) &m_master_addr, 
                                         &length)))
     {
-        throw "failed to receive data\n";    
+        throw std::runtime_error("failed to receive data\n");    
     }
 
     m_ar_func(m_request);
@@ -74,21 +70,25 @@ void ilrd::MasterCommunicator::ReadRequest(int fd)
 
 void ilrd::MasterCommunicator::Reply(const Response& res) const
 {
-    struct sockaddr_in server_addr;
+    std::cout << "sending reply\n";
+    size_t bytes = res.ResponseSize();
 
-    server_addr.sin_family = AF_INET; 
-    server_addr.sin_addr.s_addr = INADDR_ANY; 
-    server_addr.sin_port = htons(m_port);
+    if (1 == res.m_mode)
+    {
+        bytes = WRITE_RESPONSE_BYTES;
+    }
 
     if(0 > sendto(  m_con.GetFD(), 
-                    (const char *)&res, 
-                    res.ResponseSize(),  
+                    &res, 
+                    bytes,  
                     MSG_CONFIRM, 
-                    (const struct sockaddr *) &server_addr, 
-                    sizeof(server_addr)))
+                    (const struct sockaddr *) &m_master_addr, 
+                    sizeof(struct sockaddr_in)))
     {
-        throw "Failed to send response\n";
+        throw std::runtime_error("Failed to send response\n");
     }
+
+    std::cout<< "reply sent\n";
 }
 
 /*****FUNCTION DEFINITION******/

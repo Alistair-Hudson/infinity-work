@@ -36,7 +36,8 @@ private:
 
     Reactor m_reactor;
     MasterCommunicator m_comm;
-    Storage<BLOCK_SIZE> m_storage;
+    Storage<G_BLOCK_SIZE> m_storage;
+    Response m_response;
 };
 
 } // namespace ilrd

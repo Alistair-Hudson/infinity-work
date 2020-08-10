@@ -40,7 +40,8 @@ namespace ilrd
         Reactor& m_reactor;
         Callback< Source< int > > m_callback;
         Request m_request;
-        const int m_port;   
+        const int m_port;
+        struct sockaddr_in m_master_addr;   
     };
 
 } // namespace ilrd

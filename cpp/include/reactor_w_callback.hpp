@@ -1,3 +1,6 @@
+#ifndef ILRD_RD8586_REACTOR_HPP
+#define ILRD_RD8586_REACTOR_HPP
+
 //Reactor design pattern API
 #include <iostream>
 #include <vector>
@@ -17,8 +20,8 @@ typedef int Handle;
 
 enum MODE
 {
-    WRITE = 0,
-    READ,
+    READ = 0,
+    WRITE,
     EXCEPTION
 };
 
@@ -59,3 +62,5 @@ public:
 
     std::vector<std::pair<IListener::MODE, Handle>> Listen(const std::vector<std::pair<IListener::MODE, Handle>>& handle);
 }; */
+
+#endif /* ILRD_RD8586_REACTOR_HPP */
