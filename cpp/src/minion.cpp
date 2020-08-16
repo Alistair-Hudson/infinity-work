@@ -47,15 +47,16 @@ void ilrd::Minion::Run()
 
 void ilrd::Minion::OnRequest(const Request& request)
 {
+    int m_index = be64toh(request.m_index);
     memset((void*)&m_response, 0, m_response.ResponseSize());
 
     if (0 == request.m_mode)
     {
-        m_response.m_status =  m_storage.Read(request.m_index, (void*)m_response.m_data);
+        m_response.m_status =  m_storage.Read(m_index, (void*)m_response.m_data);
     }
     else
     {
-        m_response.m_status = m_storage.Write(request.m_index, (void*)request.m_data);
+        m_response.m_status = m_storage.Write(m_index, (void*)request.m_data);
     }
     
     m_response.m_uid = request.m_uid;
