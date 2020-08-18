@@ -13,6 +13,7 @@
 #include "reactor_w_callback.hpp"
 #include "mastercommunicator.hpp"
 #include "storage.hpp"
+#include "logger.hpp"
 
 namespace ilrd
 {

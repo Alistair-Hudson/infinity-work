@@ -5,8 +5,8 @@
                                 * version 02.08.2020.0
 ******************************************************************************/
 #include <iostream>
-#include <thread>
-#include <atomic>
+// #include <thread>
+// #include <atomic>
 
 #include <boost/atomic.hpp>
 
@@ -30,9 +30,9 @@ private:
 };
 
 template<typename T> 
-T* Singleton<T>::m_instance = nullptr;
+T* Singleton<T>::m_instance = 0;
 
-bool lock = 0;
+static bool g_lock = 0;
 
 template < class T >
 T *Singleton<T>::GetInstance()
@@ -42,7 +42,7 @@ T *Singleton<T>::GetInstance()
     {
         boost::atomic_thread_fence(boost::memory_order_acquire);
         //lock
-        while (__atomic_test_and_set(&lock, 1))
+        while (__atomic_test_and_set(&g_lock, 1))
         {
             //spin lock
         }
@@ -53,7 +53,7 @@ T *Singleton<T>::GetInstance()
             m_instance = new T;
 
         }
-        lock = 0;
+        g_lock = 0;
         boost::atomic_thread_fence(boost::memory_order_release);
     }
     

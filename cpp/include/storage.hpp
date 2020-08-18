@@ -52,13 +52,26 @@ char Storage<BLOCK_SIZE>::Write(size_t index, const void *src)
     //assert(m_capacity > index);
 
     std::fstream fs;
-    fs.open(m_name);
-    //if (!fs.is_open()){return 1;}
+    try
+    {
+        fs.open(m_name);
+    }
+    catch (...)
+    {
+        return 1;
+    }
+    
 
     fs.seekp(index * BLOCK_SIZE, std::ios::beg);
-    fs.write((const char*)(src), BLOCK_SIZE);
+    try
+    {
+        fs.write((const char*)(src), BLOCK_SIZE);
+    }
+    catch(...)
+    {
+        return 2;
+    }
     fs.close();
-    std::cout << "wrote to storage\n";
     return 0;
 }
 
@@ -68,13 +81,26 @@ char Storage<BLOCK_SIZE>::Read(size_t index, void* dest)const
     //assert(m_capacity > index);
     
     std::fstream fs;
-    fs.open(m_name);
-    //if (!fs.is_open()){return 1;}
+    try
+    {
+        fs.open(m_name);
+    }
+    catch (...)
+    {
+        return 1;
+    }
+    
 
     fs.seekg(index * BLOCK_SIZE, std::ios::beg);
-    fs.read(static_cast<char*>(dest), BLOCK_SIZE);
+    try
+    {
+        fs.read(static_cast<char*>(dest), BLOCK_SIZE);
+    }
+    catch (...)
+    {
+        return 2;
+    }
     fs.close();
-    std::cout << "read from storage\n";
     return 0;
 }
 
