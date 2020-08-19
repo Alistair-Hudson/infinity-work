@@ -14,6 +14,8 @@
 #include "mastercommunicator.hpp"
 #include "storage.hpp"
 #include "logger.hpp"
+#include "factory.hpp"
+#include "command.hpp"
 
 namespace ilrd
 {
